@@ -1,0 +1,8 @@
+{
+  "appId": "com.couple.app",
+  "appName": "情侣互动",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

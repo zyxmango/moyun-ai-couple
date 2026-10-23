@@ -1,0 +1,118 @@
+/* 墨韵精炼设计风格 - 水墨雅致、留白克制 */
+:root {
+  --ink-darkest: #1a1a1a;
+  --ink-dark: #2c2c2c;
+  --ink-primary: #3d3d3d;
+  --ink-secondary: #6b6b6b;
+  --ink-light: #9a9a9a;
+  --accent-rose: #c96b6b;
+  --accent-rose-light: #e8b4b4;
+  --accent-rose-bg: #faf0f0;
+  --accent-gold: #c9a96e;
+  --accent-teal: #5e8b7e;
+  --bg-paper: #f7f5f0;
+  --bg-card: #ffffff;
+  --bg-soft: #f0ede8;
+  --border-soft: #e8e4de;
+  --shadow-soft: 0 2px 12px rgba(44, 44, 44, 0.06);
+  --shadow-hover: 0 6px 24px rgba(44, 44, 44, 0.1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  background: var(--bg-paper);
+  color: var(--ink-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
+}
+
+/* Element Plus 主题覆盖 */
+.el-button--primary {
+  --el-button-bg-color: var(--ink-dark);
+  --el-button-border-color: var(--ink-dark);
+  --el-button-hover-bg-color: var(--ink-primary);
+  --el-button-hover-border-color: var(--ink-primary);
+}
+
+.el-button--rose {
+  --el-button-bg-color: var(--accent-rose);
+  --el-button-border-color: var(--accent-rose);
+  --el-button-hover-bg-color: #b85a5a;
+  --el-button-hover-border-color: #b85a5a;
+  --el-button-text-color: #fff;
+  background: var(--accent-rose);
+  border-color: var(--accent-rose);
+  color: #fff;
+}
+
+/* 通用卡片 */
+.ink-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  padding: 20px;
+  transition: box-shadow 0.3s ease;
+}
+.ink-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* 页面容器 */
+.page-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100%;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink-darkest);
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .page-container {
+    padding: 12px;
+  }
+  .page-title {
+    font-size: 19px;
+  }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 渐入动画 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
