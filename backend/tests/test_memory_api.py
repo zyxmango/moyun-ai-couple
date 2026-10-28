@@ -503,6 +503,20 @@ class MemoryAPITest(unittest.TestCase):
             {"previous_preference", "current_preference"},
         )
 
+        long_gap = ai_service._attach_uncovered_context_facts([{
+            "event_kind": "trip", "event_key": "trip:武汉", "source_message_ids": [30],
+            "facts": [{"type": "destination", "value": "抵达武汉", "source_message_ids": [30]}],
+        }], [
+            {"id": 30, "created_at": "2047-08-01T09:00:00", "content": "我们到武汉啦。"},
+            {"id": 31, "created_at": "2047-08-01T09:05:00", "content": "我到家以后再给你发消息。"},
+            {"id": 45, "created_at": "2047-08-01T18:00:00", "content": "晚上吃的是藕汤，我觉得很香。"},
+            {"id": 46, "created_at": "2047-08-01T18:05:00", "content": "晚饭先不用等我。"},
+        ])[0]
+        self.assertIn(45, long_gap["source_message_ids"])
+        self.assertNotIn(31, long_gap["source_message_ids"])
+        self.assertNotIn(46, long_gap["source_message_ids"])
+        self.assertTrue(any(fact["type"] == "meal" and "藕汤" in fact["value"] for fact in long_gap["facts"]))
+
     def test_04bbhc_routine_event_key_cannot_merge_across_dates(self):
         db = self.Session()
         couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
@@ -565,6 +579,22 @@ class MemoryAPITest(unittest.TestCase):
     def test_04bbi_empty_context_uses_deterministic_abstention(self):
         answer = ai_service.memory_answer("我们约好移居火星了吗？", "没有找到相关共同记忆。", [], strict=True)
         self.assertEqual(answer, "目前没有找到相关记录，所以我无法确认这件事。")
+
+    def test_04bbj_answer_removes_unsupported_absence_and_unsolicited_advice(self):
+        answer = ai_service._sanitize_memory_answer(
+            "计划已经取消，暂时没有新日期。后来也没再提过重新计划。"
+            "如果现在还想去，可以重新商量一个日期。",
+            "之前的计划现在是什么状态？",
+        )
+        self.assertIn("计划已经取消", answer)
+        self.assertIn("后续情况，目前无法确认", answer)
+        self.assertNotIn("没再提过", answer)
+        self.assertNotIn("重新商量", answer)
+
+    def test_04bbk_routine_notifications_are_never_memory_facts(self):
+        self.assertTrue(ai_service._is_routine_context("我到家以后再给你发消息。"))
+        self.assertTrue(ai_service._is_routine_context("晚饭先不用等我！"))
+        self.assertFalse(ai_service._is_routine_context("以后忙时发一句简短说明。"))
 
     def test_04c_failed_extraction_keeps_cursor_for_retry(self):
         db = self.Session()

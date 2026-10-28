@@ -315,6 +315,8 @@ class AIService:
             "event_key 表示可跨批次复用的稳定身份，只能由事件类型和核心主题组成，例如"
             "trip:武汉:2019-01-06、plan:哈尔滨旅行、preference:咖啡甜度、conflict:忘记倒垃圾:2024-01-30；"
             "不能用‘我到家再说’等闲聊作event_key，同一事件的不同状态不得改变 event_key。"
+            "‘我到家以后再给你发消息’‘晚饭先不用等我’等即时通知不是事件事实、计划或冲突约定，"
+            "不能写入facts，也不能作为任何长期事件的证据。"
             "事实槽位必须规范：旅行使用destination/activity/meal/completion；偏好使用preference_topic/"
             "previous_preference/current_preference；计划使用plan_intent/plan_status/cancellation_reason；"
             "冲突与和好使用conflict_reason/resolution/agreement。证据明确出现的槽位不得遗漏。"
@@ -387,7 +389,7 @@ class AIService:
                     if not isinstance(fact, dict):
                         continue
                     value = str(fact.get("value") or "").strip()
-                    if not value:
+                    if not value or self._is_routine_context(value):
                         continue
                     fact_ids = []
                     for source_id in fact.get("source_message_ids") or []:
@@ -462,6 +464,16 @@ class AIService:
             raise
 
     @staticmethod
+    def _is_routine_context(text: str) -> bool:
+        normalized = re.sub(r"[\s，。！？、,.!?]", "", str(text or "")).lower()
+        routine_patterns = (
+            "我到家以后再给你发消息", "到家以后再给你发消息", "到家再给你发消息",
+            "我到家后再给你发消息", "到家后再给你发消息", "晚饭先不用等我",
+            "我晚点再回复你", "晚一点再回复你",
+        )
+        return any(pattern in normalized for pattern in routine_patterns)
+
+    @staticmethod
     def _canonical_fact_type(event_kind: str, value: str, suggested: str = "fact") -> str:
         """把模型自由命名的事实收敛到按事件类型定义的固定槽位。"""
         text = f"{suggested} {value}".lower()
@@ -516,8 +528,8 @@ class AIService:
             for source_id in fact.get("source_message_ids", [])
         }
         fact_signals = (
-            ("meal", ("早餐", "午饭", "晚饭", "夜宵", "吃了", "喝了", "点了", "餐厅"), {"trip", "date", "activity"}),
-            ("destination", ("抵达", "到达", "到了", "出发去"), {"trip"}),
+            ("meal", ("早餐", "午饭", "晚饭", "晚餐", "夜宵", "晚上吃", "吃的是", "吃了", "喝了", "点了", "餐厅"), {"trip", "date", "activity"}),
+            ("destination", ("抵达", "到达", "到了", "我们到", "出发去"), {"trip"}),
             ("activity", ("去了", "逛了", "散步", "拍照", "参观", "看了", "体验了"), {"trip", "date", "activity"}),
             ("completion", ("旅行结束", "返程", "回到家", "回家了", "回来了"), {"trip", "date", "activity"}),
             ("agreement", ("约定", "共识", "以后", "办法", "轮值"), {"conflict", "reconciliation"}),
@@ -539,7 +551,7 @@ class AIService:
             if not source_ids:
                 return None
             distance = min(abs(message_id - value) for value in source_ids)
-            if distance > 6:
+            if distance > 30:
                 return None
             evidence_dates = {message_date(message_by_id[value]) for value in source_ids if value in message_by_id}
             current_date = message_date(message_by_id[message_id])
@@ -553,7 +565,7 @@ class AIService:
         for message in messages:
             message_id = int(message["id"])
             text = re.sub(r"\s+", " ", str(message.get("content") or "")).strip()
-            if not text:
+            if not text or cls._is_routine_context(text):
                 continue
             matched_rows = [row for row in fact_signals if any(marker in text for marker in row[1])]
             if not matched_rows:
@@ -571,7 +583,7 @@ class AIService:
                 if not ranked:
                     continue
                 # 没有主题词支撑时，只允许唯一的最近事件接收补漏，避免跨事件挂靠。
-                if len(ranked) > 1 and ranked[0][0] <= 0 and ranked[0][0] == ranked[1][0]:
+                if len(ranked) > 1 and ranked[0][0] <= 0:
                     continue
                 target = ranked[0][1]
                 canonical_type = cls._canonical_fact_type(target.get("event_kind", ""), text, fact_type)
@@ -736,17 +748,40 @@ class AIService:
             "多条记录互相矛盾时应指出暂时无法确定，并邀请两个人补充或确认。"
             "问题询问地点、餐食、当前偏好、取消状态或和好后的约定时，必须原样保留相关facts中的具体值，"
             "不能用‘达成共识’‘找到办法’等泛化表达替代。"
+            "当共同记忆中出现agreement=具体约定时，回答必须逐字保留等号后的具体约定，不得改写。"
             "planned 只代表计划，不能回答成已经发生；uncertain 只能作为不确定线索。"
             "信息不足时，只能用第一人称说明‘我还没记住这件事’或‘目前无法确认’，并邀请用户补充；"
             "绝对不能把‘没有记录’推断成‘你们没有做过、没有收到过、没有计划过或没有发生过’。"
+            "同样不能说‘后来没再提’‘一直没有重新安排’‘从未在记忆里出现’，只能说后续目前无法确认。"
+            "除非用户主动询问建议，否则不要新增‘可以重新约时间’等未来行动建议。"
             "不要为了活泼添加票、交通工具、装备、价格等参考内容里没有的玩笑细节。"
             "不要进行心理诊断，也不要替用户做关系决定。回答通常控制在2到4句话。"
         )
         prompt = f"【共同记忆】\n{context}\n\n【问题】\n{question}"
         messages = (history or []) + [{"role": "user", "content": prompt}]
         if strict:
-            return self._chat_strict(messages, system, temperature=0.1, max_tokens=1000)
-        return self.chat(messages, system_prompt=system, temperature=0.1, max_tokens=1000)
+            answer = self._chat_strict(messages, system, temperature=0.1, max_tokens=1000)
+        else:
+            answer = self.chat(messages, system_prompt=system, temperature=0.1, max_tokens=1000)
+        return self._sanitize_memory_answer(answer, question)
+
+    @staticmethod
+    def _sanitize_memory_answer(answer: str, question: str = "") -> str:
+        """移除模型对记录缺失和未来安排的二次推断。"""
+        text = str(answer or "").strip()
+        unsupported_absence = re.compile(
+            r"[^。！？\n]*(?:后来(?:也|好像)?(?:一直)?没再提过|后来(?:也|好像)?(?:一直)?没有再提过|"
+            r"没有在记忆里出现过|没在记忆里出现过|从未在记忆里出现过|一直没有重新安排)[^。！？\n]*[。！？]?"
+        )
+        text = unsupported_absence.sub("关于后续情况，目前无法确认。", text)
+        asks_advice = any(marker in question for marker in ("怎么办", "怎么做", "建议", "要不要", "可以吗"))
+        if not asks_advice:
+            unsolicited_advice = re.compile(
+                r"(?:如果|要是)[^。！？\n]*(?:可以|不妨|建议|随时)[^。！？\n]*[。！？]?"
+            )
+            text = unsolicited_advice.sub("", text)
+        text = re.sub(r"(?:关于后续情况，目前无法确认。\s*){2,}", "关于后续情况，目前无法确认。", text)
+        return text.strip()
 
     def memory_report(self, memories: List[Dict], period_label: str) -> str:
         context = "\n".join(
