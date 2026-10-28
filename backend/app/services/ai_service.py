@@ -312,8 +312,12 @@ class AIService:
             "facts 是原子事实数组，每项只包含 type、value、occurred_at、source_message_ids；"
             "例如抵达、游览、餐食、偏好旧值、偏好新值、取消原因、冲突原因、解决办法分别保存，不能只写概括。"
             "每个事件最多8个facts，每个value不超过100字，输出必须是紧凑且可解析的合法JSON。"
-            "event_key 表示可跨批次复用的稳定主题，例如 trip:武汉、plan:哈尔滨旅行、preference:咖啡甜度；"
-            "同一事件的不同状态不得改变 event_key。"
+            "event_key 表示可跨批次复用的稳定身份，只能由事件类型和核心主题组成，例如"
+            "trip:武汉:2019-01-06、plan:哈尔滨旅行、preference:咖啡甜度、conflict:忘记倒垃圾:2024-01-30；"
+            "不能用‘我到家再说’等闲聊作event_key，同一事件的不同状态不得改变 event_key。"
+            "事实槽位必须规范：旅行使用destination/activity/meal/completion；偏好使用preference_topic/"
+            "previous_preference/current_preference；计划使用plan_intent/plan_status/cancellation_reason；"
+            "冲突与和好使用conflict_reason/resolution/agreement。证据明确出现的槽位不得遗漏。"
             "source_message_ids 必须只包含真正支持该结论的输入消息 id；importance 和 confidence 为 0 到 1。"
         )
         raw = self._chat_strict(
@@ -331,6 +335,18 @@ class AIService:
                 data = parse_events(raw)
             except json.JSONDecodeError:
                 retry_system = system + "上一次输出格式不合法。重新生成，不要解释，不要Markdown，不要尾随逗号。"
+                raw = self._chat_strict(
+                    [{"role": "user", "content": json.dumps(compact, ensure_ascii=False)}],
+                    system_prompt=retry_system,
+                    temperature=0.0,
+                    max_tokens=3200,
+                )
+                data = parse_events(raw)
+            if isinstance(data, list) and not data and fallback:
+                retry_system = system + (
+                    "上一次返回了空数组，但规则检查发现输入含有长期记忆信号。"
+                    "请逐条检查原始消息，只抽取有直接证据的事件；仍然没有时才返回空数组。"
+                )
                 raw = self._chat_strict(
                     [{"role": "user", "content": json.dumps(compact, ensure_ascii=False)}],
                     system_prompt=retry_system,
@@ -381,11 +397,35 @@ class AIService:
                             continue
                         if source_id in allowed_ids and source_id in source_ids and source_id not in fact_ids:
                             fact_ids.append(source_id)
+                    if not fact_ids:
+                        # 模型偶尔省略事实级证据。用字符二元组只选最相近原文，
+                        # 不能把事件全部消息都标成已覆盖，否则缺失事实无法被发现。
+                        value_grams = {value[index:index + 2] for index in range(max(0, len(value) - 1))}
+                        ranked_sources = []
+                        for source_id in source_ids:
+                            source_text = next(
+                                (str(row.get("content") or "") for row in messages if int(row["id"]) == source_id), ""
+                            )
+                            source_grams = {
+                                source_text[index:index + 2] for index in range(max(0, len(source_text) - 1))
+                            }
+                            overlap = len(value_grams & source_grams) / max(1, min(len(value_grams), len(source_grams)))
+                            ranked_sources.append((overlap, source_id))
+                        best_overlap = max((row[0] for row in ranked_sources), default=0.0)
+                        if best_overlap > 0:
+                            fact_ids = [
+                                source_id for overlap, source_id in ranked_sources
+                                if overlap >= max(0.12, best_overlap * 0.75)
+                            ]
+                        if not fact_ids and source_ids:
+                            fact_ids = [source_ids[0]]
                     facts.append({
-                        "type": str(fact.get("type") or "fact")[:40],
+                        "type": self._canonical_fact_type(
+                            event_kind, value, str(fact.get("type") or "fact")
+                        ),
                         "value": value[:500],
                         "occurred_at": str(fact.get("occurred_at") or "")[:32],
-                        "source_message_ids": fact_ids or source_ids,
+                        "source_message_ids": fact_ids,
                     })
                 if not facts:
                     facts = [{
@@ -414,58 +454,138 @@ class AIService:
                 }
                 if self._has_long_term_value(event, messages):
                     events.append(event)
-            return self._attach_uncovered_context_facts(events or fallback, messages)
+            # 在线模型即使二次检查后仍返回空，也不能再把整批信号拼成一条兜底记忆；
+            # 那会把不同日期、不同主题的事件静默合并。离线模式仍保留保守规则兜底。
+            return self._attach_uncovered_context_facts(events, messages)
         except Exception:
             logger.exception("Memory event extraction failed; keeping the sync cursor for retry")
             raise
 
     @staticmethod
-    def _attach_uncovered_context_facts(events: List[Dict], messages: List[Dict]) -> List[Dict]:
-        """把模型漏掉的餐食、活动和解决办法作为事实回填到同批事件，避免静默丢失。"""
+    def _canonical_fact_type(event_kind: str, value: str, suggested: str = "fact") -> str:
+        """把模型自由命名的事实收敛到按事件类型定义的固定槽位。"""
+        text = f"{suggested} {value}".lower()
+        kind = (event_kind or "fact").lower()
+        rules = {
+            "trip": (
+                ("meal", ("早餐", "午饭", "晚饭", "夜宵", "餐食", "吃了", "喝了")),
+                ("completion", ("结束", "返程", "回到家", "回家", "回来")),
+                ("destination", ("抵达", "到达", "目的地", "destination", "arrival")),
+                ("activity", ("去了", "逛了", "散步", "拍照", "参观", "体验", "activity")),
+            ),
+            "preference": (
+                ("current_preference", ("现在", "当前", "改为", "选择", "新偏好", "current")),
+                ("previous_preference", ("以前", "原来", "过去", "旧偏好", "previous")),
+                ("preference_topic", ("主题", "偏好项", "topic")),
+            ),
+            "plan": (
+                ("cancellation_reason", ("原因", "冲突", "来不了", "cancellation_reason")),
+                ("plan_status", ("取消", "改期", "完成", "不去了", "status")),
+                ("plan_intent", ("计划", "约好", "报名", "预订", "intent")),
+            ),
+            "conflict": (
+                ("agreement", ("约定", "共识", "以后", "轮值", "agreement")),
+                ("resolution", ("和好", "道歉", "说清楚", "解决", "resolution")),
+                ("conflict_reason", ("因为", "矛盾", "争执", "吵架", "不开心", "reason")),
+            ),
+            "reconciliation": (
+                ("agreement", ("约定", "共识", "以后", "轮值", "agreement")),
+                ("resolution", ("和好", "道歉", "说清楚", "解决", "resolution")),
+                ("conflict_reason", ("因为", "矛盾", "争执", "吵架", "不开心", "reason")),
+            ),
+        }
+        allowed = {item[0] for item in rules.get(kind, ())}
+        normalized = re.sub(r"[^a-z0-9_]+", "_", suggested.lower()).strip("_")[:40]
+        if normalized in allowed:
+            return normalized
+        for fact_type, markers in rules.get(kind, ()):
+            if any(marker in text for marker in markers):
+                return fact_type
+        return normalized if normalized in allowed else (normalized or "fact")
+
+    @classmethod
+    def _attach_uncovered_context_facts(cls, events: List[Dict], messages: List[Dict]) -> List[Dict]:
+        """按固定槽位补齐原始证据；只有同日、邻近且目标唯一时才回填。"""
         if not events:
             return events
-        covered = {
-            int(source_id)
+        message_by_id = {int(item["id"]): item for item in messages}
+        covered_slots = {
+            (int(source_id), str(fact.get("type") or "fact"))
             for event in events
-            for source_id in event.get("source_message_ids", [])
+            for fact in event.get("facts", [])
+            for source_id in fact.get("source_message_ids", [])
         }
         fact_signals = (
             ("meal", ("早餐", "午饭", "晚饭", "夜宵", "吃了", "喝了", "点了", "餐厅"), {"trip", "date", "activity"}),
+            ("destination", ("抵达", "到达", "到了", "出发去"), {"trip"}),
             ("activity", ("去了", "逛了", "散步", "拍照", "参观", "看了", "体验了"), {"trip", "date", "activity"}),
-            ("resolution", ("和好", "道歉", "说清楚", "解决", "办法", "共识", "轮值"), {"conflict", "reconciliation"}),
-            ("plan_update", ("取消", "改期", "不去了", "完成了", "已经去了"), {"plan"}),
-            ("preference_update", ("现在改", "现在选择", "不再", "以后不要", "明确选择"), {"preference"}),
+            ("completion", ("旅行结束", "返程", "回到家", "回家了", "回来了"), {"trip", "date", "activity"}),
+            ("agreement", ("约定", "共识", "以后", "办法", "轮值"), {"conflict", "reconciliation"}),
+            ("resolution", ("和好", "道歉", "说清楚", "说开了", "解决"), {"conflict", "reconciliation"}),
+            ("conflict_reason", ("吵架", "争执", "矛盾", "闹别扭", "不开心"), {"conflict", "reconciliation"}),
+            ("plan_status", ("取消", "改期", "不去了", "完成了", "已经去了"), {"plan"}),
+            ("current_preference", ("现在改", "现在选择", "不再", "以后不要", "明确选择"), {"preference"}),
+            ("previous_preference", ("以前", "原来一直", "过去一直"), {"preference"}),
         )
+
+        def message_date(item: Dict):
+            try:
+                return str(item.get("created_at") or "")[:10]
+            except Exception:
+                return ""
+
+        def target_score(event: Dict, message_id: int, text: str):
+            source_ids = [int(value) for value in event.get("source_message_ids", []) if str(value).isdigit()]
+            if not source_ids:
+                return None
+            distance = min(abs(message_id - value) for value in source_ids)
+            if distance > 6:
+                return None
+            evidence_dates = {message_date(message_by_id[value]) for value in source_ids if value in message_by_id}
+            current_date = message_date(message_by_id[message_id])
+            if current_date and evidence_dates and current_date not in evidence_dates:
+                return None
+            anchors = [str(event.get("event_key") or ""), str(event.get("title") or "")]
+            anchors.extend(str(value) for value in event.get("entities", []))
+            lexical = sum(1 for value in anchors if len(value.strip()) >= 2 and value.strip().lower() in text.lower())
+            return lexical * 10 - distance
+
         for message in messages:
             message_id = int(message["id"])
-            if message_id in covered:
-                continue
             text = re.sub(r"\s+", " ", str(message.get("content") or "")).strip()
             if not text:
                 continue
-            matched = next((row for row in fact_signals if any(marker in text for marker in row[1])), None)
-            if matched is None:
+            matched_rows = [row for row in fact_signals if any(marker in text for marker in row[1])]
+            if not matched_rows:
                 continue
-            fact_type, _, compatible_kinds = matched
-            compatible = [event for event in events if event.get("event_kind") in compatible_kinds]
-            if not compatible:
-                continue
-            target = min(
-                compatible,
-                key=lambda event: min(
-                    (abs(message_id - int(source_id)) for source_id in event.get("source_message_ids", [])),
-                    default=10**9,
-                ),
-            )
-            target.setdefault("facts", []).append({
-                "type": fact_type,
-                "value": text[:500],
-                "occurred_at": str(message.get("created_at") or "")[:32],
-                "source_message_ids": [message_id],
-            })
-            target.setdefault("source_message_ids", []).append(message_id)
-            target["source_message_ids"] = list(dict.fromkeys(target["source_message_ids"]))
-            covered.add(message_id)
+            for fact_type, _, compatible_kinds in matched_rows:
+                compatible = [event for event in events if event.get("event_kind") in compatible_kinds]
+                if not compatible:
+                    continue
+                ranked = sorted(
+                    ((target_score(event, message_id, text), event) for event in compatible),
+                    key=lambda row: row[0] if row[0] is not None else -10**9,
+                    reverse=True,
+                )
+                ranked = [row for row in ranked if row[0] is not None]
+                if not ranked:
+                    continue
+                # 没有主题词支撑时，只允许唯一的最近事件接收补漏，避免跨事件挂靠。
+                if len(ranked) > 1 and ranked[0][0] <= 0 and ranked[0][0] == ranked[1][0]:
+                    continue
+                target = ranked[0][1]
+                canonical_type = cls._canonical_fact_type(target.get("event_kind", ""), text, fact_type)
+                if (message_id, canonical_type) in covered_slots:
+                    continue
+                target.setdefault("facts", []).append({
+                    "type": canonical_type,
+                    "value": text[:500],
+                    "occurred_at": str(message.get("created_at") or "")[:32],
+                    "source_message_ids": [message_id],
+                })
+                target.setdefault("source_message_ids", []).append(message_id)
+                target["source_message_ids"] = list(dict.fromkeys(target["source_message_ids"]))
+                covered_slots.add((message_id, canonical_type))
         return events
 
     @staticmethod
@@ -555,6 +675,8 @@ class AIService:
             "你是长期记忆总结器。输入已经完成事件聚合，不要筛选或拆分，只生成一条完整记忆。"
             "只能使用原始证据和结构化facts；必须保留facts中的时间、地点、活动、餐食、状态变化和解决办法。"
             "不得删掉任何仍有效的原子事实；遇到新旧偏好时应明确当前值和旧值。"
+            "summary必须逐项保留facts的具体value，尤其是餐食名称、偏好新值、取消原因和冲突后的具体约定；"
+            "不能把‘建立家务轮值表’改写成‘找到相处方式’这类泛化表达。"
             "不得补充证据中没有的人名、原因、结果或情绪。只输出JSON对象，字段为"
             "title、summary、location、emotion、tags、importance。summary不超过240字。"
         )
@@ -612,6 +734,8 @@ class AIService:
             "不要展示检索过程，不要提到来源、片段、编号或共同记忆库，不要使用[1][2]等引用标记。"
             "记录时间不等于事件发生时间；用户询问具体日期而记录中没有明确日期时，要温和地说明目前只能确认事件，无法确认具体时间。"
             "多条记录互相矛盾时应指出暂时无法确定，并邀请两个人补充或确认。"
+            "问题询问地点、餐食、当前偏好、取消状态或和好后的约定时，必须原样保留相关facts中的具体值，"
+            "不能用‘达成共识’‘找到办法’等泛化表达替代。"
             "planned 只代表计划，不能回答成已经发生；uncertain 只能作为不确定线索。"
             "信息不足时，只能用第一人称说明‘我还没记住这件事’或‘目前无法确认’，并邀请用户补充；"
             "绝对不能把‘没有记录’推断成‘你们没有做过、没有收到过、没有计划过或没有发生过’。"

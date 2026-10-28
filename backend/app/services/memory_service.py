@@ -480,7 +480,11 @@ class MemoryService:
             if occurred is None:
                 occurred = min(message_map[item].created_at for item in fact_ids)
             facts.append({
-                "type": str(raw.get("type") or "fact")[:40],
+                "type": ai_service._canonical_fact_type(
+                    str(event.get("event_kind") or event.get("category") or "fact"),
+                    value,
+                    str(raw.get("type") or "fact"),
+                ),
                 "value": value,
                 "occurred_at": occurred.isoformat(),
                 "source_message_ids": fact_ids,
@@ -514,15 +518,49 @@ class MemoryService:
         return merged[-80:]
 
     @staticmethod
-    def _candidate_key(event: Dict, event_at: datetime | None) -> str:
+    def _canonical_event_topic(event: Dict) -> str:
+        """提取用于事件身份的核心主题，拒绝把日常套话当作跨批次键。"""
         kind = str(event.get("event_kind") or event.get("category") or "event").lower()
         hint = str(event.get("event_key") or event.get("title") or "").lower()
-        hint = re.sub(r"(?:planned|ongoing|completed|cancelled|uncertain|计划中|已完成|已取消)", "", hint)
-        hint = re.sub(r"[^a-z0-9\u4e00-\u9fa5:]+", "", hint)[:100]
         if hint.startswith(f"{kind}:"):
             hint = hint[len(kind) + 1:]
+        hint = re.sub(r":?(?:19|20)\d{2}-\d{1,2}-\d{1,2}$", "", hint)
+        hint = re.sub(r"(?:planned|ongoing|completed|cancelled|uncertain|计划中|已完成|已取消)", "", hint)
+        hint = re.sub(r"(?:偏好变化|偏好更新|当前偏好|旅行事件|共同事件|计划状态)", "", hint)
+        hint = re.sub(r"[^a-z0-9\u4e00-\u9fa5:]+", "", hint)[:100]
+        routine_phrases = (
+            "我到家以后再给你发消息", "晚饭先不用等我", "以后再说", "晚点再说",
+            "共同记忆", "聊天记录", "unknown", "未知事件",
+        )
+        if not hint or any(phrase in hint for phrase in routine_phrases):
+            hint = ""
+        if not hint:
+            generic_entities = {"用户", "用户1", "用户2", "双方", "情侣", "偏好", "计划", "事件"}
+            entities = [
+                re.sub(r"[^a-z0-9\u4e00-\u9fa5]+", "", str(value).lower())
+                for value in event.get("entities", [])
+                if str(value).strip() and str(value).strip() not in generic_entities
+            ]
+            hint = next((value for value in entities if len(value) >= 2), "")
+        return hint[:100]
+
+    @classmethod
+    def _candidate_key(cls, event: Dict, event_at: datetime | None) -> str:
+        kind = str(event.get("event_kind") or event.get("category") or "event").lower()
+        hint = cls._canonical_event_topic(event)
+        reliable_topic = bool(hint)
+        if not hint:
+            source_ids = []
+            for value in event.get("source_message_ids", []):
+                try:
+                    source_ids.append(int(value))
+                except (TypeError, ValueError):
+                    continue
+            hint = f"message-{min(source_ids)}" if source_ids else "unknown"
         # 一次性活动用日期防止同城多次经历误合并；计划和偏好跨日期沿用同一主题。
-        date_part = "" if kind in {"plan", "preference"} else f":{event_at:%Y-%m-%d}" if event_at else ""
+        # 计划/偏好只有在主题可靠时才允许跨日期复用；套话键必须按日期隔离。
+        timeless = kind in {"plan", "preference"} and reliable_topic
+        date_part = "" if timeless else f":{event_at:%Y-%m-%d}" if event_at else ""
         return f"{kind}:{hint or 'unknown'}{date_part}"[:160]
 
     def _find_candidate(self, db: Session, couple_id: int, event: Dict, event_at: datetime | None):
@@ -530,6 +568,7 @@ class MemoryService:
         exact = db.query(MemoryCandidate).filter(
             MemoryCandidate.couple_id == couple_id,
             MemoryCandidate.event_key == key,
+            MemoryCandidate.category == (event.get("category") or "event"),
         ).order_by(MemoryCandidate.updated_at.desc()).first()
         if exact:
             return exact, key
@@ -537,6 +576,7 @@ class MemoryService:
         query = db.query(MemoryCandidate).filter(
             MemoryCandidate.couple_id == couple_id,
             MemoryCandidate.event_kind == kind,
+            MemoryCandidate.category == (event.get("category") or "event"),
         )
         if event_at and kind not in {"plan", "preference"}:
             query = query.filter(MemoryCandidate.event_date.between(
@@ -544,28 +584,57 @@ class MemoryService:
             ))
         candidates = query.order_by(MemoryCandidate.updated_at.desc()).limit(40).all()
         incoming_entities = set(str(item).lower() for item in event.get("entities", []) if str(item).strip())
-        incoming_hint = str(event.get("event_key") or event.get("title") or "").lower()
+        incoming_topic = self._canonical_event_topic(event)
         generic_entities = {"用户", "用户1", "用户2", "双方", "情侣", "偏好", "计划", "事件"}
         incoming_entities -= generic_entities
-        incoming_topic = re.sub(r"^[a-z_]+:", "", incoming_hint)
+        incoming_source_ids = []
+        for value in event.get("source_message_ids", []):
+            try:
+                incoming_source_ids.append(int(value))
+            except (TypeError, ValueError):
+                continue
         best = None
         best_score = 0.0
+        best_text_score = 0.0
+        best_entity_score = 0.0
+        best_adjacent = False
         for candidate in candidates:
             existing_entities = set(str(item).lower() for item in self._json_list(candidate.entities)) - generic_entities
             entity_score = len(incoming_entities & existing_entities) / max(1, min(len(incoming_entities), len(existing_entities)))
-            existing_topic = re.sub(r"^[a-z_]+:", "", (candidate.title_hint or "").lower())
+            existing_topic = self._canonical_event_topic({
+                "event_kind": candidate.event_kind,
+                "event_key": candidate.title_hint,
+                "entities": self._json_list(candidate.entities),
+            })
             text_score = SequenceMatcher(None, incoming_topic, existing_topic).ratio()
-            score = max(entity_score, text_score)
+            old_ids = self._json_ids(candidate.source_message_ids)
+            adjacent = bool(incoming_source_ids and old_ids) and min(
+                abs(left - right) for left in incoming_source_ids for right in old_ids
+            ) <= 6
+            score = max(entity_score, text_score, 0.75 if adjacent else 0.0)
             if score > best_score:
                 best, best_score = candidate, score
-                best_text_score, best_entity_score = text_score, entity_score
-        # 模糊合并必须有强主题或实体证据，避免同城多次旅行、相似计划被错误合并。
+                best_text_score, best_entity_score, best_adjacent = text_score, entity_score, adjacent
+        # 计划和偏好必须有明确稳定主题，禁止仅靠相似措辞或实体值跨日期合并。
         if kind in {"preference", "plan"}:
-            strong_match = best is not None and best_text_score >= 0.82 and (
-                not incoming_entities or best_entity_score >= 0.5
+            strong_match = bool(
+                best and incoming_topic and self._canonical_event_topic({
+                    "event_kind": best.event_kind,
+                    "event_key": best.title_hint,
+                    "entities": self._json_list(best.entities),
+                }) and (
+                    incoming_topic == self._canonical_event_topic({
+                        "event_kind": best.event_kind,
+                        "event_key": best.title_hint,
+                        "entities": self._json_list(best.entities),
+                    })
+                    or (best_text_score >= 0.92 and best_entity_score >= 0.5)
+                )
             )
         else:
-            strong_match = best is not None and best_score >= 0.68
+            strong_match = best is not None and (
+                best_entity_score >= 0.5 or best_text_score >= 0.9 or best_adjacent
+            )
         return (best, best.event_key) if strong_match else (None, key)
 
     @staticmethod

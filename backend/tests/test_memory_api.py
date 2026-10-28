@@ -446,6 +446,122 @@ class MemoryAPITest(unittest.TestCase):
         self.assertNotEqual(rows[0].event_key, rows[1].event_key)
         db.close()
 
+    def test_04bbha_online_empty_result_never_uses_batch_wide_fallback(self):
+        empty = Mock()
+        empty.choices = [Mock(message=Mock(content="[]"))]
+        client = Mock()
+        client.chat.completions.create.side_effect = [empty, empty]
+        original_client = ai_service._client
+        ai_service._client = client
+        try:
+            events = ai_service.extract_memory_events([
+                {"id": 1, "sender_id": 1, "created_at": "2047-01-01T10:00:00", "content": "我们到了武汉。"},
+                {"id": 2, "sender_id": 1, "created_at": "2047-02-01T10:00:00", "content": "以后不要按跑步准备。"},
+                {"id": 3, "sender_id": 1, "created_at": "2047-03-01T10:00:00", "content": "学习双人舞取消了。"},
+            ])
+        finally:
+            ai_service._client = original_client
+        self.assertEqual(client.chat.completions.create.call_count, 2)
+        self.assertEqual(events, [])
+
+    def test_04bbhb_uncovered_fact_requires_same_day_and_unique_target(self):
+        cross_day = ai_service._attach_uncovered_context_facts([{
+            "event_kind": "trip", "event_key": "trip:武汉", "source_message_ids": [1],
+            "facts": [{"type": "destination", "value": "抵达武汉", "source_message_ids": [1]}],
+        }], [
+            {"id": 1, "created_at": "2047-05-01T10:00:00", "content": "我们抵达武汉。"},
+            {"id": 2, "created_at": "2047-05-02T18:00:00", "content": "晚饭吃了藕汤。"},
+        ])
+        self.assertEqual(cross_day[0]["source_message_ids"], [1])
+
+        ambiguous = ai_service._attach_uncovered_context_facts([
+            {
+                "event_kind": "trip", "event_key": "trip:武汉", "source_message_ids": [10],
+                "facts": [{"type": "destination", "value": "武汉", "source_message_ids": [10]}],
+            },
+            {
+                "event_kind": "trip", "event_key": "trip:南京", "source_message_ids": [12],
+                "facts": [{"type": "destination", "value": "南京", "source_message_ids": [12]}],
+            },
+        ], [
+            {"id": 10, "created_at": "2047-06-01T10:00:00", "content": "抵达武汉。"},
+            {"id": 11, "created_at": "2047-06-01T18:00:00", "content": "晚饭吃了面。"},
+            {"id": 12, "created_at": "2047-06-01T20:00:00", "content": "抵达南京。"},
+        ])
+        self.assertNotIn(11, ambiguous[0]["source_message_ids"])
+        self.assertNotIn(11, ambiguous[1]["source_message_ids"])
+
+        preference = ai_service._attach_uncovered_context_facts([{
+            "event_kind": "preference", "event_key": "preference:早餐饮品",
+            "source_message_ids": [20], "facts": [],
+        }], [{
+            "id": 20, "created_at": "2047-07-01T08:00:00",
+            "content": "以前早餐喝豆浆，现在改成热牛奶。",
+        }])[0]
+        self.assertEqual(
+            {fact["type"] for fact in preference["facts"]},
+            {"previous_preference", "current_preference"},
+        )
+
+    def test_04bbhc_routine_event_key_cannot_merge_across_dates(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        candidates = []
+        for index, created_at in enumerate((datetime(2048, 1, 1, 10), datetime(2048, 3, 1, 10))):
+            message = Message(
+                couple_id=couple_id, sender_id=self.user1_id,
+                content="我到家以后再给你发消息。", msg_type="text", created_at=created_at,
+            )
+            db.add(message)
+            db.commit()
+            db.refresh(message)
+            candidate, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+                "title": "我到家以后再给你发消息", "summary": "计划稍后联系。",
+                "category": "plan", "event_kind": "plan",
+                "event_key": "我到家以后再给你发消息", "entities": [],
+                "state": "planned", "event_date": created_at.isoformat(),
+                "confidence": 0.8, "source_message_ids": [message.id],
+            }, [message])
+            candidates.append(candidate)
+        db.commit()
+        self.assertNotEqual(candidates[0].id, candidates[1].id)
+        self.assertNotEqual(candidates[0].event_key, candidates[1].event_key)
+        db.close()
+
+    def test_04bbhd_same_preference_topic_updates_one_candidate(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        candidates = []
+        for index, (value, created_at) in enumerate((
+            ("半糖拿铁", datetime(2049, 1, 1, 10)),
+            ("无糖燕麦拿铁", datetime(2049, 5, 1, 10)),
+        )):
+            message = Message(
+                couple_id=couple_id, sender_id=self.user1_id,
+                content=f"我现在的咖啡甜度选择{value}。", msg_type="text", created_at=created_at,
+            )
+            db.add(message)
+            db.commit()
+            db.refresh(message)
+            candidate, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+                "title": "咖啡甜度偏好", "summary": f"咖啡甜度选择{value}",
+                "category": "preference", "event_kind": "preference",
+                "event_key": "preference:咖啡甜度", "entities": ["咖啡甜度", value],
+                "state": "ongoing", "event_date": created_at.isoformat(),
+                "confidence": 0.9, "source_message_ids": [message.id],
+                "facts": [{"type": "current_preference", "value": value, "source_message_ids": [message.id]}],
+            }, [message])
+            candidates.append(candidate)
+        db.commit()
+        self.assertEqual(candidates[0].id, candidates[1].id)
+        facts = memory_service._json_list(candidates[1].facts)
+        current = [fact for fact in facts if fact["type"] == "current_preference"]
+        previous = [fact for fact in facts if fact["type"] == "previous_preference"]
+        self.assertEqual(len(current), 1)
+        self.assertIn("无糖燕麦拿铁", current[0]["value"])
+        self.assertGreaterEqual(len(previous), 1)
+        db.close()
+
     def test_04bbi_empty_context_uses_deterministic_abstention(self):
         answer = ai_service.memory_answer("我们约好移居火星了吗？", "没有找到相关共同记忆。", [], strict=True)
         self.assertEqual(answer, "目前没有找到相关记录，所以我无法确认这件事。")
