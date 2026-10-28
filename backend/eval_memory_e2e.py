@@ -29,6 +29,12 @@ REPORT_MD = REPORT_DIR / "memory_e2e_report.md"
 BASELINE_JSON = REPORT_DIR / "memory_e2e_report_baseline.json"
 SEED = 20261027
 BATCH_SIZE = memory_service.CHAT_BATCH_SIZE
+DEFAULT_CASES_PER_KIND = 8
+DEFAULT_NOISE_BATCHES = 8
+DEFAULT_NEGATIVE_QUESTIONS = 12
+FULL_CASES_PER_KIND = 16
+FULL_NOISE_BATCHES = 16
+FULL_NEGATIVE_QUESTIONS = 24
 
 
 EVENTS = [
@@ -159,7 +165,7 @@ def make_case(kind: str, index: int, date: datetime) -> dict:
     }
 
 
-def build_messages():
+def build_messages(cases_per_kind: int = DEFAULT_CASES_PER_KIND, noise_batch_count: int = DEFAULT_NOISE_BATCHES):
     rng = random.Random(SEED)
     cases = []
     messages = []
@@ -167,8 +173,8 @@ def build_messages():
     start = datetime(2019, 1, 6, 18, 0)
     kinds = ["event", "preference", "plan", "reconciliation"]
     for kind_index, kind in enumerate(kinds):
-        for index in range(16):
-            date = start + timedelta(days=(kind_index * 16 + index) * 37)
+        for index in range(cases_per_kind):
+            date = start + timedelta(days=(kind_index * cases_per_kind + index) * 37)
             case = make_case(kind, index, date)
             evidence_positions = sorted(rng.sample(range(5, 25), len(case["evidence"])))
             evidence_ids = []
@@ -187,9 +193,9 @@ def build_messages():
             case["evidence_ids"] = evidence_ids
             cases.append(case)
 
-    noise_batches = 16
+    noise_batches = noise_batch_count
     for batch in range(noise_batches):
-        date = start + timedelta(days=(64 + batch) * 37)
+        date = start + timedelta(days=(len(cases) + batch) * 37)
         for pos in range(BATCH_SIZE):
             messages.append({
                 "id": next_id, "couple_id": 1, "sender_id": 1 + (pos % 2),
@@ -342,13 +348,17 @@ def write_report(payload: dict):
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def run(resume: bool = False, rescore: bool = False):
+def run(resume: bool = False, rescore: bool = False, full: bool = False):
     if not ai_service.available:
         raise RuntimeError("端到端真实性评测需要可用的 AI_API_KEY，当前只能使用离线规则模板")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    messages, cases, noise_batches = build_messages()
-    TRUTH_PATH.write_text(json.dumps({"cases": cases, "negative_questions": NO_ANSWER}, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    cases_per_kind = FULL_CASES_PER_KIND if full else DEFAULT_CASES_PER_KIND
+    noise_batch_count = FULL_NOISE_BATCHES if full else DEFAULT_NOISE_BATCHES
+    negative_count = FULL_NEGATIVE_QUESTIONS if full else DEFAULT_NEGATIVE_QUESTIONS
+    messages, cases, noise_batches = build_messages(cases_per_kind, noise_batch_count)
+    negative_questions = NO_ANSWER[:negative_count]
+    TRUTH_PATH.write_text(json.dumps({"cases": cases, "negative_questions": negative_questions}, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     if DB_PATH.exists() and not resume:
         DB_PATH.unlink()
     if resume and not DB_PATH.exists():
@@ -372,11 +382,12 @@ def run(resume: bool = False, rescore: bool = False):
             previous_sync_seconds = float(json.loads(REPORT_JSON.read_text(encoding="utf-8")).get("sync_seconds") or 0.0)
         sync_started = time.perf_counter()
         batch_count = (memory_service.get_settings(db, 1).last_synced_message_id or 0) // BATCH_SIZE
+        total_batches = len(cases) + noise_batches
         while True:
             result = memory_service.sync_chat_events(db, 1, max_batches=1)
             batch_count += 1
             if batch_count % 10 == 0:
-                print(f"抽取进度：{min(batch_count, 80)}/80 批", flush=True)
+                print(f"抽取进度：{min(batch_count, total_batches)}/{total_batches} 批", flush=True)
             if result["remaining_messages"] == 0:
                 break
             if not result["processed_messages"]:
@@ -465,7 +476,7 @@ def run(resume: bool = False, rescore: bool = False):
             "没记", "不知道", "没有找到", "无法确认", "不能确认", "暂时不清楚",
             "还没", "没有", "不是", "未在", "没在", "未出现",
         )
-        for index, question in enumerate(NO_ANSWER):
+        for index, question in enumerate(negative_questions):
             sources = memory_service.search(db, 1, question, top_k=5, user_id=1)
             context = make_context(sources)
             answer = ai_service.memory_answer(question, context, [], strict=True)
@@ -480,11 +491,11 @@ def run(resume: bool = False, rescore: bool = False):
                 "source_ids": [item["id"] for item in sources],
             })
             if (index + 1) % 8 == 0:
-                print(f"无答案问答进度：{index + 1}/{len(NO_ANSWER)}", flush=True)
+                print(f"无答案问答进度：{index + 1}/{len(negative_questions)}", flush=True)
 
         extra_memories = [m for m in extracted if m.id not in supported_memory_ids]
         polluted_noise_batches = set()
-        noise_start = 64 * BATCH_SIZE + 1
+        noise_start = len(cases) * BATCH_SIZE + 1
         for memory in extra_memories:
             for source_id in ids(memory.source_message_ids):
                 if source_id >= noise_start:
@@ -514,7 +525,7 @@ def run(resume: bool = False, rescore: bool = False):
             "chat_model": ai_service.model, "embedding_model": ai_service.embedding_index_model,
             "sync_seconds": round(sync_seconds, 2),
             "dataset": {"messages": len(messages), "truth_events": len(cases), "noise_batches": noise_batches,
-                        "positive_questions": len(cases), "negative_questions": len(NO_ANSWER),
+                        "positive_questions": len(cases), "negative_questions": len(negative_questions),
                         "extracted_memories": total_extracted, "extra_memories": len(extra_memories)},
             "metrics": metrics, "extraction_cases": extraction_rows,
             "answer_cases": answer_rows, "negative_cases": negative_rows,
@@ -532,5 +543,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--resume", action="store_true", help="从独立评测库保存的同步游标继续")
     parser.add_argument("--rescore", action="store_true", help="按当前门控清理现有候选并重新执行问答")
+    parser.add_argument("--full", action="store_true", help="运行原始全量数据；默认使用一半数据以节省模型额度")
     options = parser.parse_args()
-    run(resume=options.resume or options.rescore, rescore=options.rescore)
+    run(resume=options.resume or options.rescore, rescore=options.rescore, full=options.full)

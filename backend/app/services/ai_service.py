@@ -3,6 +3,7 @@ import json
 import hashlib
 import logging
 import re
+from datetime import datetime
 from typing import List, Dict, Optional
 
 import numpy as np
@@ -14,6 +15,23 @@ logger = logging.getLogger(__name__)
 
 
 class AIService:
+    @staticmethod
+    def _unit_float(value, default: float = 0.5) -> float:
+        """Normalize model confidence fields without letting loose labels stop syncing."""
+        labels = {
+            "low": 0.3,
+            "medium": 0.5,
+            "high": 0.8,
+            "低": 0.3,
+            "中": 0.5,
+            "高": 0.8,
+        }
+        try:
+            number = float(labels.get(str(value).strip().lower(), value))
+        except (TypeError, ValueError):
+            number = default
+        return max(0.0, min(1.0, number))
+
     def __init__(self):
         self.api_key = settings.AI_API_KEY
         self.api_base = settings.AI_API_BASE
@@ -278,7 +296,7 @@ class AIService:
                 "location": str(data.get("location") or "")[:100],
                 "emotion": str(data.get("emotion") or "")[:30],
                 "tags": [str(x)[:30] for x in (data.get("tags") or [])][:8],
-                "importance": max(0.0, min(1.0, float(data.get("importance", 0.5)))),
+                "importance": self._unit_float(data.get("importance"), 0.5),
             }
         except Exception:
             return fallback
@@ -450,15 +468,17 @@ class AIService:
                     "location": str(item.get("location") or "")[:100],
                     "emotion": str(item.get("emotion") or "")[:30],
                     "tags": [str(x)[:30] for x in (item.get("tags") or [])][:8],
-                    "importance": max(0.0, min(1.0, float(item.get("importance", 0.5)))),
-                    "confidence": max(0.0, min(1.0, float(item.get("confidence", 0.5)))),
+                    "importance": self._unit_float(item.get("importance"), 0.5),
+                    "confidence": self._unit_float(item.get("confidence"), 0.5),
                     "source_message_ids": source_ids,
                 }
                 if self._has_long_term_value(event, messages):
                     events.append(event)
             # 在线模型即使二次检查后仍返回空，也不能再把整批信号拼成一条兜底记忆；
             # 那会把不同日期、不同主题的事件静默合并。离线模式仍保留保守规则兜底。
-            return self._attach_uncovered_context_facts(events, messages)
+            events = self._attach_uncovered_context_facts(events, messages)
+            events = self._verify_fact_completeness(events, messages)
+            return self._split_incoherent_events(events, messages)
         except Exception:
             logger.exception("Memory event extraction failed; keeping the sync cursor for retry")
             raise
@@ -600,6 +620,188 @@ class AIService:
                 covered_slots.add((message_id, canonical_type))
         return events
 
+    def _verify_fact_completeness(self, events: List[Dict], messages: List[Dict]) -> List[Dict]:
+        """按证据中真实出现的槽位做完整性复核；缺槽时整批只补抽一次。"""
+        if not events:
+            return events
+        message_map = {int(item["id"]): item for item in messages}
+        slot_signals = {
+            "trip": {
+                "destination": ("抵达", "到达", "到了", "我们到", "出发去"),
+                "activity": ("去了", "逛了", "散步", "拍照", "参观", "体验"),
+                "meal": ("早餐", "午饭", "晚饭", "晚餐", "夜宵", "晚上吃", "吃的是", "吃了", "喝了"),
+                "completion": ("旅行结束", "返程", "回到家", "回家了", "回来了"),
+            },
+            "preference": {
+                "previous_preference": ("以前", "原来一直", "过去一直"),
+                "current_preference": ("现在改", "现在选择", "明确选择", "不再", "以后不要"),
+            },
+            "plan": {
+                "plan_intent": ("计划", "约好", "报名", "预订", "下个月", "下周", "明年"),
+                "plan_status": ("取消", "改期", "不去了", "完成了", "已经去了"),
+                "cancellation_reason": ("原因", "时间冲突", "临时有工作", "来不了"),
+            },
+            "conflict": {
+                "conflict_reason": ("吵架", "争执", "矛盾", "闹别扭", "不开心"),
+                "resolution": ("和好", "道歉", "说清楚", "说开了"),
+                "agreement": ("约定", "共识", "以后按", "轮值"),
+            },
+            "reconciliation": {
+                "conflict_reason": ("吵架", "争执", "矛盾", "闹别扭", "不开心"),
+                "resolution": ("和好", "道歉", "说清楚", "说开了"),
+                "agreement": ("约定", "共识", "以后按", "轮值"),
+            },
+        }
+        missing_by_event = {}
+        evidence_ids_by_event = {}
+        for index, event in enumerate(events):
+            kind = str(event.get("event_kind") or "")
+            schema = slot_signals.get(kind, {})
+            if not schema:
+                continue
+            source_ids = [int(value) for value in event.get("source_message_ids", []) if str(value).isdigit()]
+            source_dates = {
+                str(message_map[value].get("created_at") or "")[:10]
+                for value in source_ids if value in message_map
+            }
+            evidence = [
+                item for item in messages
+                if not source_dates or str(item.get("created_at") or "")[:10] in source_dates
+            ]
+            evidence_ids_by_event[index] = {int(item["id"]) for item in evidence}
+            evidence_text = " ".join(
+                str(item.get("content") or "") for item in evidence
+                if not self._is_routine_context(str(item.get("content") or ""))
+            )
+            expected = {
+                slot for slot, markers in schema.items() if any(marker in evidence_text for marker in markers)
+            }
+            existing = {str(fact.get("type") or "") for fact in event.get("facts", [])}
+            missing = sorted(expected - existing)
+            if missing:
+                missing_by_event[index] = missing
+        if not missing_by_event or not self.available:
+            for index, missing in missing_by_event.items():
+                events[index]["missing_fact_slots"] = missing
+            return events
+
+        compact_events = [{
+            "event_index": index,
+            "event_kind": events[index].get("event_kind"),
+            "event_key": events[index].get("event_key"),
+            "missing_slots": missing,
+            "source_message_ids": events[index].get("source_message_ids", []),
+        } for index, missing in missing_by_event.items()]
+        compact_messages = [{
+            "id": int(item["id"]), "created_at": str(item.get("created_at") or ""),
+            "content": str(item.get("content") or "")[:1000],
+        } for item in messages if not self._is_routine_context(str(item.get("content") or ""))]
+        system = (
+            "你是事实槽位补全器。只补充missing_slots中有原始消息直接证据的事实；没有证据就不输出。"
+            "不得改写事件、不得创造原因或结果。只输出JSON数组，每项为event_index和facts；"
+            "facts每项只含type、value、occurred_at、source_message_ids，type必须来自missing_slots。"
+        )
+        try:
+            raw = self._chat_strict(
+                [{"role": "user", "content": json.dumps({
+                    "events": compact_events, "messages": compact_messages,
+                }, ensure_ascii=False)}],
+                system_prompt=system, temperature=0.0, max_tokens=1400,
+            )
+            match = re.search(r"\[[\s\S]*\]", raw)
+            patches = json.loads(match.group(0) if match else raw)
+            for patch in patches if isinstance(patches, list) else []:
+                try:
+                    index = int(patch.get("event_index"))
+                except (TypeError, ValueError, AttributeError):
+                    continue
+                if index not in missing_by_event or not (0 <= index < len(events)):
+                    continue
+                for fact in patch.get("facts", []):
+                    fact_type = str(fact.get("type") or "")
+                    value = str(fact.get("value") or "").strip()
+                    if fact_type not in missing_by_event[index] or not value or self._is_routine_context(value):
+                        continue
+                    fact_ids = []
+                    for source_id in fact.get("source_message_ids") or []:
+                        try:
+                            source_id = int(source_id)
+                        except (TypeError, ValueError):
+                            continue
+                        if source_id in evidence_ids_by_event.get(index, set()) and source_id not in fact_ids:
+                            fact_ids.append(source_id)
+                    if not fact_ids:
+                        continue
+                    events[index].setdefault("facts", []).append({
+                        "type": fact_type, "value": value[:500],
+                        "occurred_at": str(fact.get("occurred_at") or "")[:32],
+                        "source_message_ids": fact_ids,
+                    })
+                    events[index]["source_message_ids"] = list(dict.fromkeys(
+                        list(events[index].get("source_message_ids", [])) + fact_ids
+                    ))
+        except Exception:
+            logger.exception("Targeted memory fact completion failed; keeping verified facts")
+
+        for index, missing in missing_by_event.items():
+            existing = {str(fact.get("type") or "") for fact in events[index].get("facts", [])}
+            unresolved = [slot for slot in missing if slot not in existing]
+            if unresolved:
+                events[index]["missing_fact_slots"] = unresolved
+        return events
+
+    @staticmethod
+    def _split_incoherent_events(events: List[Dict], messages: List[Dict]) -> List[Dict]:
+        """把跨越多个不相邻日期的一次性事件拆开，避免形成跨事件大记忆。"""
+        message_map = {int(item["id"]): item for item in messages}
+        result = []
+        for event in events:
+            kind = str(event.get("event_kind") or "")
+            if kind in {"plan", "preference", "fact"}:
+                result.append(event)
+                continue
+            groups = {}
+            for source_id in event.get("source_message_ids", []):
+                try:
+                    source_id = int(source_id)
+                except (TypeError, ValueError):
+                    continue
+                item = message_map.get(source_id)
+                if not item:
+                    continue
+                day = str(item.get("created_at") or "")[:10]
+                groups.setdefault(day, []).append(source_id)
+            days = sorted(day for day in groups if day)
+            if len(days) <= 1:
+                result.append(event)
+                continue
+            try:
+                parsed_days = [datetime.fromisoformat(day) for day in days]
+                span_days = (max(parsed_days) - min(parsed_days)).days
+            except ValueError:
+                span_days = 0
+            if span_days <= 2:
+                result.append(event)
+                continue
+            for day in days:
+                source_ids = groups[day]
+                source_set = set(source_ids)
+                split = dict(event)
+                split["source_message_ids"] = source_ids
+                split["facts"] = [
+                    fact for fact in event.get("facts", [])
+                    if set(int(value) for value in fact.get("source_message_ids", []) if str(value).isdigit()) & source_set
+                ]
+                split["summary"] = " ".join(
+                    str(message_map[source_id].get("content") or "").strip()
+                    for source_id in source_ids if source_id in message_map
+                )[:2000]
+                split["title"] = f"{str(event.get('title') or kind)[:160]}（{day}）"
+                split["event_date"] = day
+                split["event_key"] = f"{event.get('event_key') or kind}:{day}"
+                result.append(split)
+        return result
+
     @staticmethod
     def _has_long_term_value(event: Dict, messages: List[Dict]) -> bool:
         """对在线模型输出做保守门控，阻止即时生活状态灌入长期记忆。"""
@@ -704,7 +906,7 @@ class AIService:
             "location": str(data.get("location") or "")[:100],
             "emotion": str(data.get("emotion") or "")[:30],
             "tags": [str(value)[:30] for value in (data.get("tags") or [])][:8],
-            "importance": max(0.0, min(1.0, float(data.get("importance", 0.6)))),
+            "importance": self._unit_float(data.get("importance"), 0.6),
         }
 
     def _fallback_memory_extract(self, text: str, source_title: str = "") -> Dict:
@@ -740,6 +942,9 @@ class AIService:
     ) -> str:
         if context.strip() == "没有找到相关共同记忆。":
             return "目前没有找到相关记录，所以我无法确认这件事。"
+        conflict_answer = self._deterministic_conflict_answer(question, context)
+        if conflict_answer:
+            return self._sanitize_memory_answer(conflict_answer, question)
         system = (
             "你是专属于一对情侣的共同记忆助手。只能依据给出的共同记忆回答，绝对不可编造。"
             "请像熟悉他们故事的温暖朋友一样直接回答：自然、亲切、简洁，不过度煽情，也不要使用客服腔。"
@@ -764,6 +969,41 @@ class AIService:
         else:
             answer = self.chat(messages, system_prompt=system, temperature=0.1, max_tokens=1000)
         return self._sanitize_memory_answer(answer, question)
+
+    @staticmethod
+    def _deterministic_conflict_answer(question: str, context: str) -> str:
+        """冲突类问题直接使用结构化槽位，避免模型泛化或遗漏具体约定。"""
+        if not any(marker in question for marker in ("怎么和好", "如何和好", "闹矛盾", "吵架", "争执", "冲突")):
+            return ""
+        lines = [line for line in context.splitlines() if "agreement=" in line]
+        if not lines:
+            return ""
+        chinese = "".join(re.findall(r"[\u4e00-\u9fa5]+", question))
+        terms = {
+            chinese[index:index + size]
+            for size in (2, 3, 4)
+            for index in range(max(0, len(chinese) - size + 1))
+        }
+        generic = {"怎么", "如何", "和好", "矛盾", "吵架", "争执", "冲突", "那次", "我们"}
+        terms -= generic
+        line = max(lines, key=lambda value: sum(1 for term in terms if term in value))
+
+        def fact_value(fact_type: str) -> str:
+            match = re.search(rf"(?:^|[；：]){fact_type}=([^；\n]+)", line)
+            return match.group(1).strip() if match else ""
+
+        reason = fact_value("conflict_reason")
+        resolution = fact_value("resolution")
+        agreement = fact_value("agreement")
+        if not agreement:
+            return ""
+        parts = []
+        if reason:
+            parts.append(f"那次是因为{reason}产生了矛盾。")
+        if resolution:
+            parts.append(f"后来你们{resolution}。")
+        parts.append(f"最后约定：{agreement}。")
+        return "".join(parts)
 
     @staticmethod
     def _sanitize_memory_answer(answer: str, question: str = "") -> str:

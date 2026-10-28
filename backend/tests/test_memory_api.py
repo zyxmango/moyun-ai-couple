@@ -82,6 +82,12 @@ class MemoryAPITest(unittest.TestCase):
         cls.engine.dispose()
         cls.tmp.cleanup()
 
+    def test_00_model_score_labels_are_normalized(self):
+        self.assertEqual(ai_service._unit_float("medium"), 0.5)
+        self.assertEqual(ai_service._unit_float("高"), 0.8)
+        self.assertEqual(ai_service._unit_float("invalid", 0.6), 0.6)
+        self.assertEqual(ai_service._unit_float(2), 1.0)
+
     def test_01_privacy_opt_in_and_sync(self):
         response = self.client.get("/api/ai/memory/settings", headers=self.headers1)
         self.assertEqual(response.status_code, 200)
@@ -595,6 +601,64 @@ class MemoryAPITest(unittest.TestCase):
         self.assertTrue(ai_service._is_routine_context("我到家以后再给你发消息。"))
         self.assertTrue(ai_service._is_routine_context("晚饭先不用等我！"))
         self.assertFalse(ai_service._is_routine_context("以后忙时发一句简短说明。"))
+
+    def test_04bbl_missing_fact_slots_use_one_targeted_batch_retry(self):
+        response = Mock()
+        response.choices = [Mock(message=Mock(content=json.dumps([{
+            "event_index": 0,
+            "facts": [{
+                "type": "meal", "value": "晚上吃的是藕汤",
+                "occurred_at": "2050-01-01T18:00:00", "source_message_ids": [3],
+            }],
+        }], ensure_ascii=False)))]
+        client = Mock()
+        client.chat.completions.create.return_value = response
+        original_client = ai_service._client
+        ai_service._client = client
+        try:
+            events = ai_service._verify_fact_completeness([{
+                "event_kind": "trip", "event_key": "trip:武汉", "source_message_ids": [1, 2],
+                "facts": [
+                    {"type": "destination", "value": "抵达武汉", "source_message_ids": [1]},
+                    {"type": "activity", "value": "去了东湖绿道", "source_message_ids": [2]},
+                ],
+            }], [
+                {"id": 1, "created_at": "2050-01-01T09:00:00", "content": "我们抵达武汉。"},
+                {"id": 2, "created_at": "2050-01-01T13:00:00", "content": "下午去了东湖绿道。"},
+                {"id": 3, "created_at": "2050-01-01T18:00:00", "content": "晚上吃的是藕汤。"},
+            ])
+        finally:
+            ai_service._client = original_client
+        self.assertEqual(client.chat.completions.create.call_count, 1)
+        self.assertTrue(any(fact["type"] == "meal" and "藕汤" in fact["value"] for fact in events[0]["facts"]))
+        self.assertNotIn("missing_fact_slots", events[0])
+
+    def test_04bbm_incoherent_cross_date_event_is_split(self):
+        events = ai_service._split_incoherent_events([{
+            "title": "错误合并旅行", "event_kind": "trip", "event_key": "trip:旅行",
+            "source_message_ids": [1, 2],
+            "facts": [
+                {"type": "destination", "value": "武汉", "source_message_ids": [1]},
+                {"type": "destination", "value": "南京", "source_message_ids": [2]},
+            ],
+        }], [
+            {"id": 1, "created_at": "2050-01-01T09:00:00", "content": "抵达武汉。"},
+            {"id": 2, "created_at": "2050-04-01T09:00:00", "content": "抵达南京。"},
+        ])
+        self.assertEqual(len(events), 2)
+        self.assertEqual({tuple(event["source_message_ids"]) for event in events}, {(1,), (2,)})
+        self.assertNotEqual(events[0]["event_key"], events[1]["event_key"])
+
+    def test_04bbn_conflict_answer_preserves_agreement_verbatim(self):
+        context = (
+            "- 事件时间：2050-01-01；状态：completed；类型：倒垃圾冲突；内容：已经和好；"
+            "已确认事实：conflict_reason=忘记倒垃圾；resolution=互相道歉并和好；"
+            "agreement=列了家务轮值表"
+        )
+        answer = ai_service._deterministic_conflict_answer("忘记倒垃圾闹矛盾后，我们怎么和好的？", context)
+        self.assertIn("忘记倒垃圾", answer)
+        self.assertIn("互相道歉并和好", answer)
+        self.assertIn("最后约定：列了家务轮值表", answer)
 
     def test_04c_failed_extraction_keeps_cursor_for_retry(self):
         db = self.Session()
