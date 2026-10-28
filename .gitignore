@@ -21,6 +21,7 @@ frontend/android/app/release/
 
 # ============ Python / 后端 ============
 __pycache__/
+backend/.venv/
 *.py[cod]
 *.pyc
 venv/

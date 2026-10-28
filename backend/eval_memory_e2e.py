@@ -215,10 +215,15 @@ def memory_text(memory: SharedMemory) -> str:
 def make_context(sources: list[dict]) -> str:
     parts = []
     for item in sources:
+        facts = "；".join(
+            f"{fact.get('type', 'fact')}={fact.get('value', '')}"
+            for fact in item.get("facts", []) if fact.get("value")
+        )
         evidence = "；".join(f"{row['created_at']}：{row['content']}" for row in item.get("evidence", [])[:6])
         parts.append(
             f"- 事件时间：{item['event_date'] or '未知'}；状态：{item.get('memory_state') or '未知'}；"
             f"类型：{item['title']}；内容：{item['content']}"
+            + (f"；已确认事实：{facts}" if facts else "")
             + (f"；原始证据：{evidence}" if evidence else "")
         )
     return "\n".join(parts) or "没有找到相关共同记忆。"
@@ -232,6 +237,11 @@ def judge_answer(question: str, context: str, answer: str, expected: str = "") -
         '{"supported":true或false,"answered":true或false,"covers_expected":true或false,'
         '"unsupported_claims":["..."]}。'
         "语气、概括和同义改写不算错误；新增的人名、地点、日期、状态、原因、结果算无依据。"
+        "当参考内容明确表示没有找到相关记忆时，回答中的‘没记住’、‘未记录’、‘无法确认’"
+        "属于有依据的认知状态，不算新增事实；‘如果发生过请告诉我’等条件句或邀请也不算事实断言。"
+        "但是，不能把缺少记录推断成现实中没有发生：‘没去过’、‘没发生’、‘没约好’等否定事实，"
+        "以及为了活泼而补充的具体物品、计划或经历，仍必须判为无依据。"
+        "标准答案要点为‘无；应明确表示资料不足’时，只要回答清楚表达资料不足，covers_expected应为true。"
     )
     prompt = f"参考内容：\n{context}\n\n标准答案要点：{expected or '无；应明确表示资料不足'}\n\n问题：{question}\n\n回答：{answer}"
     raw = ai_service._chat_strict(
@@ -308,11 +318,12 @@ def write_report(payload: dict):
     if not extraction_failures and not answer_failures and not negative_failures and m["answer_accuracy"] == 1:
         lines.append("- 本轮没有失败样例。")
     for row in extraction_failures[:12]:
-        lines.append(f"- 抽取失败：{row['id']}，实际记忆：{row.get('memory_text') or '未抽取'}")
+        memory_text = " ".join((row.get("memory_text") or "未抽取").split())
+        lines.append(f"- 抽取失败：{row['id']}，实际记忆：{memory_text}")
     for row in answer_failures[:12]:
-        lines.append(f"- 回答失败：{row['question']} → {row['answer']}")
+        lines.append(f"- 回答失败：{row['question']} → {' '.join(row['answer'].split())}")
     for row in negative_failures[:12]:
-        lines.append(f"- 无答案失败：{row['question']} → {row['answer']}")
+        lines.append(f"- 无答案失败：{row['question']} → {' '.join(row['answer'].split())}")
     if not payload["answer_cases"]:
         lines.append("- 在线回答明细未保留；核心指标来自最后一次完整在线运行，详见执行状态。")
     lines += [
@@ -357,7 +368,7 @@ def run(resume: bool = False, rescore: bool = False):
             db.commit()
 
         previous_sync_seconds = 0.0
-        if rescore and REPORT_JSON.exists():
+        if resume and REPORT_JSON.exists():
             previous_sync_seconds = float(json.loads(REPORT_JSON.read_text(encoding="utf-8")).get("sync_seconds") or 0.0)
         sync_started = time.perf_counter()
         batch_count = (memory_service.get_settings(db, 1).last_synced_message_id or 0) // BATCH_SIZE

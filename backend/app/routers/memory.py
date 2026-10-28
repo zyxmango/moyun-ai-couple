@@ -253,12 +253,17 @@ def memory_chat(
     sources = memory_service.search(db, couple.id, data.question.strip(), top_k=5, user_id=user.id)
     context_parts = []
     for item in sources:
+        facts = "；".join(
+            f"{fact.get('type', 'fact')}={fact.get('value', '')}"
+            for fact in item.get("facts", []) if fact.get("value")
+        )
         evidence = "；".join(
             f"{row['created_at']}：{row['content']}" for row in item.get("evidence", [])[:6]
         )
         context_parts.append(
             f"- 事件时间：{item['event_date'] or '未知'}；状态：{item.get('memory_state') or '未知'}；"
             f"类型：{item['title']}；内容：{item['content']}"
+            + (f"；已确认事实：{facts}" if facts else "")
             + (f"；原始证据：{evidence}" if evidence else "")
         )
     context = "\n".join(context_parts) or "没有找到相关共同记忆。"

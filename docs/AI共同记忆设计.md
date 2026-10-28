@@ -10,8 +10,10 @@
 用户明确授权
   -> 原始聊天只保存在 messages
   -> 持久化游标按 ID 分批追赶新增聊天
-  -> 连续对话自动整理为事件/偏好/事实/计划
-  -> 与已有事件合并并关联原始 message id
+  -> 连续对话抽取事件候选和带来源的原子事实
+  -> 按事件类型、主题、地点和时间窗口合并候选
+  -> 程序状态机确定完成/取消/和好/偏好版本边界
+  -> 原子事实物化为事件记忆并关联原始 message id
   -> 持久化语义向量与多路 LSH 候选桶
   -> 权限过滤后召回语义候选并进行精确余弦排序
   -> Top K 事件按需回查原文并生成有依据的回答
@@ -31,7 +33,12 @@
 
 - `couple_ai_settings`：情侣级授权和来源开关。
 - `couple_ai_settings.last_synced_message_id`：聊天整理游标；只有整批成功后才推进，失败后可重试。
+- `memory_candidates`：跨批次聚合的事件候选，保存事件键、类型、原子事实和全部证据消息 ID。
 - `shared_memories`：事件级记忆、来源消息 ID、时间、状态、置信度、地点、情绪和标签。
+- `shared_memories.facts`：结构化原子事实数组，每项保存 `type/value/occurred_at/source_message_ids`；摘要遗漏时事实仍然保留。
+- `shared_memories.event_key/event_kind`：限制相似事件合并；一次性活动把日期纳入事件键。
+- `shared_memories.valid_from/valid_to`：偏好版本有效期；“当前偏好”只使用仍有效的版本。
+- `memory_event_history`：保存事件状态、摘要和事实版本，更新时不覆盖历史证据。
 - `shared_memories.embedding_*`：持久化的归一化语义向量及模型版本；内容变化后自动失效并重建。
 - `memory_embedding_buckets`：按情侣和模型隔离的多路 LSH 索引，数据量较大时避免扫描全部向量。
 - `shared_memories` 同时记录 `owner_id / visibility / category / version / is_active`，用于私密过滤和偏好版本更新。
@@ -55,14 +62,26 @@
 
 ## 评估
 
-运行：
+单元与边界测试：
 
 ```powershell
 cd backend
-conda run -n couple-app python eval_memory_rag.py
+.\.venv\Scripts\python.exe -m pytest tests -q
 ```
 
-当前 20 条虚构记忆问答离线集关注 Recall@3、MRR 和检索延迟。该结果只用于回归验证；后续增加困难负样本、权限泄漏率、来源忠实度、拒答率、Token 和成本指标。
+在线单例端到端验证：
+
+```powershell
+.\.venv\Scripts\python.exe verify_memory_pipeline_single.py
+```
+
+完整真实性评测：
+
+```powershell
+.\.venv\Scripts\python.exe eval_memory_e2e.py
+```
+
+完整评测覆盖 2,400 条碎片聊天、64 个标准事件、16 批纯闲聊、64 个改写问题和 24 个无答案问题，分别统计抽取内容、日期、状态、Recall@5、回答正确率、来源忠实度和拒答率。
 
 ## 语义索引
 

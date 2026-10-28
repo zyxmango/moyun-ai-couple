@@ -289,7 +289,7 @@ class AIService:
             return []
         fallback = self._fallback_memory_events(messages)
         if not self.available:
-            return fallback
+            return self._attach_uncovered_context_facts(fallback, messages)
 
         compact = [
             {
@@ -308,7 +308,10 @@ class AIService:
             "只输出 JSON 数组。每项字段："
             "title、summary、category(event/preference/fact/plan)、state(planned/ongoing/completed/cancelled/uncertain)、"
             "event_kind(trip/date/conflict/gift/preference/plan/fact/activity)、event_key、entities、"
-            "event_date、event_end、location、emotion、tags、importance、confidence、source_message_ids。"
+            "event_date、event_end、location、emotion、tags、importance、confidence、source_message_ids、facts。"
+            "facts 是原子事实数组，每项只包含 type、value、occurred_at、source_message_ids；"
+            "例如抵达、游览、餐食、偏好旧值、偏好新值、取消原因、冲突原因、解决办法分别保存，不能只写概括。"
+            "每个事件最多8个facts，每个value不超过100字，输出必须是紧凑且可解析的合法JSON。"
             "event_key 表示可跨批次复用的稳定主题，例如 trip:武汉、plan:哈尔滨旅行、preference:咖啡甜度；"
             "同一事件的不同状态不得改变 event_key。"
             "source_message_ids 必须只包含真正支持该结论的输入消息 id；importance 和 confidence 为 0 到 1。"
@@ -317,11 +320,24 @@ class AIService:
             [{"role": "user", "content": json.dumps(compact, ensure_ascii=False)}],
             system_prompt=system,
             temperature=0.1,
-            max_tokens=1800,
+            max_tokens=3000,
         )
         try:
-            match = re.search(r"\[[\s\S]*\]", raw)
-            data = json.loads(match.group(0) if match else raw)
+            def parse_events(value: str):
+                match = re.search(r"\[[\s\S]*\]", value)
+                return json.loads(match.group(0) if match else value)
+
+            try:
+                data = parse_events(raw)
+            except json.JSONDecodeError:
+                retry_system = system + "上一次输出格式不合法。重新生成，不要解释，不要Markdown，不要尾随逗号。"
+                raw = self._chat_strict(
+                    [{"role": "user", "content": json.dumps(compact, ensure_ascii=False)}],
+                    system_prompt=retry_system,
+                    temperature=0.0,
+                    max_tokens=3200,
+                )
+                data = parse_events(raw)
             if not isinstance(data, list):
                 raise ValueError("memory extraction response is not a JSON array")
             allowed_ids = {int(item["id"]) for item in messages}
@@ -347,9 +363,37 @@ class AIService:
                 if state not in {"planned", "ongoing", "completed", "cancelled", "uncertain"}:
                     state = "uncertain"
                 event_kind = str(item.get("event_kind") or category).lower()
-                if event_kind not in {"trip", "date", "conflict", "gift", "preference", "plan", "fact", "activity"}:
+                if event_kind not in {"trip", "date", "conflict", "reconciliation", "gift", "preference", "plan", "fact", "activity"}:
                     event_kind = category
                 entities = [str(value).strip()[:80] for value in (item.get("entities") or []) if str(value).strip()][:12]
+                facts = []
+                for fact in (item.get("facts") or [])[:20]:
+                    if not isinstance(fact, dict):
+                        continue
+                    value = str(fact.get("value") or "").strip()
+                    if not value:
+                        continue
+                    fact_ids = []
+                    for source_id in fact.get("source_message_ids") or []:
+                        try:
+                            source_id = int(source_id)
+                        except (TypeError, ValueError):
+                            continue
+                        if source_id in allowed_ids and source_id in source_ids and source_id not in fact_ids:
+                            fact_ids.append(source_id)
+                    facts.append({
+                        "type": str(fact.get("type") or "fact")[:40],
+                        "value": value[:500],
+                        "occurred_at": str(fact.get("occurred_at") or "")[:32],
+                        "source_message_ids": fact_ids or source_ids,
+                    })
+                if not facts:
+                    facts = [{
+                        "type": event_kind,
+                        "value": summary[:500],
+                        "occurred_at": str(item.get("event_date") or "")[:32],
+                        "source_message_ids": source_ids,
+                    }]
                 event = {
                     "title": str(item.get("title") or summary[:24])[:200],
                     "summary": summary[:2000],
@@ -357,6 +401,7 @@ class AIService:
                     "event_kind": event_kind,
                     "event_key": str(item.get("event_key") or item.get("title") or summary[:24]).strip()[:160],
                     "entities": entities,
+                    "facts": facts,
                     "state": state,
                     "event_date": str(item.get("event_date") or "")[:32],
                     "event_end": str(item.get("event_end") or "")[:32],
@@ -369,10 +414,59 @@ class AIService:
                 }
                 if self._has_long_term_value(event, messages):
                     events.append(event)
-            return events
+            return self._attach_uncovered_context_facts(events or fallback, messages)
         except Exception:
             logger.exception("Memory event extraction failed; keeping the sync cursor for retry")
             raise
+
+    @staticmethod
+    def _attach_uncovered_context_facts(events: List[Dict], messages: List[Dict]) -> List[Dict]:
+        """把模型漏掉的餐食、活动和解决办法作为事实回填到同批事件，避免静默丢失。"""
+        if not events:
+            return events
+        covered = {
+            int(source_id)
+            for event in events
+            for source_id in event.get("source_message_ids", [])
+        }
+        fact_signals = (
+            ("meal", ("早餐", "午饭", "晚饭", "夜宵", "吃了", "喝了", "点了", "餐厅"), {"trip", "date", "activity"}),
+            ("activity", ("去了", "逛了", "散步", "拍照", "参观", "看了", "体验了"), {"trip", "date", "activity"}),
+            ("resolution", ("和好", "道歉", "说清楚", "解决", "办法", "共识", "轮值"), {"conflict", "reconciliation"}),
+            ("plan_update", ("取消", "改期", "不去了", "完成了", "已经去了"), {"plan"}),
+            ("preference_update", ("现在改", "现在选择", "不再", "以后不要", "明确选择"), {"preference"}),
+        )
+        for message in messages:
+            message_id = int(message["id"])
+            if message_id in covered:
+                continue
+            text = re.sub(r"\s+", " ", str(message.get("content") or "")).strip()
+            if not text:
+                continue
+            matched = next((row for row in fact_signals if any(marker in text for marker in row[1])), None)
+            if matched is None:
+                continue
+            fact_type, _, compatible_kinds = matched
+            compatible = [event for event in events if event.get("event_kind") in compatible_kinds]
+            if not compatible:
+                continue
+            target = min(
+                compatible,
+                key=lambda event: min(
+                    (abs(message_id - int(source_id)) for source_id in event.get("source_message_ids", [])),
+                    default=10**9,
+                ),
+            )
+            target.setdefault("facts", []).append({
+                "type": fact_type,
+                "value": text[:500],
+                "occurred_at": str(message.get("created_at") or "")[:32],
+                "source_message_ids": [message_id],
+            })
+            target.setdefault("source_message_ids", []).append(message_id)
+            target["source_message_ids"] = list(dict.fromkeys(target["source_message_ids"]))
+            covered.add(message_id)
+        return events
 
     @staticmethod
     def _has_long_term_value(event: Dict, messages: List[Dict]) -> bool:
@@ -430,6 +524,12 @@ class AIService:
             "event_kind": "preference" if category == "preference" else ("plan" if planned or cancelled else "event"),
             "event_key": selected[0][1][:80],
             "entities": [],
+            "facts": [{
+                "type": "preference" if category == "preference" else ("plan" if planned or cancelled else "event"),
+                "value": joined[:500],
+                "occurred_at": "",
+                "source_message_ids": [int(messages[index]["id"]) for index, _ in selected],
+            }],
             "state": "cancelled" if cancelled else ("planned" if planned else "completed"),
             "event_end": "",
             "confidence": 0.7,
@@ -453,7 +553,8 @@ class AIService:
             return fallback
         system = (
             "你是长期记忆总结器。输入已经完成事件聚合，不要筛选或拆分，只生成一条完整记忆。"
-            "只能使用原始证据；必须尽量保留证据中的时间、地点、活动、餐食、状态变化和解决办法。"
+            "只能使用原始证据和结构化facts；必须保留facts中的时间、地点、活动、餐食、状态变化和解决办法。"
+            "不得删掉任何仍有效的原子事实；遇到新旧偏好时应明确当前值和旧值。"
             "不得补充证据中没有的人名、原因、结果或情绪。只输出JSON对象，字段为"
             "title、summary、location、emotion、tags、importance。summary不超过240字。"
         )
@@ -503,6 +604,8 @@ class AIService:
     def memory_answer(
         self, question: str, context: str, history: List[Dict] | None = None, strict: bool = False
     ) -> str:
+        if context.strip() == "没有找到相关共同记忆。":
+            return "目前没有找到相关记录，所以我无法确认这件事。"
         system = (
             "你是专属于一对情侣的共同记忆助手。只能依据给出的共同记忆回答，绝对不可编造。"
             "请像熟悉他们故事的温暖朋友一样直接回答：自然、亲切、简洁，不过度煽情，也不要使用客服腔。"
@@ -512,13 +615,14 @@ class AIService:
             "planned 只代表计划，不能回答成已经发生；uncertain 只能作为不确定线索。"
             "信息不足时，只能用第一人称说明‘我还没记住这件事’或‘目前无法确认’，并邀请用户补充；"
             "绝对不能把‘没有记录’推断成‘你们没有做过、没有收到过、没有计划过或没有发生过’。"
+            "不要为了活泼添加票、交通工具、装备、价格等参考内容里没有的玩笑细节。"
             "不要进行心理诊断，也不要替用户做关系决定。回答通常控制在2到4句话。"
         )
         prompt = f"【共同记忆】\n{context}\n\n【问题】\n{question}"
         messages = (history or []) + [{"role": "user", "content": prompt}]
         if strict:
-            return self._chat_strict(messages, system, temperature=0.8, max_tokens=1000)
-        return self.chat(messages, system_prompt=system, max_tokens=1000)
+            return self._chat_strict(messages, system, temperature=0.1, max_tokens=1000)
+        return self.chat(messages, system_prompt=system, temperature=0.1, max_tokens=1000)
 
     def memory_report(self, memories: List[Dict], period_label: str) -> str:
         context = "\n".join(

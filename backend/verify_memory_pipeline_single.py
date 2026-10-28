@@ -65,6 +65,27 @@ def main():
             raise AssertionError(f"业务状态错误：{memory.memory_state}")
         if len(memory_service._json_ids(memory.source_message_ids)) != 4:
             raise AssertionError("正式记忆没有保留全部四条原始证据")
+        facts = memory_service._json_list(memory.facts)
+        if not any("藕汤" in str(fact.get("value") or "") for fact in facts):
+            raise AssertionError("结构化事实没有保留餐食信息")
+        while True:
+            embedded = memory_service.ensure_embeddings(db, 1, limit=16)
+            if embedded["remaining_embeddings"] == 0:
+                break
+        sources = memory_service.search(db, 1, "武汉旅行时去了哪里，晚饭吃了什么？", top_k=5, user_id=1)
+        if not sources:
+            raise AssertionError("语义检索没有召回武汉旅行")
+        context = "\n".join(
+            f"- 时间：{item['event_date']}；状态：{item['memory_state']}；内容：{item['content']}；"
+            f"事实：{json.dumps(item.get('facts', []), ensure_ascii=False)}"
+            for item in sources
+        )
+        answer = ai_service.memory_answer(
+            "武汉旅行时去了哪里，晚饭吃了什么？", context, [], strict=True
+        )
+        for expected in ("东湖绿道", "藕汤"):
+            if expected not in answer:
+                raise AssertionError(f"最终回答缺少有依据的事实：{expected}；回答={answer}")
         print(json.dumps({
             "model": ai_service.model,
             "sync": result,
@@ -81,10 +102,13 @@ def main():
             },
             "memory": {
                 "title": memory.title, "content": memory.content,
+                "facts": facts,
                 "state": memory.memory_state, "lifecycle": memory.lifecycle,
                 "closure_reason": memory.closure_reason,
                 "source_message_ids": memory_service._json_ids(memory.source_message_ids),
             },
+            "retrieved_memory_ids": [item["id"] for item in sources],
+            "answer": answer,
             "passed": True,
             "database": str(DB_PATH),
         }, ensure_ascii=False, indent=2))

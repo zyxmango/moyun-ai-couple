@@ -65,7 +65,7 @@ class MemoryService:
     def _memory_text(memory: SharedMemory) -> str:
         return " ".join([
             memory.title or "", memory.content or "", memory.location or "", memory.tags or "",
-            memory.category or "", memory.memory_state or "",
+            memory.category or "", memory.event_kind or "", memory.memory_state or "", memory.facts or "",
         ])
 
     @staticmethod
@@ -345,6 +345,8 @@ class MemoryService:
         incoming_terms = set(re.findall(r"[\u4e00-\u9fa5]{2,}|[a-zA-Z0-9]+", incoming))
         best = None
         best_score = 0.0
+        best_text_score = 0.0
+        best_entity_score = 0.0
         for memory in candidates:
             existing = f"{memory.title} {memory.content} {memory.location or ''}".lower()
             existing_terms = set(re.findall(r"[\u4e00-\u9fa5]{2,}|[a-zA-Z0-9]+", existing))
@@ -430,6 +432,87 @@ class MemoryService:
         except (TypeError, ValueError, json.JSONDecodeError):
             return []
 
+    def _resolve_event_date(
+        self, event: Dict, message_map: Dict[int, Message], source_ids: List[int]
+    ) -> datetime | None:
+        """消息时间是可信锚点；模型时间只有与证据一致时才可覆盖它。"""
+        source_dates = [message_map[item].created_at for item in source_ids if item in message_map]
+        if not source_dates:
+            return None
+        kind = str(event.get("event_kind") or event.get("category") or "event").lower()
+        anchor = max(source_dates) if kind in {"preference", "conflict", "reconciliation"} else min(source_dates)
+        parsed = self._parse_datetime(event.get("event_date"))
+        if parsed is None:
+            return anchor
+        evidence = " ".join(message_map[item].content or "" for item in source_ids if item in message_map)
+        has_absolute_date = bool(re.search(r"(?:19|20)\d{2}\s*(?:年|[-/.])\s*\d{1,2}", evidence))
+        if has_absolute_date or abs((parsed - anchor).total_seconds()) <= 7 * 86400:
+            return parsed
+        return anchor
+
+    def _normalize_event_facts(
+        self, event: Dict, message_map: Dict[int, Message], source_ids: List[int]
+    ) -> List[Dict]:
+        facts = []
+        raw_facts = event.get("facts") or [{
+            "type": event.get("event_kind") or event.get("category") or "fact",
+            "value": event.get("summary") or event.get("title") or "",
+            "occurred_at": event.get("event_date") or "",
+            "source_message_ids": source_ids,
+        }]
+        for raw in raw_facts:
+            if not isinstance(raw, dict):
+                continue
+            value = re.sub(r"\s+", " ", str(raw.get("value") or "")).strip()[:500]
+            if not value:
+                continue
+            fact_ids = []
+            for item in raw.get("source_message_ids") or source_ids:
+                try:
+                    item = int(item)
+                except (TypeError, ValueError):
+                    continue
+                if item in source_ids and item in message_map and item not in fact_ids:
+                    fact_ids.append(item)
+            if not fact_ids:
+                fact_ids = list(source_ids)
+            occurred = self._parse_datetime(raw.get("occurred_at"))
+            if occurred is None:
+                occurred = min(message_map[item].created_at for item in fact_ids)
+            facts.append({
+                "type": str(raw.get("type") or "fact")[:40],
+                "value": value,
+                "occurred_at": occurred.isoformat(),
+                "source_message_ids": fact_ids,
+            })
+        return facts
+
+    @staticmethod
+    def _merge_facts(existing: List[Dict], incoming: List[Dict]) -> List[Dict]:
+        current_types = {"current_preference", "preference_current", "current_value"}
+        incoming_current_values = {
+            re.sub(r"\s+", "", str(fact.get("value") or "")).lower()
+            for fact in incoming if str(fact.get("type") or "").lower() in current_types
+        }
+        merged = []
+        seen = set()
+        for fact in [*existing, *incoming]:
+            fact = dict(fact)
+            value = re.sub(r"\s+", "", str(fact.get("value") or "")).lower()
+            if (
+                fact in existing
+                and str(fact.get("type") or "").lower() in current_types
+                and incoming_current_values
+                and value not in incoming_current_values
+            ):
+                fact["type"] = "previous_preference"
+            key = (str(fact.get("type") or "fact").lower(), value)
+            if not value or key in seen:
+                continue
+            seen.add(key)
+            merged.append(fact)
+        return merged[-80:]
+
     @staticmethod
     def _candidate_key(event: Dict, event_at: datetime | None) -> str:
         kind = str(event.get("event_kind") or event.get("category") or "event").lower()
@@ -462,16 +545,28 @@ class MemoryService:
         candidates = query.order_by(MemoryCandidate.updated_at.desc()).limit(40).all()
         incoming_entities = set(str(item).lower() for item in event.get("entities", []) if str(item).strip())
         incoming_hint = str(event.get("event_key") or event.get("title") or "").lower()
+        generic_entities = {"用户", "用户1", "用户2", "双方", "情侣", "偏好", "计划", "事件"}
+        incoming_entities -= generic_entities
+        incoming_topic = re.sub(r"^[a-z_]+:", "", incoming_hint)
         best = None
         best_score = 0.0
         for candidate in candidates:
-            existing_entities = set(str(item).lower() for item in self._json_list(candidate.entities))
+            existing_entities = set(str(item).lower() for item in self._json_list(candidate.entities)) - generic_entities
             entity_score = len(incoming_entities & existing_entities) / max(1, min(len(incoming_entities), len(existing_entities)))
-            text_score = SequenceMatcher(None, incoming_hint, candidate.title_hint or "").ratio()
+            existing_topic = re.sub(r"^[a-z_]+:", "", (candidate.title_hint or "").lower())
+            text_score = SequenceMatcher(None, incoming_topic, existing_topic).ratio()
             score = max(entity_score, text_score)
             if score > best_score:
                 best, best_score = candidate, score
-        return (best, best.event_key) if best is not None and best_score >= 0.45 else (None, key)
+                best_text_score, best_entity_score = text_score, entity_score
+        # 模糊合并必须有强主题或实体证据，避免同城多次旅行、相似计划被错误合并。
+        if kind in {"preference", "plan"}:
+            strong_match = best is not None and best_text_score >= 0.82 and (
+                not incoming_entities or best_entity_score >= 0.5
+            )
+        else:
+            strong_match = best is not None and best_score >= 0.68
+        return (best, best.event_key) if strong_match else (None, key)
 
     @staticmethod
     def _candidate_boundary(event_kind: str, source_text: str, suggested_state: str):
@@ -484,9 +579,17 @@ class MemoryService:
             return ("completed", "closed", "explicit_resolution") if resolved and resolution else (
                 "ongoing", "open", ""
             )
+        if event_kind == "reconciliation":
+            resolved = any(marker in source_text for marker in ("和好", "道歉", "说清楚", "说开了"))
+            return ("completed", "closed", "explicit_resolution") if resolved else (
+                "uncertain", "open", ""
+            )
         if event_kind in {"trip", "date", "activity"}:
             ended = any(marker in source_text for marker in ("旅行结束", "活动结束", "约会结束", "回到家", "回家了", "返程", "回来了"))
-            return ("completed", "closed", "explicit_completion") if ended else (
+            happened = suggested_state == "completed" or any(
+                marker in source_text for marker in ("去了", "到达", "抵达", "吃了", "看了", "参加了", "完成了")
+            )
+            return ("completed", "closed", "explicit_completion") if ended or happened else (
                 "ongoing" if suggested_state != "planned" else "planned", "open", ""
             )
         if event_kind == "preference":
@@ -506,9 +609,7 @@ class MemoryService:
         source_ids = sorted({int(item) for item in event.get("source_message_ids", []) if int(item) in message_map})
         if not source_ids:
             return None, False
-        event_at = self._parse_datetime(
-            event.get("event_date"), min(message_map[item].created_at for item in source_ids)
-        )
+        event_at = self._resolve_event_date(event, message_map, source_ids)
         candidate, event_key = self._find_candidate(db, couple_id, event, event_at)
         created = candidate is None
         if candidate is None:
@@ -530,13 +631,19 @@ class MemoryService:
                 "entities": event.get("entities", []), "source_message_ids": source_ids,
             })
         entities = list(dict.fromkeys(self._json_list(candidate.entities) + list(event.get("entities", []))))
+        facts = self._merge_facts(
+            self._json_list(candidate.facts), self._normalize_event_facts(event, message_map, source_ids)
+        )
         combined_ids = sorted(old_ids | set(source_ids))
         candidate.title_hint = event.get("event_key") or event.get("title") or candidate.title_hint
         candidate.fragments = json.dumps(fragments[-40:], ensure_ascii=False)
+        candidate.facts = json.dumps(facts, ensure_ascii=False)
         candidate.entities = json.dumps(entities[:30], ensure_ascii=False)
         candidate.source_message_ids = json.dumps(combined_ids)
-        candidate.event_date = min(filter(None, [candidate.event_date, event_at]), default=event_at)
-        candidate.event_end = max(message_map[item].created_at for item in combined_ids if item in message_map)
+        dates = [value for value in (candidate.event_date, event_at) if value is not None]
+        candidate.event_date = max(dates) if candidate.event_kind == "preference" else min(dates)
+        evidence_dates = [row[0] for row in db.query(Message.created_at).filter(Message.id.in_(combined_ids)).all()]
+        candidate.event_end = max(evidence_dates) if evidence_dates else event_at
         candidate.confidence = max(candidate.confidence or 0.0, event.get("confidence", 0.5))
         candidate.last_seen_at = max(message_map[item].created_at for item in source_ids)
         candidate.quiet_until = candidate.last_seen_at + timedelta(hours=48)
@@ -564,6 +671,7 @@ class MemoryService:
             "lifecycle": candidate.lifecycle, "closure_reason": candidate.closure_reason,
             "title_hint": candidate.title_hint, "entities": self._json_list(candidate.entities),
             "fragments": self._json_list(candidate.fragments),
+            "facts": self._json_list(candidate.facts),
         }
         summary = ai_service.summarize_memory_candidate(candidate_payload, [{
             "id": item.id, "content": item.content, "created_at": item.created_at.isoformat()
@@ -579,10 +687,21 @@ class MemoryService:
             db.flush()
             candidate.memory_id = memory.id
         previous = (memory.content, memory.memory_state, memory.lifecycle, memory.source_message_ids)
+        facts = self._json_list(candidate.facts)
+        content = summary["summary"]
+        for fact in facts:
+            value = str(fact.get("value") or "").strip()
+            if value and value not in content:
+                content = f"{content}；{value}" if content else value
         memory.title = summary["title"]
-        memory.content = summary["summary"]
+        memory.content = content[:8000]
+        memory.event_key = candidate.event_key
+        memory.event_kind = candidate.event_kind
+        memory.facts = json.dumps(facts, ensure_ascii=False)
         memory.event_date = candidate.event_date
         memory.event_end = candidate.event_end
+        memory.valid_from = candidate.event_date if candidate.event_kind == "preference" else None
+        memory.valid_to = None
         memory.location = summary.get("location", "")
         memory.emotion = summary.get("emotion", "")
         memory.tags = json.dumps(summary.get("tags", []), ensure_ascii=False)
@@ -608,6 +727,7 @@ class MemoryService:
                 memory_id=memory.id, candidate_id=candidate.id, state=memory.memory_state,
                 lifecycle=memory.lifecycle, closure_reason=memory.closure_reason,
                 title=memory.title, content=memory.content,
+                facts=memory.facts,
                 source_message_ids=memory.source_message_ids,
             ))
             memory.version = 1 if created else (memory.version or 1) + 1
@@ -776,7 +896,10 @@ class MemoryService:
             memories = base.filter(SharedMemory.id.in_(candidate_ids)).all() if candidate_ids else []
         if not memories:
             return []
-        corpus = [" ".join([m.title or "", m.content or "", m.location or "", m.tags or ""]) for m in memories]
+        corpus = [" ".join([
+            m.title or "", m.content or "", m.location or "", m.tags or "", m.facts or "",
+            m.event_kind or "", m.memory_state or "",
+        ]) for m in memories]
         scores = []
         now = datetime.utcnow()
         min_relevance = self.LOCAL_MIN_RELEVANCE if model == "local-hash-v1" else self.MIN_RELEVANCE
@@ -784,6 +907,10 @@ class MemoryService:
         month_match = re.search(r"(?:20\d{2}\s*年\s*)?(1[0-2]|0?[1-9])\s*月", query)
         query_year = int(year_match.group(1)) if year_match else None
         query_month = int(month_match.group(1)) if month_match else None
+        wants_current_preference = "现在" in query and any(
+            marker in query for marker in ("喜欢", "偏好", "口味", "选择", "饮品", "运动", "座位")
+        )
+        wants_cancelled = any(marker in query for marker in ("取消", "不去了", "没去成"))
         for index, memory in enumerate(memories):
             text = corpus[index].lower()
             keyword = sum(1 for term in query_terms if term in text) / max(1, len(query_terms))
@@ -800,6 +927,10 @@ class MemoryService:
                 continue
             if query_month and memory_date and memory_date.month != query_month:
                 continue
+            if wants_current_preference and memory.category != "preference":
+                continue
+            if wants_cancelled and memory.memory_state != "cancelled":
+                continue
             age_days = (now - (memory.event_date or memory.created_at)).days
             recency = max(0.0, 1.0 - max(age_days, 0) / 3650) * 0.05
             relevance = max(0.0, semantic) * 0.75 + keyword * 0.25
@@ -810,7 +941,12 @@ class MemoryService:
             ):
                 continue
             if relevance >= min_relevance and supported:
-                score = relevance + recency + memory.importance * 0.03
+                metadata_boost = 0.0
+                if wants_current_preference and memory.memory_state == "ongoing" and memory.valid_to is None:
+                    metadata_boost += 0.12
+                if wants_cancelled and memory.memory_state == "cancelled":
+                    metadata_boost += 0.12
+                score = relevance + recency + memory.importance * 0.03 + metadata_boost
                 scores.append((score, memory))
         ranked = sorted(scores, key=lambda item: item[0], reverse=True)[:top_k]
         results = []
@@ -849,12 +985,17 @@ class MemoryService:
             "owner_id": memory.owner_id,
             "visibility": memory.visibility or "shared",
             "category": memory.category or "event",
+            "event_key": memory.event_key or "",
+            "event_kind": memory.event_kind or memory.category or "event",
+            "facts": self._json_list(memory.facts),
             "memory_state": memory.memory_state or "completed",
             "lifecycle": memory.lifecycle or "closed",
             "closure_reason": memory.closure_reason or "",
             "state_confidence": memory.state_confidence if memory.state_confidence is not None else 1.0,
             "confidence": memory.confidence if memory.confidence is not None else 1.0,
             "event_end": memory.event_end.isoformat() if memory.event_end else None,
+            "valid_from": memory.valid_from.isoformat() if memory.valid_from else None,
+            "valid_to": memory.valid_to.isoformat() if memory.valid_to else None,
             "source_message_ids": self._json_ids(memory.source_message_ids),
             "version": memory.version or 1,
             "is_active": memory.is_active if memory.is_active is not None else True,

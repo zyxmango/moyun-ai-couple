@@ -62,6 +62,9 @@ def init_db():
         "owner_id": "INTEGER",
         "visibility": "VARCHAR(20) DEFAULT 'shared'",
         "category": "VARCHAR(30) DEFAULT 'event'",
+        "event_key": "VARCHAR(160) DEFAULT ''",
+        "event_kind": "VARCHAR(30) DEFAULT 'event'",
+        "facts": "TEXT DEFAULT '[]'",
         "version": "INTEGER DEFAULT 1",
         "is_active": "BOOLEAN DEFAULT 1",
         "memory_state": "VARCHAR(20) DEFAULT 'completed'",
@@ -70,6 +73,8 @@ def init_db():
         "state_confidence": "FLOAT DEFAULT 1.0",
         "confidence": "FLOAT DEFAULT 1.0",
         "event_end": "DATETIME",
+        "valid_from": "DATETIME",
+        "valid_to": "DATETIME",
         "source_message_ids": "TEXT DEFAULT '[]'",
         "embedding_b64": "TEXT DEFAULT ''",
         "embedding_model": "VARCHAR(100) DEFAULT ''",
@@ -88,5 +93,23 @@ def init_db():
             "CREATE INDEX IF NOT EXISTS ix_shared_memories_embedding_model "
             "ON shared_memories (embedding_model)"
         ))
+        connection.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_shared_memories_event_key "
+            "ON shared_memories (event_key)"
+        ))
         # 旧版把每条聊天直接当作记忆；保留数据便于追溯，但停止参与检索。
         connection.execute(text("UPDATE shared_memories SET is_active = 0 WHERE source_type = 'chat'"))
+
+    table_additions = {
+        "memory_candidates": {"facts": "TEXT DEFAULT '[]'"},
+        "memory_event_history": {"facts": "TEXT DEFAULT '[]'"},
+    }
+    inspector = inspect(engine)
+    with engine.begin() as connection:
+        for table_name, columns in table_additions.items():
+            if table_name not in inspector.get_table_names():
+                continue
+            existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+            for name, definition in columns.items():
+                if name not in existing_columns:
+                    connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {name} {definition}"))

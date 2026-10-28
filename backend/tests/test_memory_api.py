@@ -1,4 +1,5 @@
 """AI 共同记忆端到端 API 测试（不调用外部模型）。"""
+import json
 import tempfile
 import unittest
 from datetime import datetime, timedelta
@@ -195,6 +196,47 @@ class MemoryAPITest(unittest.TestCase):
         db.close()
         self.assertEqual(results, [])
 
+    def test_04bbba_uncovered_meal_is_attached_to_trip_facts(self):
+        messages = [
+            {"id": 1, "created_at": "2041-05-02T09:00:00", "content": "我们到武汉了，旅行开始。"},
+            {"id": 2, "created_at": "2041-05-02T13:00:00", "content": "下午去了东湖绿道散步。"},
+            {"id": 3, "created_at": "2041-05-02T17:00:00", "content": "晚饭吃了藕汤，味道很好。"},
+        ]
+        event = {
+            "event_kind": "trip", "source_message_ids": [1, 2],
+            "facts": [{"type": "activity", "value": "去了东湖绿道", "source_message_ids": [2]}],
+        }
+        result = ai_service._attach_uncovered_context_facts([event], messages)
+        self.assertIn(3, result[0]["source_message_ids"])
+        self.assertTrue(any(fact["type"] == "meal" and "藕汤" in fact["value"] for fact in result[0]["facts"]))
+
+    def test_04bbbb_malformed_model_json_retries_once(self):
+        invalid = Mock()
+        invalid.choices = [Mock(message=Mock(content='[{"title":"偏好" "summary":"喜欢咖啡"}]'))]
+        valid = Mock()
+        valid.choices = [Mock(message=Mock(content=json.dumps([{
+            "title": "咖啡偏好", "summary": "现在明确选择无糖咖啡。",
+            "category": "preference", "event_kind": "preference",
+            "event_key": "preference:咖啡", "entities": ["咖啡"], "state": "ongoing",
+            "event_date": "2041-06-01T10:00:00", "confidence": 0.9,
+            "source_message_ids": [1], "facts": [{
+                "type": "current_preference", "value": "现在选择无糖咖啡", "source_message_ids": [1],
+            }],
+        }], ensure_ascii=False)))]
+        client = Mock()
+        client.chat.completions.create.side_effect = [invalid, valid]
+        original_client = ai_service._client
+        ai_service._client = client
+        try:
+            events = ai_service.extract_memory_events([{
+                "id": 1, "sender_id": 1, "created_at": "2041-06-01T10:00:00",
+                "content": "请记住我现在明确选择无糖咖啡。",
+            }])
+        finally:
+            ai_service._client = original_client
+        self.assertEqual(client.chat.completions.create.call_count, 2)
+        self.assertEqual(events[0]["facts"][0]["type"], "current_preference")
+
     def test_04bbc_multiple_events_from_same_evidence_get_unique_source_ids(self):
         db = self.Session()
         couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
@@ -298,6 +340,115 @@ class MemoryAPITest(unittest.TestCase):
         self.assertEqual(set(memory_service._json_ids(memory.source_message_ids)), {item.id for item in messages})
         self.assertEqual(db.query(MemoryEventHistory).filter(MemoryEventHistory.memory_id == memory.id).count(), 1)
         db.close()
+
+    def test_04bbf_structured_facts_state_and_date_are_deterministic(self):
+        state, lifecycle, reason = memory_service._candidate_boundary(
+            "activity", "下午去了东湖绿道散步拍照。", "completed"
+        )
+        self.assertEqual((state, lifecycle, reason), ("completed", "closed", "explicit_completion"))
+
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        changed_at = datetime(2043, 8, 20, 18, 0)
+        messages = [
+            Message(
+                couple_id=couple_id, sender_id=self.user1_id,
+                content="以前早餐喝豆浆，不过现在改成热牛奶。", msg_type="text", created_at=changed_at,
+            ),
+            Message(
+                couple_id=couple_id, sender_id=self.user2_id,
+                content="以后早餐就按热牛奶准备。", msg_type="text", created_at=changed_at + timedelta(minutes=5),
+            ),
+        ]
+        db.add_all(messages)
+        db.commit()
+        for item in messages:
+            db.refresh(item)
+        event = {
+            "title": "早餐饮品偏好变化", "summary": "早餐饮品从豆浆改为热牛奶。",
+            "category": "preference", "event_kind": "preference", "event_key": "preference:早餐饮品",
+            "entities": ["早餐饮品", "豆浆", "热牛奶"], "state": "ongoing",
+            # 模拟模型给出一个与证据时间明显冲突的日期，程序应以消息时间为准。
+            "event_date": "2012-12-09T18:00:00", "confidence": 0.95,
+            "source_message_ids": [item.id for item in messages],
+            "facts": [
+                {"type": "previous_preference", "value": "早餐以前喝豆浆", "source_message_ids": [messages[0].id]},
+                {"type": "current_preference", "value": "早餐现在改为热牛奶", "source_message_ids": [messages[0].id, messages[1].id]},
+            ],
+        }
+        candidate, _ = memory_service._merge_candidate_fragment(db, couple_id, event, messages)
+        self.assertEqual(candidate.event_date.date(), changed_at.date())
+        self.assertEqual(candidate.state, "ongoing")
+        self.assertTrue(memory_service._materialize_candidate(db, candidate))
+        db.commit()
+        memory = db.query(SharedMemory).filter(SharedMemory.id == candidate.memory_id).one()
+        facts = memory_service._json_list(memory.facts)
+        self.assertEqual([fact["type"] for fact in facts], ["previous_preference", "current_preference"])
+        self.assertIn("热牛奶", memory.content)
+        self.assertEqual(memory.valid_from.date(), changed_at.date())
+        db.close()
+
+    def test_04bbg_same_place_on_different_dates_stays_separate(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        messages = []
+        for year in (2044, 2045):
+            item = Message(
+                couple_id=couple_id, sender_id=self.user1_id,
+                content=f"{year}年5月2日我们去了武汉。", msg_type="text",
+                created_at=datetime(year, 5, 2, 12, 0),
+            )
+            db.add(item)
+            db.commit()
+            db.refresh(item)
+            messages.append(item)
+            candidate, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+                "title": "武汉旅行", "summary": f"{year}年去了武汉。", "category": "event",
+                "event_kind": "trip", "event_key": "trip:武汉", "entities": ["武汉"],
+                "state": "completed", "event_date": item.created_at.isoformat(),
+                "confidence": 0.95, "source_message_ids": [item.id],
+            }, [item])
+            self.assertEqual(candidate.event_date.date(), item.created_at.date())
+        db.commit()
+        keys = [row[0] for row in db.query(MemoryCandidate.event_key).filter(
+            MemoryCandidate.couple_id == couple_id,
+            MemoryCandidate.event_key.like("trip:武汉:%"),
+        ).all()]
+        db.close()
+        self.assertIn("trip:武汉:2044-05-02", keys)
+        self.assertIn("trip:武汉:2045-05-02", keys)
+
+    def test_04bbh_different_preference_topics_do_not_merge(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        created_at = datetime(2046, 6, 1, 12, 0)
+        rows = []
+        for index, (topic, value) in enumerate((("咖啡甜度", "无糖"), ("火锅辣度", "微辣"))):
+            message = Message(
+                couple_id=couple_id, sender_id=self.user1_id,
+                content=f"请记住我现在的{topic}偏好是{value}。", msg_type="text",
+                created_at=created_at + timedelta(minutes=index),
+            )
+            db.add(message)
+            db.commit()
+            db.refresh(message)
+            candidate, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+                "title": f"{topic}偏好", "summary": f"当前{topic}选择{value}",
+                "category": "preference", "event_kind": "preference",
+                "event_key": f"preference:{topic}", "entities": ["用户1", "偏好", topic, value],
+                "state": "ongoing", "event_date": message.created_at.isoformat(),
+                "confidence": 0.95, "source_message_ids": [message.id],
+                "facts": [{"type": "current_preference", "value": f"{topic}={value}", "source_message_ids": [message.id]}],
+            }, [message])
+            rows.append(candidate)
+        db.commit()
+        self.assertNotEqual(rows[0].id, rows[1].id)
+        self.assertNotEqual(rows[0].event_key, rows[1].event_key)
+        db.close()
+
+    def test_04bbi_empty_context_uses_deterministic_abstention(self):
+        answer = ai_service.memory_answer("我们约好移居火星了吗？", "没有找到相关共同记忆。", [], strict=True)
+        self.assertEqual(answer, "目前没有找到相关记录，所以我无法确认这件事。")
 
     def test_04c_failed_extraction_keeps_cursor_for_retry(self):
         db = self.Session()

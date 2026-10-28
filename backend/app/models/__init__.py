@@ -214,12 +214,18 @@ class SharedMemory(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     visibility = Column(String(20), default="shared", index=True)  # shared/private
     category = Column(String(30), default="event", index=True)  # event/preference/plan
+    event_key = Column(String(160), default="", index=True)
+    event_kind = Column(String(30), default="event", index=True)
+    # 结构化原子事实；每项保留 type/value/occurred_at/source_message_ids。
+    facts = Column(Text, default="[]")
     memory_state = Column(String(20), default="completed", index=True)  # planned/ongoing/completed/cancelled/uncertain
     lifecycle = Column(String(20), default="closed", index=True)  # open/dormant/closed
     closure_reason = Column(String(40), default="")
     state_confidence = Column(Float, default=1.0)
     confidence = Column(Float, default=1.0)
     event_end = Column(DateTime, nullable=True)
+    valid_from = Column(DateTime, nullable=True, index=True)
+    valid_to = Column(DateTime, nullable=True, index=True)
     # JSON 数组，只引用 messages.id，不复制原始聊天正文。
     source_message_ids = Column(Text, default="[]")
     embedding_b64 = Column(Text, default="")
@@ -245,6 +251,7 @@ class MemoryCandidate(Base):
     category = Column(String(30), default="event")
     title_hint = Column(String(200), default="")
     fragments = Column(Text, default="[]")
+    facts = Column(Text, default="[]")
     entities = Column(Text, default="[]")
     source_message_ids = Column(Text, default="[]")
     event_date = Column(DateTime, nullable=True, index=True)
@@ -272,6 +279,7 @@ class MemoryEventHistory(Base):
     closure_reason = Column(String(40), default="")
     title = Column(String(200), default="")
     content = Column(Text, default="")
+    facts = Column(Text, default="[]")
     source_message_ids = Column(Text, default="[]")
     changed_at = Column(DateTime, default=datetime.utcnow, index=True)
 
