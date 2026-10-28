@@ -68,11 +68,10 @@
         <div class="toolbar">
           <span>共 {{ memories.total }} 条共同记忆</span>
           <el-select v-model="sourceFilter" clearable placeholder="全部来源" @change="loadMemories">
-            <el-option label="聊天" value="chat" />
+            <el-option label="聊天事件" value="chat_event" />
             <el-option label="日记" value="diary" />
             <el-option label="相册" value="photo" />
             <el-option label="纪念日" value="anniversary" />
-            <el-option label="AI 提取" value="ai_extract" />
           </el-select>
         </div>
         <el-empty v-if="!memories.items.length" description="同步后，共同记忆会出现在这里" />
@@ -84,6 +83,7 @@
                 <strong>{{ item.title }}</strong>
                 <el-tag size="small" effect="plain">{{ sourceLabel(item.source_type) }}</el-tag>
                 <el-tag v-if="item.visibility === 'private'" size="small" type="warning" effect="plain">仅自己可见</el-tag>
+                <el-tag v-if="item.status === 'uncertain'" size="small" type="info" effect="plain">信息不确定</el-tag>
                 <el-tag v-if="item.version > 1" size="small" effect="plain">v{{ item.version }}</el-tag>
               </div>
               <p>{{ item.content }}</p>
@@ -93,7 +93,10 @@
                 <span v-for="tag in item.tags" :key="tag">#{{ tag }}</span>
               </div>
             </div>
-            <el-button text type="danger" @click="removeMemory(item)">删除</el-button>
+            <div class="memory-actions">
+              <el-button text @click="editMemory(item)">纠正</el-button>
+              <el-button text type="danger" @click="removeMemory(item)">删除</el-button>
+            </div>
           </article>
         </div>
       </el-tab-pane>
@@ -132,23 +135,6 @@
         </section>
       </el-tab-pane>
 
-      <el-tab-pane :label="`待确认${pending.total ? ` (${pending.total})` : ''}`" name="review">
-        <div class="toolbar">
-          <span>AI 提取的事件只有确认后才会进入问答</span>
-          <el-button :loading="extracting" @click="extractCandidates">提取最近记录</el-button>
-        </div>
-        <el-empty v-if="!pending.items.length" description="暂无待确认记忆" />
-        <article v-for="item in pending.items" :key="item.id" class="ink-card review-card">
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.content }}</p>
-          <div class="memory-meta"><span v-if="item.emotion">心情：{{ item.emotion }}</span><span v-if="item.location">📍 {{ item.location }}</span></div>
-          <div class="review-actions">
-            <el-button @click="review(item, 'rejected')">忽略</el-button>
-            <el-button type="primary" @click="review(item, 'confirmed')">确认记忆</el-button>
-          </div>
-        </article>
-      </el-tab-pane>
-
       <el-tab-pane label="隐私设置" name="privacy">
         <section class="ink-card privacy-card">
           <h3>数据来源</h3>
@@ -179,7 +165,6 @@ const syncing = ref(false)
 const asking = ref(false)
 const answering = ref(false)
 const reporting = ref(false)
-const extracting = ref(false)
 const savingManual = ref(false)
 const activeTab = ref('ask')
 const sourceFilter = ref('')
@@ -190,21 +175,19 @@ const daily = ref(null)
 const dailyAnswer = ref('')
 const report = ref(null)
 const memories = reactive({ total: 0, items: [] })
-const pending = reactive({ total: 0, items: [] })
 const settings = reactive({ enabled: false, include_chat: true, include_diary: true, include_album: true, include_anniversary: true })
 const manual = reactive({ title: '', content: '', category: 'preference', visibility: 'shared' })
 const starters = ['我们第一次旅行是什么时候？', '最近有哪些值得纪念的开心事情？', '我们讨论过哪些未来计划？']
 
 const formatDate = (value) => value ? new Date(value).toLocaleDateString('zh-CN') : '日期未记录'
-const sourceLabel = (type) => ({ chat: '聊天', diary: '日记', photo: '相册', anniversary: '纪念日', ai_extract: 'AI 提取', manual: '主动记录' }[type] || type)
+const sourceLabel = (type) => ({ chat_event: '聊天事件', diary: '日记', photo: '相册', anniversary: '纪念日', manual: '主动记录' }[type] || type)
 
 const loadSettings = async () => Object.assign(settings, await memoryApi.settings())
-const loadMemories = async () => Object.assign(memories, await memoryApi.list({ status: 'confirmed', source_type: sourceFilter.value || undefined }))
-const loadPending = async () => Object.assign(pending, await memoryApi.list({ status: 'pending' }))
+const loadMemories = async () => Object.assign(memories, await memoryApi.list({ status: 'all', source_type: sourceFilter.value || undefined }))
 const loadDaily = async () => { daily.value = await memoryApi.todayQuestion() }
 
 const loadWorkspace = async () => {
-  await Promise.all([loadMemories(), loadPending(), loadDaily()])
+  await Promise.all([loadMemories(), loadDaily()])
 }
 
 const enableMemory = async () => {
@@ -282,31 +265,29 @@ const generateReport = async () => {
   try { report.value = await memoryApi.report(7) } finally { reporting.value = false }
 }
 
-const extractCandidates = async () => {
-  extracting.value = true
-  try {
-    const result = await memoryApi.extract()
-    await loadPending()
-    ElMessage.success(result.created ? `提取了 ${result.created} 条待确认记忆` : '没有新的记录需要提取')
-  } finally { extracting.value = false }
-}
-
-const review = async (item, status) => {
-  await memoryApi.review(item.id, { status })
-  await Promise.all([loadPending(), status === 'confirmed' ? loadMemories() : Promise.resolve()])
-  ElMessage.success(status === 'confirmed' ? '已加入共同记忆' : '已忽略')
-}
-
 const removeMemory = async (item) => {
   await ElMessageBox.confirm(`确定删除“${item.title}”的 AI 记忆索引？`, '删除记忆')
   await memoryApi.delete(item.id)
   await loadMemories()
 }
 
+const editMemory = async (item) => {
+  const { value } = await ElMessageBox.prompt('纠正这条记忆的内容。保存后会作为确定信息参与回答。', '纠正记忆', {
+    inputValue: item.content,
+    inputType: 'textarea',
+    confirmButtonText: '保存',
+    cancelButtonText: '取消',
+    inputValidator: value => value?.trim() ? true : '内容不能为空'
+  })
+  await memoryApi.review(item.id, { status: 'confirmed', content: value.trim() })
+  await loadMemories()
+  ElMessage.success('记忆已纠正')
+}
+
 const clearMemories = async () => {
   await ElMessageBox.confirm('只清空 AI 索引，不删除原始聊天、日记或照片。确定继续？', '清空 AI 记忆', { type: 'warning' })
   await memoryApi.clear()
-  await Promise.all([loadMemories(), loadPending()])
+  await loadMemories()
   ElMessage.success('AI 记忆已清空')
 }
 
@@ -348,6 +329,7 @@ onMounted(async () => {
 .memory-card { display:flex; gap:18px; padding:18px; margin-bottom:12px; }
 .memory-date { width:92px; flex-shrink:0; font-size:12px; color:var(--ink-light); }
 .memory-main { flex:1; min-width:0; }
+.memory-actions { display:flex; flex-shrink:0; }
 .memory-title { display:flex; align-items:center; gap:8px; }
 .memory-main p,.review-card p { color:var(--ink-secondary); line-height:1.7; white-space:pre-wrap; }
 .memory-meta { display:flex; gap:10px; flex-wrap:wrap; font-size:11px; color:var(--ink-light); }

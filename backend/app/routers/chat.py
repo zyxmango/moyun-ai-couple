@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..database import get_db, SessionLocal
@@ -157,6 +158,26 @@ def chat_count(
     return {"total": total}
 
 
+@router.get("/calendar")
+def chat_calendar(
+    timezone_offset: int = Query(480, ge=-720, le=840),
+    user: User = Depends(get_current_user),
+    couple: Couple = Depends(get_active_couple),
+    db: Session = Depends(get_db),
+):
+    """返回有聊天记录的本地日期；结果大小只与聊天天数有关。"""
+    local_date = func.date(Message.created_at, f"{timezone_offset:+d} minutes")
+    rows = db.query(local_date.label("chat_date"), func.count(Message.id)).filter(
+        Message.couple_id == couple.id,
+    ).group_by(local_date).order_by(local_date.asc()).all()
+    days = [{"date": chat_date, "count": count} for chat_date, count in rows if chat_date]
+    return {
+        "first_date": days[0]["date"] if days else None,
+        "last_date": days[-1]["date"] if days else None,
+        "days": days,
+    }
+
+
 @router.get("/history", response_model=List[dict])
 def chat_history(
     limit: int = Query(100, le=500),
@@ -175,9 +196,14 @@ def chat_history(
         query = query.filter(Message.created_at < before)
     msgs = query.order_by(Message.created_at.desc()).offset(offset).limit(limit).all()
     msgs.reverse()
+    sender_ids = {message.sender_id for message in msgs}
+    senders = {
+        sender.id: sender
+        for sender in db.query(User).filter(User.id.in_(sender_ids)).all()
+    } if sender_ids else {}
     result = []
     for m in msgs:
-        sender = db.query(User).filter(User.id == m.sender_id).first()
+        sender = senders.get(m.sender_id)
         result.append({
             "id": m.id, "couple_id": m.couple_id, "sender_id": m.sender_id,
             "sender_nickname": sender.nickname if sender else "",

@@ -1,0 +1,2946 @@
+{
+  "positive": [
+    {
+      "question": "2017年2月那次武汉旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-00-1",
+      "expected_answer": "去了东湖绿道，吃了热干面",
+      "expected_date": "2017-02-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年3月那次武汉旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-00-2",
+      "expected_answer": "去了湖北省博物馆，吃了豆皮",
+      "expected_date": "2017-03-22T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年4月那次武汉旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-00-3",
+      "expected_answer": "去了昙华林，吃了藕汤",
+      "expected_date": "2017-04-30T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年6月那次武汉旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-00-4",
+      "expected_answer": "去了江汉路，吃了糊汤粉",
+      "expected_date": "2017-06-08T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年7月那次重庆旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-01-1",
+      "expected_answer": "去了洪崖洞，吃了小面",
+      "expected_date": "2017-07-17T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年8月那次重庆旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-01-2",
+      "expected_answer": "去了南山一棵树，吃了酸辣粉",
+      "expected_date": "2017-08-25T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年10月那次重庆旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-01-3",
+      "expected_answer": "去了李子坝，吃了豆花饭",
+      "expected_date": "2017-10-03T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年11月那次重庆旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-01-4",
+      "expected_answer": "去了鹅岭二厂，吃了山城汤圆",
+      "expected_date": "2017-11-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2017年12月那次南京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-02-1",
+      "expected_answer": "去了明孝陵，吃了鸭血粉丝汤",
+      "expected_date": "2017-12-20T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年1月那次南京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-02-2",
+      "expected_answer": "去了颐和路，吃了盐水鸭",
+      "expected_date": "2018-01-28T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年3月那次南京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-02-3",
+      "expected_answer": "去了南京博物院，吃了梅花糕",
+      "expected_date": "2018-03-08T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年4月那次南京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-02-4",
+      "expected_answer": "去了玄武湖，吃了皮肚面",
+      "expected_date": "2018-04-16T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年5月那次杭州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-03-1",
+      "expected_answer": "去了北山街，吃了片儿川",
+      "expected_date": "2018-05-25T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年7月那次杭州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-03-2",
+      "expected_answer": "去了灵隐寺，吃了定胜糕",
+      "expected_date": "2018-07-03T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年8月那次杭州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-03-3",
+      "expected_answer": "去了九溪，吃了龙井虾仁",
+      "expected_date": "2018-08-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年9月那次杭州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-03-4",
+      "expected_answer": "去了良渚博物院，吃了葱包桧",
+      "expected_date": "2018-09-19T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年10月那次成都旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-04-1",
+      "expected_answer": "去了人民公园，吃了钟水饺",
+      "expected_date": "2018-10-28T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2018年12月那次成都旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-04-2",
+      "expected_answer": "去了杜甫草堂，吃了甜水面",
+      "expected_date": "2018-12-06T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年1月那次成都旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-04-3",
+      "expected_answer": "去了望平街，吃了兔头",
+      "expected_date": "2019-01-14T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年2月那次成都旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-04-4",
+      "expected_answer": "去了青城山，吃了蛋烘糕",
+      "expected_date": "2019-02-22T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年4月那次厦门旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-05-1",
+      "expected_answer": "去了黄厝海滩，吃了沙茶面",
+      "expected_date": "2019-04-02T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年5月那次厦门旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-05-2",
+      "expected_answer": "去了沙坡尾，吃了海蛎煎",
+      "expected_date": "2019-05-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年6月那次厦门旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-05-3",
+      "expected_answer": "去了鼓浪屿，吃了花生汤",
+      "expected_date": "2019-06-19T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年7月那次厦门旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-05-4",
+      "expected_answer": "去了植物园，吃了土笋冻",
+      "expected_date": "2019-07-28T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年9月那次青岛旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-06-1",
+      "expected_answer": "去了小麦岛，吃了鲅鱼水饺",
+      "expected_date": "2019-09-05T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年10月那次青岛旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-06-2",
+      "expected_answer": "去了八大关，吃了海菜凉粉",
+      "expected_date": "2019-10-14T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年11月那次青岛旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-06-3",
+      "expected_answer": "去了栈桥，吃了锅贴",
+      "expected_date": "2019-11-22T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2019年12月那次青岛旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-06-4",
+      "expected_answer": "去了石老人海滩，吃了脂渣",
+      "expected_date": "2019-12-31T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年2月那次苏州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-07-1",
+      "expected_answer": "去了平江路，吃了苏式汤面",
+      "expected_date": "2020-02-08T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年3月那次苏州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-07-2",
+      "expected_answer": "去了拙政园，吃了生煎",
+      "expected_date": "2020-03-18T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年4月那次苏州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-07-3",
+      "expected_answer": "去了金鸡湖，吃了桂花糖粥",
+      "expected_date": "2020-04-26T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年6月那次苏州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-07-4",
+      "expected_answer": "去了虎丘，吃了松鼠桂鱼",
+      "expected_date": "2020-06-04T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年7月那次长沙旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-08-1",
+      "expected_answer": "去了岳麓山，吃了臭豆腐",
+      "expected_date": "2020-07-13T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年8月那次长沙旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-08-2",
+      "expected_answer": "去了橘子洲，吃了糖油粑粑",
+      "expected_date": "2020-08-21T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年9月那次长沙旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-08-3",
+      "expected_answer": "去了谢子龙影像馆，吃了米粉",
+      "expected_date": "2020-09-29T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年11月那次长沙旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-08-4",
+      "expected_answer": "去了梅溪湖，吃了口味虾",
+      "expected_date": "2020-11-07T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2020年12月那次西安旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-09-1",
+      "expected_answer": "去了城墙，吃了肉夹馍",
+      "expected_date": "2020-12-16T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年1月那次西安旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-09-2",
+      "expected_answer": "去了陕西历史博物馆，吃了凉皮",
+      "expected_date": "2021-01-24T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年3月那次西安旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-09-3",
+      "expected_answer": "去了大雁塔，吃了甑糕",
+      "expected_date": "2021-03-04T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年4月那次西安旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-09-4",
+      "expected_answer": "去了华清宫，吃了羊肉泡馍",
+      "expected_date": "2021-04-12T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年5月那次大理旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-10-1",
+      "expected_answer": "去了洱海生态廊道，吃了乳扇",
+      "expected_date": "2021-05-21T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年6月那次大理旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-10-2",
+      "expected_answer": "去了喜洲古镇，吃了饵丝",
+      "expected_date": "2021-06-29T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年8月那次大理旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-10-3",
+      "expected_answer": "去了苍山，吃了酸辣鱼",
+      "expected_date": "2021-08-07T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年9月那次大理旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-10-4",
+      "expected_answer": "去了双廊，吃了喜洲粑粑",
+      "expected_date": "2021-09-15T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年10月那次泉州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-11-1",
+      "expected_answer": "去了开元寺，吃了面线糊",
+      "expected_date": "2021-10-24T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2021年12月那次泉州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-11-2",
+      "expected_answer": "去了西街，吃了土笋冻",
+      "expected_date": "2021-12-02T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年1月那次泉州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-11-3",
+      "expected_answer": "去了蟳埔村，吃了姜母鸭",
+      "expected_date": "2022-01-10T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年2月那次泉州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-11-4",
+      "expected_answer": "去了洛阳桥，吃了四果汤",
+      "expected_date": "2022-02-18T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年3月那次广州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-12-1",
+      "expected_answer": "去了沙面，吃了虾饺",
+      "expected_date": "2022-03-29T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年5月那次广州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-12-2",
+      "expected_answer": "去了广东省博物馆，吃了艇仔粥",
+      "expected_date": "2022-05-07T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年6月那次广州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-12-3",
+      "expected_answer": "去了永庆坊，吃了云吞面",
+      "expected_date": "2022-06-15T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年7月那次广州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-12-4",
+      "expected_answer": "去了海心桥，吃了双皮奶",
+      "expected_date": "2022-07-24T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年9月那次北京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-13-1",
+      "expected_answer": "去了景山公园，吃了炸酱面",
+      "expected_date": "2022-09-01T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年10月那次北京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-13-2",
+      "expected_answer": "去了国家博物馆，吃了铜锅涮肉",
+      "expected_date": "2022-10-10T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年11月那次北京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-13-3",
+      "expected_answer": "去了颐和园，吃了豆汁焦圈",
+      "expected_date": "2022-11-18T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2022年12月那次北京旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-13-4",
+      "expected_answer": "去了五道营胡同，吃了驴打滚",
+      "expected_date": "2022-12-27T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年2月那次上海旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-14-1",
+      "expected_answer": "去了武康路，吃了生煎",
+      "expected_date": "2023-02-04T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年3月那次上海旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-14-2",
+      "expected_answer": "去了西岸美术馆，吃了葱油拌面",
+      "expected_date": "2023-03-15T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年4月那次上海旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-14-3",
+      "expected_answer": "去了外滩，吃了排骨年糕",
+      "expected_date": "2023-04-23T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年6月那次上海旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-14-4",
+      "expected_answer": "去了共青森林公园，吃了鲜肉月饼",
+      "expected_date": "2023-06-01T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年7月那次昆明旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-15-1",
+      "expected_answer": "去了翠湖，吃了过桥米线",
+      "expected_date": "2023-07-10T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年8月那次昆明旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-15-2",
+      "expected_answer": "去了云南省博物馆，吃了鲜花饼",
+      "expected_date": "2023-08-18T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年9月那次昆明旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-15-3",
+      "expected_answer": "去了斗南花市，吃了汽锅鸡",
+      "expected_date": "2023-09-26T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年11月那次昆明旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-15-4",
+      "expected_answer": "去了西山，吃了烧饵块",
+      "expected_date": "2023-11-04T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2023年12月那次福州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-16-1",
+      "expected_answer": "去了烟台山，吃了鱼丸",
+      "expected_date": "2023-12-13T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年1月那次福州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-16-2",
+      "expected_answer": "去了三坊七巷，吃了肉燕",
+      "expected_date": "2024-01-21T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年2月那次福州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-16-3",
+      "expected_answer": "去了鼓山，吃了芋泥",
+      "expected_date": "2024-02-29T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年4月那次福州旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-16-4",
+      "expected_answer": "去了上下杭，吃了锅边糊",
+      "expected_date": "2024-04-08T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年5月那次天津旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-17-1",
+      "expected_answer": "去了五大道，吃了煎饼果子",
+      "expected_date": "2024-05-17T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年6月那次天津旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-17-2",
+      "expected_answer": "去了北宁公园，吃了锅巴菜",
+      "expected_date": "2024-06-25T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年8月那次天津旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-17-3",
+      "expected_answer": "去了意式风情区，吃了熟梨糕",
+      "expected_date": "2024-08-03T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年9月那次天津旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-17-4",
+      "expected_answer": "去了天津博物馆，吃了耳朵眼炸糕",
+      "expected_date": "2024-09-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年10月那次洛阳旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-18-1",
+      "expected_answer": "去了龙门石窟，吃了牛肉汤",
+      "expected_date": "2024-10-20T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2024年11月那次洛阳旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-18-2",
+      "expected_answer": "去了隋唐城遗址植物园，吃了浆面条",
+      "expected_date": "2024-11-28T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2025年1月那次洛阳旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-18-3",
+      "expected_answer": "去了洛阳博物馆，吃了牡丹燕菜",
+      "expected_date": "2025-01-06T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2025年2月那次洛阳旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-18-4",
+      "expected_answer": "去了白马寺，吃了不翻汤",
+      "expected_date": "2025-02-14T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2025年3月那次桂林旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-19-1",
+      "expected_answer": "去了象鼻山，吃了桂林米粉",
+      "expected_date": "2025-03-25T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2025年5月那次桂林旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-19-2",
+      "expected_answer": "去了遇龙河，吃了油茶",
+      "expected_date": "2025-05-03T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2025年6月那次桂林旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-19-3",
+      "expected_answer": "去了龙脊梯田，吃了荔浦芋扣肉",
+      "expected_date": "2025-06-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "2025年7月那次桂林旅行去了哪个景点，晚饭吃了什么？",
+      "expected_source_id": "trip-19-4",
+      "expected_answer": "去了东西巷，吃了马蹄糕",
+      "expected_date": "2025-07-20T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "development"
+    },
+    {
+      "question": "现在关于咖啡甜度应该按什么偏好安排？",
+      "expected_source_id": "pref-00-v2",
+      "expected_answer": "无糖燕麦拿铁",
+      "expected_date": "2019-03-04T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于火锅辣度应该按什么偏好安排？",
+      "expected_source_id": "pref-01-v2",
+      "expected_answer": "微辣",
+      "expected_date": "2019-05-18T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于早餐饮品应该按什么偏好安排？",
+      "expected_source_id": "pref-02-v2",
+      "expected_answer": "热牛奶",
+      "expected_date": "2019-08-01T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于电影类型应该按什么偏好安排？",
+      "expected_source_id": "pref-03-v2",
+      "expected_answer": "纪录片",
+      "expected_date": "2019-10-15T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于周末运动应该按什么偏好安排？",
+      "expected_source_id": "pref-04-v2",
+      "expected_answer": "骑行",
+      "expected_date": "2019-12-29T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于座位位置应该按什么偏好安排？",
+      "expected_source_id": "pref-05-v2",
+      "expected_answer": "靠过道",
+      "expected_date": "2019-10-15T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于蛋糕口味应该按什么偏好安排？",
+      "expected_source_id": "pref-06-v2",
+      "expected_answer": "海盐芝士",
+      "expected_date": "2019-12-29T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于旅行节奏应该按什么偏好安排？",
+      "expected_source_id": "pref-07-v2",
+      "expected_answer": "每天只排两个地方",
+      "expected_date": "2020-03-13T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于晚餐主食应该按什么偏好安排？",
+      "expected_source_id": "pref-08-v2",
+      "expected_answer": "杂粮饭",
+      "expected_date": "2020-05-27T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于奶茶配料应该按什么偏好安排？",
+      "expected_source_id": "pref-09-v2",
+      "expected_answer": "不加小料",
+      "expected_date": "2020-08-10T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于音乐风格应该按什么偏好安排？",
+      "expected_source_id": "pref-10-v2",
+      "expected_answer": "轻爵士",
+      "expected_date": "2020-05-27T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于阅读类型应该按什么偏好安排？",
+      "expected_source_id": "pref-11-v2",
+      "expected_answer": "人物传记",
+      "expected_date": "2020-08-10T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于拍照风格应该按什么偏好安排？",
+      "expected_source_id": "pref-12-v2",
+      "expected_answer": "自然抓拍",
+      "expected_date": "2020-10-24T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于散步时间应该按什么偏好安排？",
+      "expected_source_id": "pref-13-v2",
+      "expected_answer": "清晨",
+      "expected_date": "2021-01-07T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于住宿类型应该按什么偏好安排？",
+      "expected_source_id": "pref-14-v2",
+      "expected_answer": "安静民宿",
+      "expected_date": "2021-03-23T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于交通方式应该按什么偏好安排？",
+      "expected_source_id": "pref-15-v2",
+      "expected_answer": "地铁优先",
+      "expected_date": "2021-01-07T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于花的种类应该按什么偏好安排？",
+      "expected_source_id": "pref-16-v2",
+      "expected_answer": "洋桔梗",
+      "expected_date": "2021-03-23T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于香味偏好应该按什么偏好安排？",
+      "expected_source_id": "pref-17-v2",
+      "expected_answer": "柑橘香",
+      "expected_date": "2021-06-06T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于家居颜色应该按什么偏好安排？",
+      "expected_source_id": "pref-18-v2",
+      "expected_answer": "原木色",
+      "expected_date": "2021-08-20T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于甜品甜度应该按什么偏好安排？",
+      "expected_source_id": "pref-19-v2",
+      "expected_answer": "三分甜",
+      "expected_date": "2021-11-03T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于面条口感应该按什么偏好安排？",
+      "expected_source_id": "pref-20-v2",
+      "expected_answer": "有嚼劲",
+      "expected_date": "2021-08-20T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于旅行纪念品应该按什么偏好安排？",
+      "expected_source_id": "pref-21-v2",
+      "expected_answer": "当地明信片",
+      "expected_date": "2021-11-03T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于雨天活动应该按什么偏好安排？",
+      "expected_source_id": "pref-22-v2",
+      "expected_answer": "在家做饭",
+      "expected_date": "2022-01-17T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于约会预算应该按什么偏好安排？",
+      "expected_source_id": "pref-23-v2",
+      "expected_answer": "三百元以内",
+      "expected_date": "2022-04-02T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于宠物选择应该按什么偏好安排？",
+      "expected_source_id": "pref-24-v2",
+      "expected_answer": "领养橘猫",
+      "expected_date": "2022-06-16T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于夜宵选择应该按什么偏好安排？",
+      "expected_source_id": "pref-25-v2",
+      "expected_answer": "清汤馄饨",
+      "expected_date": "2022-04-02T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于水果偏好应该按什么偏好安排？",
+      "expected_source_id": "pref-26-v2",
+      "expected_answer": "蓝莓",
+      "expected_date": "2022-06-16T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于零食口味应该按什么偏好安排？",
+      "expected_source_id": "pref-27-v2",
+      "expected_answer": "海盐",
+      "expected_date": "2022-08-30T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于礼物类型应该按什么偏好安排？",
+      "expected_source_id": "pref-28-v2",
+      "expected_answer": "手写纪念册",
+      "expected_date": "2022-11-13T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于看展类型应该按什么偏好安排？",
+      "expected_source_id": "pref-29-v2",
+      "expected_answer": "历史文物",
+      "expected_date": "2023-01-27T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于手机铃声应该按什么偏好安排？",
+      "expected_source_id": "pref-30-v2",
+      "expected_answer": "静音震动",
+      "expected_date": "2022-11-13T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于枕头高度应该按什么偏好安排？",
+      "expected_source_id": "pref-31-v2",
+      "expected_answer": "低枕",
+      "expected_date": "2023-01-27T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于空调温度应该按什么偏好安排？",
+      "expected_source_id": "pref-32-v2",
+      "expected_answer": "二十六度",
+      "expected_date": "2023-04-12T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于做饭分工应该按什么偏好安排？",
+      "expected_source_id": "pref-33-v2",
+      "expected_answer": "一人做饭一人洗碗",
+      "expected_date": "2023-06-26T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于收纳方式应该按什么偏好安排？",
+      "expected_source_id": "pref-34-v2",
+      "expected_answer": "带门柜子",
+      "expected_date": "2023-09-09T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于纪念日安排应该按什么偏好安排？",
+      "expected_source_id": "pref-35-v2",
+      "expected_answer": "一起做一顿饭",
+      "expected_date": "2023-06-26T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于通勤歌单应该按什么偏好安排？",
+      "expected_source_id": "pref-36-v2",
+      "expected_answer": "舒缓安静",
+      "expected_date": "2023-09-09T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于运动强度应该按什么偏好安排？",
+      "expected_source_id": "pref-37-v2",
+      "expected_answer": "轻量拉伸",
+      "expected_date": "2023-11-23T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于旅行箱大小应该按什么偏好安排？",
+      "expected_source_id": "pref-38-v2",
+      "expected_answer": "二十四寸",
+      "expected_date": "2024-02-06T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "现在关于聊天方式应该按什么偏好安排？",
+      "expected_source_id": "pref-39-v2",
+      "expected_answer": "冷静后再聊",
+      "expected_date": "2024-04-21T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去哈尔滨看雪”最后怎么样了？",
+      "expected_source_id": "plan-00-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-02-03T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去舟山看海”最后怎么样了？",
+      "expected_source_id": "plan-01-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-03-09T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“报名陶艺课”最后怎么样了？",
+      "expected_source_id": "plan-02-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-04-12T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“参加城市夜跑”最后怎么样了？",
+      "expected_source_id": "plan-03-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-05-16T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“周末露营”最后怎么样了？",
+      "expected_source_id": "plan-04-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-06-07T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去郊区采摘”最后怎么样了？",
+      "expected_source_id": "plan-05-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-07-11T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“看草莓音乐节”最后怎么样了？",
+      "expected_source_id": "plan-06-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-08-14T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“订温泉酒店”最后怎么样了？",
+      "expected_source_id": "plan-07-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-09-17T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“拍周年写真”最后怎么样了？",
+      "expected_source_id": "plan-08-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-10-09T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“领养一只猫”最后怎么样了？",
+      "expected_source_id": "plan-09-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-11-12T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“学习双人舞”最后怎么样了？",
+      "expected_source_id": "plan-10-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-12-16T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去天文馆”最后怎么样了？",
+      "expected_source_id": "plan-11-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2022-01-19T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“参加烘焙课”最后怎么样了？",
+      "expected_source_id": "plan-12-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2022-02-10T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“坐夜游轮船”最后怎么样了？",
+      "expected_source_id": "plan-13-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2022-03-16T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去看话剧”最后怎么样了？",
+      "expected_source_id": "plan-14-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2022-04-19T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“骑行环湖”最后怎么样了？",
+      "expected_source_id": "plan-15-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2022-05-23T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“整理旧照片”最后怎么样了？",
+      "expected_source_id": "plan-16-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2022-06-14T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“重新布置书房”最后怎么样了？",
+      "expected_source_id": "plan-17-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2022-07-18T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去植物园拍花”最后怎么样了？",
+      "expected_source_id": "plan-18-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2022-08-21T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“参加读书会”最后怎么样了？",
+      "expected_source_id": "plan-19-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2022-09-24T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“安排家庭聚餐”最后怎么样了？",
+      "expected_source_id": "plan-20-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2022-10-16T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去海洋馆”最后怎么样了？",
+      "expected_source_id": "plan-21-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2022-11-19T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“学习做咖啡”最后怎么样了？",
+      "expected_source_id": "plan-22-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2022-12-23T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“周末爬山”最后怎么样了？",
+      "expected_source_id": "plan-23-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2023-01-26T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去古镇住一晚”最后怎么样了？",
+      "expected_source_id": "plan-24-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2023-02-17T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“看日出”最后怎么样了？",
+      "expected_source_id": "plan-25-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2023-03-23T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“参加手作市集”最后怎么样了？",
+      "expected_source_id": "plan-26-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2023-04-26T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去滑雪”最后怎么样了？",
+      "expected_source_id": "plan-27-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2023-05-30T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“拍一支旅行短片”最后怎么样了？",
+      "expected_source_id": "plan-28-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2023-06-21T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“租车自驾”最后怎么样了？",
+      "expected_source_id": "plan-29-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2023-07-25T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去农场喂小羊”最后怎么样了？",
+      "expected_source_id": "plan-30-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2023-08-28T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“看一场篮球赛”最后怎么样了？",
+      "expected_source_id": "plan-31-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2023-10-01T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“参加公益活动”最后怎么样了？",
+      "expected_source_id": "plan-32-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2023-10-23T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去水族馆过生日”最后怎么样了？",
+      "expected_source_id": "plan-33-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2023-11-26T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“体验玻璃吹制”最后怎么样了？",
+      "expected_source_id": "plan-34-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2023-12-30T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“一起学游泳”最后怎么样了？",
+      "expected_source_id": "plan-35-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2024-02-02T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去郊外观星”最后怎么样了？",
+      "expected_source_id": "plan-36-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2024-02-24T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“坐高铁去邻城吃饭”最后怎么样了？",
+      "expected_source_id": "plan-37-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2024-03-29T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“参加桌游局”最后怎么样了？",
+      "expected_source_id": "plan-38-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2024-05-02T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "development"
+    },
+    {
+      "question": "原来安排的“去剧院听音乐会”最后怎么样了？",
+      "expected_source_id": "plan-39-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2024-06-05T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为忘记倒垃圾闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-00",
+      "expected_answer": "列了轮值表",
+      "expected_date": "2022-02-03T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为回消息太晚闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-01",
+      "expected_answer": "约定忙时发一个简短说明",
+      "expected_date": "2022-02-27T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为旅行预算超支闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-02",
+      "expected_answer": "单独建立旅行预算",
+      "expected_date": "2022-03-23T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为临时改变计划闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-03",
+      "expected_answer": "改计划前先问对方",
+      "expected_date": "2022-04-16T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为家务分配不均闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-04",
+      "expected_answer": "按房间重新分工",
+      "expected_date": "2022-05-10T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为约会迟到闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-05",
+      "expected_answer": "迟到超过十分钟就提前通知",
+      "expected_date": "2022-06-03T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为睡前一直看手机闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-06",
+      "expected_answer": "睡前半小时把手机放远",
+      "expected_date": "2022-06-27T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为没有提前说加班闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-07",
+      "expected_answer": "确定加班后马上发消息",
+      "expected_date": "2022-07-21T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为买东西没商量闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-08",
+      "expected_answer": "超过三百元的共同用品先商量",
+      "expected_date": "2022-08-14T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为周末安排太满闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-09",
+      "expected_answer": "每个周末只安排一件主要活动",
+      "expected_date": "2022-09-07T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为说话语气太急闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-10",
+      "expected_answer": "情绪上来先停十分钟",
+      "expected_date": "2022-10-01T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为忘记纪念日闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-11",
+      "expected_answer": "把重要日期加入共同提醒",
+      "expected_date": "2022-10-25T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为做饭口味太辣闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-12",
+      "expected_answer": "做饭前确认辣度",
+      "expected_date": "2022-11-18T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为没有及时收拾餐桌闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-13",
+      "expected_answer": "吃完饭一起收拾",
+      "expected_date": "2022-12-12T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为出门路线意见不同闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-14",
+      "expected_answer": "出门前一晚确认路线",
+      "expected_date": "2023-01-05T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为拍照等太久闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-15",
+      "expected_answer": "每次只选十张照片",
+      "expected_date": "2023-01-29T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为空调温度不一致闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-16",
+      "expected_answer": "睡觉时固定二十六度",
+      "expected_date": "2023-02-22T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为外卖点错了闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-17",
+      "expected_answer": "下单前互相确认",
+      "expected_date": "2023-03-18T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为抢着替对方做决定闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-18",
+      "expected_answer": "先表达需求再给建议",
+      "expected_date": "2023-04-11T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "准备搬家的那周因为玩游戏忘了时间闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-19",
+      "expected_answer": "设置游戏结束闹钟",
+      "expected_date": "2023-05-05T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为忘记倒垃圾闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-20",
+      "expected_answer": "列了轮值表",
+      "expected_date": "2023-05-29T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为回消息太晚闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-21",
+      "expected_answer": "约定忙时发一个简短说明",
+      "expected_date": "2023-06-22T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为旅行预算超支闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-22",
+      "expected_answer": "单独建立旅行预算",
+      "expected_date": "2023-07-16T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为临时改变计划闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-23",
+      "expected_answer": "改计划前先问对方",
+      "expected_date": "2023-08-09T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为家务分配不均闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-24",
+      "expected_answer": "按房间重新分工",
+      "expected_date": "2023-09-02T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为约会迟到闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-25",
+      "expected_answer": "迟到超过十分钟就提前通知",
+      "expected_date": "2023-09-26T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为睡前一直看手机闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-26",
+      "expected_answer": "睡前半小时把手机放远",
+      "expected_date": "2023-10-20T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为没有提前说加班闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-27",
+      "expected_answer": "确定加班后马上发消息",
+      "expected_date": "2023-11-13T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为买东西没商量闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-28",
+      "expected_answer": "超过三百元的共同用品先商量",
+      "expected_date": "2023-12-07T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为周末安排太满闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-29",
+      "expected_answer": "每个周末只安排一件主要活动",
+      "expected_date": "2023-12-31T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为说话语气太急闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-30",
+      "expected_answer": "情绪上来先停十分钟",
+      "expected_date": "2024-01-24T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为忘记纪念日闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-31",
+      "expected_answer": "把重要日期加入共同提醒",
+      "expected_date": "2024-02-17T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为做饭口味太辣闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-32",
+      "expected_answer": "做饭前确认辣度",
+      "expected_date": "2024-03-12T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为没有及时收拾餐桌闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-33",
+      "expected_answer": "吃完饭一起收拾",
+      "expected_date": "2024-04-05T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为出门路线意见不同闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-34",
+      "expected_answer": "出门前一晚确认路线",
+      "expected_date": "2024-04-29T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为拍照等太久闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-35",
+      "expected_answer": "每次只选十张照片",
+      "expected_date": "2024-05-23T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为空调温度不一致闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-36",
+      "expected_answer": "睡觉时固定二十六度",
+      "expected_date": "2024-06-16T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为外卖点错了闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-37",
+      "expected_answer": "下单前互相确认",
+      "expected_date": "2024-07-10T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为抢着替对方做决定闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-38",
+      "expected_answer": "先表达需求再给建议",
+      "expected_date": "2024-08-03T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "连续下雨的周末因为玩游戏忘了时间闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-39",
+      "expected_answer": "设置游戏结束闹钟",
+      "expected_date": "2024-08-27T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为忘记倒垃圾闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-40",
+      "expected_answer": "列了轮值表",
+      "expected_date": "2024-09-20T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为回消息太晚闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-41",
+      "expected_answer": "约定忙时发一个简短说明",
+      "expected_date": "2024-10-14T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为旅行预算超支闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-42",
+      "expected_answer": "单独建立旅行预算",
+      "expected_date": "2024-11-07T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为临时改变计划闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-43",
+      "expected_answer": "改计划前先问对方",
+      "expected_date": "2024-12-01T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为家务分配不均闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-44",
+      "expected_answer": "按房间重新分工",
+      "expected_date": "2024-12-25T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为约会迟到闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-45",
+      "expected_answer": "迟到超过十分钟就提前通知",
+      "expected_date": "2025-01-18T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为睡前一直看手机闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-46",
+      "expected_answer": "睡前半小时把手机放远",
+      "expected_date": "2025-02-11T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为没有提前说加班闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-47",
+      "expected_answer": "确定加班后马上发消息",
+      "expected_date": "2025-03-07T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为买东西没商量闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-48",
+      "expected_answer": "超过三百元的共同用品先商量",
+      "expected_date": "2025-03-31T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为周末安排太满闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-49",
+      "expected_answer": "每个周末只安排一件主要活动",
+      "expected_date": "2025-04-24T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为说话语气太急闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-50",
+      "expected_answer": "情绪上来先停十分钟",
+      "expected_date": "2025-05-18T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为忘记纪念日闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-51",
+      "expected_answer": "把重要日期加入共同提醒",
+      "expected_date": "2025-06-11T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为做饭口味太辣闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-52",
+      "expected_answer": "做饭前确认辣度",
+      "expected_date": "2025-07-05T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为没有及时收拾餐桌闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-53",
+      "expected_answer": "吃完饭一起收拾",
+      "expected_date": "2025-07-29T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为出门路线意见不同闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-54",
+      "expected_answer": "出门前一晚确认路线",
+      "expected_date": "2025-08-22T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为拍照等太久闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-55",
+      "expected_answer": "每次只选十张照片",
+      "expected_date": "2025-09-15T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为空调温度不一致闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-56",
+      "expected_answer": "睡觉时固定二十六度",
+      "expected_date": "2025-10-09T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为外卖点错了闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-57",
+      "expected_answer": "下单前互相确认",
+      "expected_date": "2025-11-02T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为抢着替对方做决定闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-58",
+      "expected_answer": "先表达需求再给建议",
+      "expected_date": "2025-11-26T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "项目收尾的月底因为玩游戏忘了时间闹别扭后，两个人定了什么解决办法？",
+      "expected_source_id": "conflict-59",
+      "expected_answer": "设置游戏结束闹钟",
+      "expected_date": "2025-12-20T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "development"
+    },
+    {
+      "question": "2020年3月那次生日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-00",
+      "expected_answer": "拍立得，藏在书架第二层",
+      "expected_date": "2020-03-07T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年4月那次生日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-01",
+      "expected_answer": "手写相册，刻了当天日期",
+      "expected_date": "2020-04-09T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年5月那次生日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-02",
+      "expected_answer": "银色书签，提前一周准备",
+      "expected_date": "2020-05-12T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年6月那次生日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-03",
+      "expected_answer": "降噪耳机，是在晚饭后送的",
+      "expected_date": "2020-06-14T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年7月那次生日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-04",
+      "expected_answer": "蓝色围巾，附了一张手写卡片",
+      "expected_date": "2020-07-17T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年8月那次生日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-05",
+      "expected_answer": "陶瓷马克杯，包装用了牛皮纸",
+      "expected_date": "2020-08-19T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年9月那次纪念日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-06",
+      "expected_answer": "拍立得，藏在书架第二层",
+      "expected_date": "2020-09-21T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年10月那次纪念日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-07",
+      "expected_answer": "手写相册，刻了当天日期",
+      "expected_date": "2020-10-24T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年11月那次纪念日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-08",
+      "expected_answer": "银色书签，提前一周准备",
+      "expected_date": "2020-11-26T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2020年12月那次纪念日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-09",
+      "expected_answer": "降噪耳机，是在晚饭后送的",
+      "expected_date": "2020-12-29T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年1月那次纪念日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-10",
+      "expected_answer": "蓝色围巾，附了一张手写卡片",
+      "expected_date": "2021-01-31T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年3月那次纪念日收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-11",
+      "expected_answer": "陶瓷马克杯，包装用了牛皮纸",
+      "expected_date": "2021-03-05T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年4月那次升职收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-12",
+      "expected_answer": "拍立得，藏在书架第二层",
+      "expected_date": "2021-04-07T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年5月那次升职收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-13",
+      "expected_answer": "手写相册，刻了当天日期",
+      "expected_date": "2021-05-10T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年6月那次升职收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-14",
+      "expected_answer": "银色书签，提前一周准备",
+      "expected_date": "2021-06-12T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年7月那次升职收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-15",
+      "expected_answer": "降噪耳机，是在晚饭后送的",
+      "expected_date": "2021-07-15T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年8月那次升职收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-16",
+      "expected_answer": "蓝色围巾，附了一张手写卡片",
+      "expected_date": "2021-08-17T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年9月那次升职收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-17",
+      "expected_answer": "陶瓷马克杯，包装用了牛皮纸",
+      "expected_date": "2021-09-19T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年10月那次搬家收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-18",
+      "expected_answer": "拍立得，藏在书架第二层",
+      "expected_date": "2021-10-22T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2021年11月那次搬家收到的礼物是什么，有什么特别细节？",
+      "expected_source_id": "fact-19",
+      "expected_answer": "手写相册，刻了当天日期",
+      "expected_date": "2021-11-24T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "development"
+    },
+    {
+      "question": "2017年2月那一趟武汉旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-00-1",
+      "expected_answer": "去了东湖绿道，吃了热干面",
+      "expected_date": "2017-02-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年3月那一趟武汉旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-00-2",
+      "expected_answer": "去了湖北省博物馆，吃了豆皮",
+      "expected_date": "2017-03-22T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年4月那一趟武汉旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-00-3",
+      "expected_answer": "去了昙华林，吃了藕汤",
+      "expected_date": "2017-04-30T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年6月那一趟武汉旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-00-4",
+      "expected_answer": "去了江汉路，吃了糊汤粉",
+      "expected_date": "2017-06-08T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年7月那一趟重庆旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-01-1",
+      "expected_answer": "去了洪崖洞，吃了小面",
+      "expected_date": "2017-07-17T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年8月那一趟重庆旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-01-2",
+      "expected_answer": "去了南山一棵树，吃了酸辣粉",
+      "expected_date": "2017-08-25T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年10月那一趟重庆旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-01-3",
+      "expected_answer": "去了李子坝，吃了豆花饭",
+      "expected_date": "2017-10-03T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年11月那一趟重庆旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-01-4",
+      "expected_answer": "去了鹅岭二厂，吃了山城汤圆",
+      "expected_date": "2017-11-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2017年12月那一趟南京旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-02-1",
+      "expected_answer": "去了明孝陵，吃了鸭血粉丝汤",
+      "expected_date": "2017-12-20T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年1月那一趟南京旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-02-2",
+      "expected_answer": "去了颐和路，吃了盐水鸭",
+      "expected_date": "2018-01-28T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年3月那一趟南京旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-02-3",
+      "expected_answer": "去了南京博物院，吃了梅花糕",
+      "expected_date": "2018-03-08T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年4月那一趟南京旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-02-4",
+      "expected_answer": "去了玄武湖，吃了皮肚面",
+      "expected_date": "2018-04-16T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年5月那一趟杭州旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-03-1",
+      "expected_answer": "去了北山街，吃了片儿川",
+      "expected_date": "2018-05-25T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年7月那一趟杭州旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-03-2",
+      "expected_answer": "去了灵隐寺，吃了定胜糕",
+      "expected_date": "2018-07-03T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年8月那一趟杭州旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-03-3",
+      "expected_answer": "去了九溪，吃了龙井虾仁",
+      "expected_date": "2018-08-11T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年9月那一趟杭州旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-03-4",
+      "expected_answer": "去了良渚博物院，吃了葱包桧",
+      "expected_date": "2018-09-19T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年10月那一趟成都旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-04-1",
+      "expected_answer": "去了人民公园，吃了钟水饺",
+      "expected_date": "2018-10-28T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2018年12月那一趟成都旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-04-2",
+      "expected_answer": "去了杜甫草堂，吃了甜水面",
+      "expected_date": "2018-12-06T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2019年1月那一趟成都旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-04-3",
+      "expected_answer": "去了望平街，吃了兔头",
+      "expected_date": "2019-01-14T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "2019年2月那一趟成都旅行具体逛了哪里，又吃了哪种当地食物？",
+      "expected_source_id": "trip-04-4",
+      "expected_answer": "去了青城山，吃了蛋烘糕",
+      "expected_date": "2019-02-22T10:00:00",
+      "expected_state": "completed",
+      "group": "similar_trip",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于咖啡甜度最终选择是什么？",
+      "expected_source_id": "pref-00-v2",
+      "expected_answer": "无糖燕麦拿铁",
+      "expected_date": "2019-03-04T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于火锅辣度最终选择是什么？",
+      "expected_source_id": "pref-01-v2",
+      "expected_answer": "微辣",
+      "expected_date": "2019-05-18T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于早餐饮品最终选择是什么？",
+      "expected_source_id": "pref-02-v2",
+      "expected_answer": "热牛奶",
+      "expected_date": "2019-08-01T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于电影类型最终选择是什么？",
+      "expected_source_id": "pref-03-v2",
+      "expected_answer": "纪录片",
+      "expected_date": "2019-10-15T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于周末运动最终选择是什么？",
+      "expected_source_id": "pref-04-v2",
+      "expected_answer": "骑行",
+      "expected_date": "2019-12-29T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于座位位置最终选择是什么？",
+      "expected_source_id": "pref-05-v2",
+      "expected_answer": "靠过道",
+      "expected_date": "2019-10-15T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于蛋糕口味最终选择是什么？",
+      "expected_source_id": "pref-06-v2",
+      "expected_answer": "海盐芝士",
+      "expected_date": "2019-12-29T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于旅行节奏最终选择是什么？",
+      "expected_source_id": "pref-07-v2",
+      "expected_answer": "每天只排两个地方",
+      "expected_date": "2020-03-13T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于晚餐主食最终选择是什么？",
+      "expected_source_id": "pref-08-v2",
+      "expected_answer": "杂粮饭",
+      "expected_date": "2020-05-27T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "这个偏好改过一次，目前关于奶茶配料最终选择是什么？",
+      "expected_source_id": "pref-09-v2",
+      "expected_answer": "不加小料",
+      "expected_date": "2020-08-10T20:00:00",
+      "expected_state": "completed",
+      "group": "preference_change",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“去哈尔滨看雪”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-00-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-02-03T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“去舟山看海”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-01-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-03-09T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“报名陶艺课”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-02-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-04-12T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“参加城市夜跑”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-03-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-05-16T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“周末露营”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-04-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-06-07T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“去郊区采摘”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-05-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-07-11T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“看草莓音乐节”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-06-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-08-14T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“订温泉酒店”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-07-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-09-17T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“拍周年写真”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-08-v2",
+      "expected_answer": "已经取消，暂时没有新日期",
+      "expected_date": "2021-10-09T19:00:00",
+      "expected_state": "cancelled",
+      "group": "cancelled_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "之前提到的“领养一只猫”后来成行了吗，最终状态是什么？",
+      "expected_source_id": "plan-09-v2",
+      "expected_answer": "已经完成",
+      "expected_date": "2021-11-12T19:00:00",
+      "expected_state": "completed",
+      "group": "completed_plan",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为忘记倒垃圾发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-00",
+      "expected_answer": "列了轮值表",
+      "expected_date": "2022-02-03T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为回消息太晚发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-01",
+      "expected_answer": "约定忙时发一个简短说明",
+      "expected_date": "2022-02-27T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为旅行预算超支发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-02",
+      "expected_answer": "单独建立旅行预算",
+      "expected_date": "2022-03-23T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为临时改变计划发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-03",
+      "expected_answer": "改计划前先问对方",
+      "expected_date": "2022-04-16T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为家务分配不均发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-04",
+      "expected_answer": "按房间重新分工",
+      "expected_date": "2022-05-10T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为约会迟到发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-05",
+      "expected_answer": "迟到超过十分钟就提前通知",
+      "expected_date": "2022-06-03T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为睡前一直看手机发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-06",
+      "expected_answer": "睡前半小时把手机放远",
+      "expected_date": "2022-06-27T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为没有提前说加班发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-07",
+      "expected_answer": "确定加班后马上发消息",
+      "expected_date": "2022-07-21T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为买东西没商量发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-08",
+      "expected_answer": "超过三百元的共同用品先商量",
+      "expected_date": "2022-08-14T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "准备搬家的那周因为周末安排太满发生分歧后，最后用什么办法和好的？",
+      "expected_source_id": "conflict-09",
+      "expected_answer": "每个周末只安排一件主要活动",
+      "expected_date": "2022-09-07T21:00:00",
+      "expected_state": "completed",
+      "group": "conflict_reconciliation",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年3月那次生日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-00",
+      "expected_answer": "拍立得，藏在书架第二层",
+      "expected_date": "2020-03-07T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年4月那次生日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-01",
+      "expected_answer": "手写相册，刻了当天日期",
+      "expected_date": "2020-04-09T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年5月那次生日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-02",
+      "expected_answer": "银色书签，提前一周准备",
+      "expected_date": "2020-05-12T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年6月那次生日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-03",
+      "expected_answer": "降噪耳机，是在晚饭后送的",
+      "expected_date": "2020-06-14T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年7月那次生日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-04",
+      "expected_answer": "蓝色围巾，附了一张手写卡片",
+      "expected_date": "2020-07-17T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年8月那次生日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-05",
+      "expected_answer": "陶瓷马克杯，包装用了牛皮纸",
+      "expected_date": "2020-08-19T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年9月那次纪念日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-06",
+      "expected_answer": "拍立得，藏在书架第二层",
+      "expected_date": "2020-09-21T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年10月那次纪念日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-07",
+      "expected_answer": "手写相册，刻了当天日期",
+      "expected_date": "2020-10-24T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年11月那次纪念日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-08",
+      "expected_answer": "银色书签，提前一周准备",
+      "expected_date": "2020-11-26T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    },
+    {
+      "question": "2020年12月那次纪念日对方送了什么，礼物上有什么值得记住的地方？",
+      "expected_source_id": "fact-09",
+      "expected_answer": "降噪耳机，是在晚饭后送的",
+      "expected_date": "2020-12-29T18:00:00",
+      "expected_state": "completed",
+      "group": "dated_fact",
+      "split": "holdout"
+    }
+  ],
+  "negative": [
+    {
+      "question": "我们有没有一起去过冰岛参加火山徒步？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在冰岛体验过火山徒步？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在冰岛安排过火山徒步？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去冰岛火山徒步的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过巴黎参加塞纳河游船？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在巴黎体验过塞纳河游船？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在巴黎安排过塞纳河游船？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去巴黎塞纳河游船的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过东京参加动漫展？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在东京体验过动漫展？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在东京安排过动漫展？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去东京动漫展的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过纽约参加跨年倒数？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在纽约体验过跨年倒数？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在纽约安排过跨年倒数？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去纽约跨年倒数的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过悉尼参加冲浪课？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在悉尼体验过冲浪课？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在悉尼安排过冲浪课？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去悉尼冲浪课的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过开普敦参加跳伞？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在开普敦体验过跳伞？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在开普敦安排过跳伞？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去开普敦跳伞的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过芬兰参加驯鹿雪橇？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在芬兰体验过驯鹿雪橇？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在芬兰安排过驯鹿雪橇？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去芬兰驯鹿雪橇的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过秘鲁参加雨林探险？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在秘鲁体验过雨林探险？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在秘鲁安排过雨林探险？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去秘鲁雨林探险的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过瑞士参加滑翔伞？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在瑞士体验过滑翔伞？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在瑞士安排过滑翔伞？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去瑞士滑翔伞的细节。",
+      "split": "development"
+    },
+    {
+      "question": "我们有没有一起去过埃及参加沙漠露营？",
+      "split": "development"
+    },
+    {
+      "question": "哪一年我们在埃及体验过沙漠露营？",
+      "split": "development"
+    },
+    {
+      "question": "我记不清了，我们是不是曾在埃及安排过沙漠露营？",
+      "split": "development"
+    },
+    {
+      "question": "请回忆一下两个人去埃及沙漠露营的细节。",
+      "split": "development"
+    },
+    {
+      "question": "对方现在是不是最喜欢榴莲披萨？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们有没有约定每周日凌晨去游泳？",
+      "split": "holdout"
+    },
+    {
+      "question": "家里是否养过一只叫雪球的白色兔子？",
+      "split": "holdout"
+    },
+    {
+      "question": "对方是否对草莓严重过敏？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们是不是把结婚日期定在了2028年8月8日？",
+      "split": "holdout"
+    },
+    {
+      "question": "两个人是否共同买过一辆红色摩托车？",
+      "split": "holdout"
+    },
+    {
+      "question": "对方现在最喜欢的乐器是不是手风琴？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们有没有决定搬去海口长期生活？",
+      "split": "holdout"
+    },
+    {
+      "question": "去年生日是不是送过一架无人机？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们是否在冰箱门上贴了紫色星星作为暗号？",
+      "split": "holdout"
+    },
+    {
+      "question": "对方有没有明确说过永远不坐高铁？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们是否约定每个月存一万元旅行基金？",
+      "split": "holdout"
+    },
+    {
+      "question": "第一次见面是不是在广州塔顶层？",
+      "split": "holdout"
+    },
+    {
+      "question": "两个人有没有一起参加过马拉松全程比赛？",
+      "split": "holdout"
+    },
+    {
+      "question": "对方是不是只喝加双份糖浆的美式咖啡？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们是否领养过一只名叫布丁的柯基？",
+      "split": "holdout"
+    },
+    {
+      "question": "纪念日礼物是不是一台绿色唱片机？",
+      "split": "holdout"
+    },
+    {
+      "question": "两个人有没有在敦煌拍过婚纱照？",
+      "split": "holdout"
+    },
+    {
+      "question": "是否因为购买钢琴发生过争吵并决定退货？",
+      "split": "holdout"
+    },
+    {
+      "question": "我们有没有取消过去南极看企鹅的计划？",
+      "split": "holdout"
+    }
+  ]
+}

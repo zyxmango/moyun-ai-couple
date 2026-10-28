@@ -1,0 +1,1854 @@
+{
+  "cases": [
+    {
+      "id": "event-00",
+      "kind": "event",
+      "date": "2019-01-06 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年01月06日我们到武汉啦。",
+        "下午只去了东湖绿道，在那里慢慢散步拍照。",
+        "晚上吃的是藕汤，我觉得很香。"
+      ],
+      "required_memory": [
+        "武汉",
+        "东湖绿道",
+        "藕汤"
+      ],
+      "required_answer": [
+        "东湖绿道",
+        "藕汤"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年1月去武汉时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        7,
+        10,
+        25
+      ]
+    },
+    {
+      "id": "event-01",
+      "kind": "event",
+      "date": "2019-02-12 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年02月12日我们到重庆啦。",
+        "下午只去了鹅岭二厂，在那里慢慢散步拍照。",
+        "晚上吃的是小面，我觉得很香。"
+      ],
+      "required_memory": [
+        "重庆",
+        "鹅岭二厂",
+        "小面"
+      ],
+      "required_answer": [
+        "鹅岭二厂",
+        "小面"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年2月去重庆时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        42,
+        49,
+        55
+      ]
+    },
+    {
+      "id": "event-02",
+      "kind": "event",
+      "date": "2019-03-21 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年03月21日我们到南京啦。",
+        "下午只去了颐和路，在那里慢慢散步拍照。",
+        "晚上吃的是盐水鸭，我觉得很香。"
+      ],
+      "required_memory": [
+        "南京",
+        "颐和路",
+        "盐水鸭"
+      ],
+      "required_answer": [
+        "颐和路",
+        "盐水鸭"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年3月去南京时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        66,
+        69,
+        73
+      ]
+    },
+    {
+      "id": "event-03",
+      "kind": "event",
+      "date": "2019-04-27 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年04月27日我们到杭州啦。",
+        "下午只去了九溪，在那里慢慢散步拍照。",
+        "晚上吃的是片儿川，我觉得很香。"
+      ],
+      "required_memory": [
+        "杭州",
+        "九溪",
+        "片儿川"
+      ],
+      "required_answer": [
+        "九溪",
+        "片儿川"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年4月去杭州时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        96,
+        109,
+        111
+      ]
+    },
+    {
+      "id": "event-04",
+      "kind": "event",
+      "date": "2019-06-03 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年06月03日我们到成都啦。",
+        "下午只去了杜甫草堂，在那里慢慢散步拍照。",
+        "晚上吃的是甜水面，我觉得很香。"
+      ],
+      "required_memory": [
+        "成都",
+        "杜甫草堂",
+        "甜水面"
+      ],
+      "required_answer": [
+        "杜甫草堂",
+        "甜水面"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年6月去成都时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        127,
+        139,
+        143
+      ]
+    },
+    {
+      "id": "event-05",
+      "kind": "event",
+      "date": "2019-07-10 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年07月10日我们到厦门啦。",
+        "下午只去了沙坡尾，在那里慢慢散步拍照。",
+        "晚上吃的是花生汤，我觉得很香。"
+      ],
+      "required_memory": [
+        "厦门",
+        "沙坡尾",
+        "花生汤"
+      ],
+      "required_answer": [
+        "沙坡尾",
+        "花生汤"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年7月去厦门时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        158,
+        163,
+        169
+      ]
+    },
+    {
+      "id": "event-06",
+      "kind": "event",
+      "date": "2019-08-16 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年08月16日我们到青岛啦。",
+        "下午只去了小麦岛，在那里慢慢散步拍照。",
+        "晚上吃的是鲅鱼水饺，我觉得很香。"
+      ],
+      "required_memory": [
+        "青岛",
+        "小麦岛",
+        "鲅鱼水饺"
+      ],
+      "required_answer": [
+        "小麦岛",
+        "鲅鱼水饺"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年8月去青岛时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        192,
+        194,
+        201
+      ]
+    },
+    {
+      "id": "event-07",
+      "kind": "event",
+      "date": "2019-09-22 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年09月22日我们到苏州啦。",
+        "下午只去了虎丘，在那里慢慢散步拍照。",
+        "晚上吃的是桂花糖粥，我觉得很香。"
+      ],
+      "required_memory": [
+        "苏州",
+        "虎丘",
+        "桂花糖粥"
+      ],
+      "required_answer": [
+        "虎丘",
+        "桂花糖粥"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年9月去苏州时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        221,
+        222,
+        228
+      ]
+    },
+    {
+      "id": "event-08",
+      "kind": "event",
+      "date": "2019-10-29 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年10月29日我们到长沙啦。",
+        "下午只去了梅溪湖，在那里慢慢散步拍照。",
+        "晚上吃的是米粉，我觉得很香。"
+      ],
+      "required_memory": [
+        "长沙",
+        "梅溪湖",
+        "米粉"
+      ],
+      "required_answer": [
+        "梅溪湖",
+        "米粉"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年10月去长沙时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        256,
+        259,
+        261
+      ]
+    },
+    {
+      "id": "event-09",
+      "kind": "event",
+      "date": "2019-12-05 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2019年12月05日我们到西安啦。",
+        "下午只去了城墙，在那里慢慢散步拍照。",
+        "晚上吃的是甑糕，我觉得很香。"
+      ],
+      "required_memory": [
+        "西安",
+        "城墙",
+        "甑糕"
+      ],
+      "required_answer": [
+        "城墙",
+        "甑糕"
+      ],
+      "forbidden_answer": [],
+      "question": "2019年12月去西安时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        280,
+        284,
+        287
+      ]
+    },
+    {
+      "id": "event-10",
+      "kind": "event",
+      "date": "2020-01-11 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2020年01月11日我们到大理啦。",
+        "下午只去了喜洲古镇，在那里慢慢散步拍照。",
+        "晚上吃的是乳扇，我觉得很香。"
+      ],
+      "required_memory": [
+        "大理",
+        "喜洲古镇",
+        "乳扇"
+      ],
+      "required_answer": [
+        "喜洲古镇",
+        "乳扇"
+      ],
+      "forbidden_answer": [],
+      "question": "2020年1月去大理时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        306,
+        308,
+        316
+      ]
+    },
+    {
+      "id": "event-11",
+      "kind": "event",
+      "date": "2020-02-17 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2020年02月17日我们到泉州啦。",
+        "下午只去了蟳埔村，在那里慢慢散步拍照。",
+        "晚上吃的是四果汤，我觉得很香。"
+      ],
+      "required_memory": [
+        "泉州",
+        "蟳埔村",
+        "四果汤"
+      ],
+      "required_answer": [
+        "蟳埔村",
+        "四果汤"
+      ],
+      "forbidden_answer": [],
+      "question": "2020年2月去泉州时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        339,
+        342,
+        344
+      ]
+    },
+    {
+      "id": "event-12",
+      "kind": "event",
+      "date": "2020-03-25 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2020年03月25日我们到广州啦。",
+        "下午只去了永庆坊，在那里慢慢散步拍照。",
+        "晚上吃的是艇仔粥，我觉得很香。"
+      ],
+      "required_memory": [
+        "广州",
+        "永庆坊",
+        "艇仔粥"
+      ],
+      "required_answer": [
+        "永庆坊",
+        "艇仔粥"
+      ],
+      "forbidden_answer": [],
+      "question": "2020年3月去广州时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        375,
+        383,
+        384
+      ]
+    },
+    {
+      "id": "event-13",
+      "kind": "event",
+      "date": "2020-05-01 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2020年05月01日我们到北京啦。",
+        "下午只去了景山公园，在那里慢慢散步拍照。",
+        "晚上吃的是炸酱面，我觉得很香。"
+      ],
+      "required_memory": [
+        "北京",
+        "景山公园",
+        "炸酱面"
+      ],
+      "required_answer": [
+        "景山公园",
+        "炸酱面"
+      ],
+      "forbidden_answer": [],
+      "question": "2020年5月去北京时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        398,
+        402,
+        404
+      ]
+    },
+    {
+      "id": "event-14",
+      "kind": "event",
+      "date": "2020-06-07 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2020年06月07日我们到上海啦。",
+        "下午只去了西岸美术馆，在那里慢慢散步拍照。",
+        "晚上吃的是排骨年糕，我觉得很香。"
+      ],
+      "required_memory": [
+        "上海",
+        "西岸美术馆",
+        "排骨年糕"
+      ],
+      "required_answer": [
+        "西岸美术馆",
+        "排骨年糕"
+      ],
+      "forbidden_answer": [],
+      "question": "2020年6月去上海时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        430,
+        435,
+        442
+      ]
+    },
+    {
+      "id": "event-15",
+      "kind": "event",
+      "date": "2020-07-14 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "2020年07月14日我们到昆明啦。",
+        "下午只去了斗南花市，在那里慢慢散步拍照。",
+        "晚上吃的是烧饵块，我觉得很香。"
+      ],
+      "required_memory": [
+        "昆明",
+        "斗南花市",
+        "烧饵块"
+      ],
+      "required_answer": [
+        "斗南花市",
+        "烧饵块"
+      ],
+      "forbidden_answer": [],
+      "question": "2020年7月去昆明时逛了哪里，晚饭吃了什么？",
+      "evidence_ids": [
+        466,
+        467,
+        468
+      ]
+    },
+    {
+      "id": "preference-00",
+      "kind": "preference",
+      "date": "2020-08-20 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到咖啡甜度，我以前一直选半糖拿铁。",
+        "不过现在口味变了，以后不要再按半糖拿铁准备。",
+        "请记住我现在明确选择无糖燕麦拿铁。"
+      ],
+      "required_memory": [
+        "咖啡甜度",
+        "无糖燕麦拿铁"
+      ],
+      "required_answer": [
+        "无糖燕麦拿铁"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于咖啡甜度的偏好是什么？",
+      "evidence_ids": [
+        489,
+        498,
+        504
+      ]
+    },
+    {
+      "id": "preference-01",
+      "kind": "preference",
+      "date": "2020-09-26 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到火锅辣度，我以前一直选中辣。",
+        "不过现在口味变了，以后不要再按中辣准备。",
+        "请记住我现在明确选择微辣。"
+      ],
+      "required_memory": [
+        "火锅辣度",
+        "微辣"
+      ],
+      "required_answer": [
+        "微辣"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于火锅辣度的偏好是什么？",
+      "evidence_ids": [
+        526,
+        528,
+        534
+      ]
+    },
+    {
+      "id": "preference-02",
+      "kind": "preference",
+      "date": "2020-11-02 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到早餐饮品，我以前一直选豆浆。",
+        "不过现在口味变了，以后不要再按豆浆准备。",
+        "请记住我现在明确选择热牛奶。"
+      ],
+      "required_memory": [
+        "早餐饮品",
+        "热牛奶"
+      ],
+      "required_answer": [
+        "热牛奶"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于早餐饮品的偏好是什么？",
+      "evidence_ids": [
+        555,
+        557,
+        559
+      ]
+    },
+    {
+      "id": "preference-03",
+      "kind": "preference",
+      "date": "2020-12-09 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到电影类型，我以前一直选悬疑片。",
+        "不过现在口味变了，以后不要再按悬疑片准备。",
+        "请记住我现在明确选择纪录片。"
+      ],
+      "required_memory": [
+        "电影类型",
+        "纪录片"
+      ],
+      "required_answer": [
+        "纪录片"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于电影类型的偏好是什么？",
+      "evidence_ids": [
+        577,
+        580,
+        595
+      ]
+    },
+    {
+      "id": "preference-04",
+      "kind": "preference",
+      "date": "2021-01-15 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到周末运动，我以前一直选跑步。",
+        "不过现在口味变了，以后不要再按跑步准备。",
+        "请记住我现在明确选择骑行。"
+      ],
+      "required_memory": [
+        "周末运动",
+        "骑行"
+      ],
+      "required_answer": [
+        "骑行"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于周末运动的偏好是什么？",
+      "evidence_ids": [
+        613,
+        618,
+        622
+      ]
+    },
+    {
+      "id": "preference-05",
+      "kind": "preference",
+      "date": "2021-02-21 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到座位位置，我以前一直选靠窗。",
+        "不过现在口味变了，以后不要再按靠窗准备。",
+        "请记住我现在明确选择靠过道。"
+      ],
+      "required_memory": [
+        "座位位置",
+        "靠过道"
+      ],
+      "required_answer": [
+        "靠过道"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于座位位置的偏好是什么？",
+      "evidence_ids": [
+        642,
+        645,
+        646
+      ]
+    },
+    {
+      "id": "preference-06",
+      "kind": "preference",
+      "date": "2021-03-30 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到蛋糕口味，我以前一直选抹茶。",
+        "不过现在口味变了，以后不要再按抹茶准备。",
+        "请记住我现在明确选择海盐芝士。"
+      ],
+      "required_memory": [
+        "蛋糕口味",
+        "海盐芝士"
+      ],
+      "required_answer": [
+        "海盐芝士"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于蛋糕口味的偏好是什么？",
+      "evidence_ids": [
+        667,
+        682,
+        685
+      ]
+    },
+    {
+      "id": "preference-07",
+      "kind": "preference",
+      "date": "2021-05-06 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到旅行节奏，我以前一直选一天四个景点。",
+        "不过现在口味变了，以后不要再按一天四个景点准备。",
+        "请记住我现在明确选择每天两个地方。"
+      ],
+      "required_memory": [
+        "旅行节奏",
+        "每天两个地方"
+      ],
+      "required_answer": [
+        "每天两个地方"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于旅行节奏的偏好是什么？",
+      "evidence_ids": [
+        697,
+        703,
+        712
+      ]
+    },
+    {
+      "id": "preference-08",
+      "kind": "preference",
+      "date": "2021-06-12 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到晚餐主食，我以前一直选米饭。",
+        "不过现在口味变了，以后不要再按米饭准备。",
+        "请记住我现在明确选择杂粮饭。"
+      ],
+      "required_memory": [
+        "晚餐主食",
+        "杂粮饭"
+      ],
+      "required_answer": [
+        "杂粮饭"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于晚餐主食的偏好是什么？",
+      "evidence_ids": [
+        726,
+        730,
+        741
+      ]
+    },
+    {
+      "id": "preference-09",
+      "kind": "preference",
+      "date": "2021-07-19 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到奶茶配料，我以前一直选珍珠。",
+        "不过现在口味变了，以后不要再按珍珠准备。",
+        "请记住我现在明确选择不加小料。"
+      ],
+      "required_memory": [
+        "奶茶配料",
+        "不加小料"
+      ],
+      "required_answer": [
+        "不加小料"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于奶茶配料的偏好是什么？",
+      "evidence_ids": [
+        760,
+        763,
+        773
+      ]
+    },
+    {
+      "id": "preference-10",
+      "kind": "preference",
+      "date": "2021-08-25 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到音乐风格，我以前一直选民谣。",
+        "不过现在口味变了，以后不要再按民谣准备。",
+        "请记住我现在明确选择轻爵士。"
+      ],
+      "required_memory": [
+        "音乐风格",
+        "轻爵士"
+      ],
+      "required_answer": [
+        "轻爵士"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于音乐风格的偏好是什么？",
+      "evidence_ids": [
+        792,
+        795,
+        804
+      ]
+    },
+    {
+      "id": "preference-11",
+      "kind": "preference",
+      "date": "2021-10-01 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到拍照风格，我以前一直选胶片复古。",
+        "不过现在口味变了，以后不要再按胶片复古准备。",
+        "请记住我现在明确选择自然抓拍。"
+      ],
+      "required_memory": [
+        "拍照风格",
+        "自然抓拍"
+      ],
+      "required_answer": [
+        "自然抓拍"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于拍照风格的偏好是什么？",
+      "evidence_ids": [
+        823,
+        824,
+        834
+      ]
+    },
+    {
+      "id": "preference-12",
+      "kind": "preference",
+      "date": "2021-11-07 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到住宿类型，我以前一直选设计酒店。",
+        "不过现在口味变了，以后不要再按设计酒店准备。",
+        "请记住我现在明确选择安静民宿。"
+      ],
+      "required_memory": [
+        "住宿类型",
+        "安静民宿"
+      ],
+      "required_answer": [
+        "安静民宿"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于住宿类型的偏好是什么？",
+      "evidence_ids": [
+        848,
+        860,
+        863
+      ]
+    },
+    {
+      "id": "preference-13",
+      "kind": "preference",
+      "date": "2021-12-14 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到交通方式，我以前一直选网约车。",
+        "不过现在口味变了，以后不要再按网约车准备。",
+        "请记住我现在明确选择地铁优先。"
+      ],
+      "required_memory": [
+        "交通方式",
+        "地铁优先"
+      ],
+      "required_answer": [
+        "地铁优先"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于交通方式的偏好是什么？",
+      "evidence_ids": [
+        886,
+        893,
+        895
+      ]
+    },
+    {
+      "id": "preference-14",
+      "kind": "preference",
+      "date": "2022-01-20 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到花的种类，我以前一直选向日葵。",
+        "不过现在口味变了，以后不要再按向日葵准备。",
+        "请记住我现在明确选择洋桔梗。"
+      ],
+      "required_memory": [
+        "花的种类",
+        "洋桔梗"
+      ],
+      "required_answer": [
+        "洋桔梗"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于花的种类的偏好是什么？",
+      "evidence_ids": [
+        918,
+        924,
+        925
+      ]
+    },
+    {
+      "id": "preference-15",
+      "kind": "preference",
+      "date": "2022-02-26 18:00:00",
+      "state": "ongoing",
+      "category": "preference",
+      "evidence": [
+        "说到香味偏好，我以前一直选木质香。",
+        "不过现在口味变了，以后不要再按木质香准备。",
+        "请记住我现在明确选择柑橘香。"
+      ],
+      "required_memory": [
+        "香味偏好",
+        "柑橘香"
+      ],
+      "required_answer": [
+        "柑橘香"
+      ],
+      "forbidden_answer": [],
+      "question": "我现在关于香味偏好的偏好是什么？",
+      "evidence_ids": [
+        939,
+        946,
+        948
+      ]
+    },
+    {
+      "id": "plan-00",
+      "kind": "plan",
+      "date": "2022-04-04 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月去哈尔滨看雪。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次去哈尔滨看雪已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "去哈尔滨看雪",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“去哈尔滨看雪”最后怎么样了？",
+      "evidence_ids": [
+        975,
+        977,
+        981
+      ]
+    },
+    {
+      "id": "plan-01",
+      "kind": "plan",
+      "date": "2022-05-11 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月报名陶艺课。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次报名陶艺课已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "报名陶艺课",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“报名陶艺课”最后怎么样了？",
+      "evidence_ids": [
+        1012,
+        1014,
+        1015
+      ]
+    },
+    {
+      "id": "plan-02",
+      "kind": "plan",
+      "date": "2022-06-17 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月参加城市夜跑。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次参加城市夜跑已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "参加城市夜跑",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“参加城市夜跑”最后怎么样了？",
+      "evidence_ids": [
+        1026,
+        1028,
+        1029
+      ]
+    },
+    {
+      "id": "plan-03",
+      "kind": "plan",
+      "date": "2022-07-24 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月周末露营。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次周末露营已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "周末露营",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“周末露营”最后怎么样了？",
+      "evidence_ids": [
+        1063,
+        1072,
+        1075
+      ]
+    },
+    {
+      "id": "plan-04",
+      "kind": "plan",
+      "date": "2022-08-30 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月看草莓音乐节。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次看草莓音乐节已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "看草莓音乐节",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“看草莓音乐节”最后怎么样了？",
+      "evidence_ids": [
+        1097,
+        1100,
+        1101
+      ]
+    },
+    {
+      "id": "plan-05",
+      "kind": "plan",
+      "date": "2022-10-06 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月订温泉酒店。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次订温泉酒店已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "订温泉酒店",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“订温泉酒店”最后怎么样了？",
+      "evidence_ids": [
+        1117,
+        1121,
+        1134
+      ]
+    },
+    {
+      "id": "plan-06",
+      "kind": "plan",
+      "date": "2022-11-12 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月拍周年写真。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次拍周年写真已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "拍周年写真",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“拍周年写真”最后怎么样了？",
+      "evidence_ids": [
+        1147,
+        1155,
+        1156
+      ]
+    },
+    {
+      "id": "plan-07",
+      "kind": "plan",
+      "date": "2022-12-19 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月学习双人舞。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次学习双人舞已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "学习双人舞",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“学习双人舞”最后怎么样了？",
+      "evidence_ids": [
+        1178,
+        1180,
+        1183
+      ]
+    },
+    {
+      "id": "plan-08",
+      "kind": "plan",
+      "date": "2023-01-25 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月参加烘焙课。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次参加烘焙课已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "参加烘焙课",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“参加烘焙课”最后怎么样了？",
+      "evidence_ids": [
+        1213,
+        1222,
+        1224
+      ]
+    },
+    {
+      "id": "plan-09",
+      "kind": "plan",
+      "date": "2023-03-03 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月坐夜游轮船。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次坐夜游轮船已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "坐夜游轮船",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“坐夜游轮船”最后怎么样了？",
+      "evidence_ids": [
+        1242,
+        1252,
+        1254
+      ]
+    },
+    {
+      "id": "plan-10",
+      "kind": "plan",
+      "date": "2023-04-09 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月去看话剧。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次去看话剧已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "去看话剧",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“去看话剧”最后怎么样了？",
+      "evidence_ids": [
+        1270,
+        1275,
+        1280
+      ]
+    },
+    {
+      "id": "plan-11",
+      "kind": "plan",
+      "date": "2023-05-16 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月骑行环湖。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次骑行环湖已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "骑行环湖",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“骑行环湖”最后怎么样了？",
+      "evidence_ids": [
+        1307,
+        1308,
+        1313
+      ]
+    },
+    {
+      "id": "plan-12",
+      "kind": "plan",
+      "date": "2023-06-22 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月去植物园拍花。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次去植物园拍花已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "去植物园拍花",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“去植物园拍花”最后怎么样了？",
+      "evidence_ids": [
+        1327,
+        1332,
+        1344
+      ]
+    },
+    {
+      "id": "plan-13",
+      "kind": "plan",
+      "date": "2023-07-29 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月参加读书会。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次参加读书会已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "参加读书会",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“参加读书会”最后怎么样了？",
+      "evidence_ids": [
+        1360,
+        1364,
+        1372
+      ]
+    },
+    {
+      "id": "plan-14",
+      "kind": "plan",
+      "date": "2023-09-04 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月去海洋馆。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次去海洋馆已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "去海洋馆",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“去海洋馆”最后怎么样了？",
+      "evidence_ids": [
+        1396,
+        1399,
+        1402
+      ]
+    },
+    {
+      "id": "plan-15",
+      "kind": "plan",
+      "date": "2023-10-11 18:00:00",
+      "state": "cancelled",
+      "category": "plan",
+      "evidence": [
+        "我们原来约好下个月去郊外观星。",
+        "但那几天临时有工作，时间完全冲突。",
+        "所以这次去郊外观星已经取消了，暂时没有新日期。"
+      ],
+      "required_memory": [
+        "去郊外观星",
+        "取消"
+      ],
+      "required_answer": [
+        "取消"
+      ],
+      "forbidden_answer": [
+        "已经完成",
+        "已经去了",
+        "如期"
+      ],
+      "question": "原来安排的“去郊外观星”最后怎么样了？",
+      "evidence_ids": [
+        1421,
+        1423,
+        1432
+      ]
+    },
+    {
+      "id": "reconciliation-00",
+      "kind": "reconciliation",
+      "date": "2023-11-17 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为忘记倒垃圾吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起列了家务轮值表，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "忘记倒垃圾",
+        "和好",
+        "列了家务轮值表"
+      ],
+      "required_answer": [
+        "列了家务轮值表"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为忘记倒垃圾闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1446,
+        1452,
+        1456
+      ]
+    },
+    {
+      "id": "reconciliation-01",
+      "kind": "reconciliation",
+      "date": "2023-12-24 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为回消息太晚吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起忙时发一句简短说明，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "回消息太晚",
+        "和好",
+        "忙时发一句简短说明"
+      ],
+      "required_answer": [
+        "忙时发一句简短说明"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为回消息太晚闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1478,
+        1481,
+        1487
+      ]
+    },
+    {
+      "id": "reconciliation-02",
+      "kind": "reconciliation",
+      "date": "2024-01-30 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为旅行预算超支吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起单独建立旅行预算，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "旅行预算超支",
+        "和好",
+        "单独建立旅行预算"
+      ],
+      "required_answer": [
+        "单独建立旅行预算"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为旅行预算超支闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1519,
+        1521,
+        1522
+      ]
+    },
+    {
+      "id": "reconciliation-03",
+      "kind": "reconciliation",
+      "date": "2024-03-07 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为临时改变计划吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起改计划前先询问，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "临时改变计划",
+        "和好",
+        "改计划前先询问"
+      ],
+      "required_answer": [
+        "改计划前先询问"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为临时改变计划闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1536,
+        1540,
+        1554
+      ]
+    },
+    {
+      "id": "reconciliation-04",
+      "kind": "reconciliation",
+      "date": "2024-04-13 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为约会迟到吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起迟到十分钟就提前通知，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "约会迟到",
+        "和好",
+        "迟到十分钟就提前通知"
+      ],
+      "required_answer": [
+        "迟到十分钟就提前通知"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为约会迟到闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1569,
+        1577,
+        1578
+      ]
+    },
+    {
+      "id": "reconciliation-05",
+      "kind": "reconciliation",
+      "date": "2024-05-20 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为睡前一直看手机吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起睡前半小时放下手机，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "睡前一直看手机",
+        "和好",
+        "睡前半小时放下手机"
+      ],
+      "required_answer": [
+        "睡前半小时放下手机"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为睡前一直看手机闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1596,
+        1599,
+        1606
+      ]
+    },
+    {
+      "id": "reconciliation-06",
+      "kind": "reconciliation",
+      "date": "2024-06-26 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为没有提前说加班吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起确定加班后马上发消息，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "没有提前说加班",
+        "和好",
+        "确定加班后马上发消息"
+      ],
+      "required_answer": [
+        "确定加班后马上发消息"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为没有提前说加班闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1630,
+        1634,
+        1642
+      ]
+    },
+    {
+      "id": "reconciliation-07",
+      "kind": "reconciliation",
+      "date": "2024-08-02 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为买东西没商量吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起共同用品先商量，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "买东西没商量",
+        "和好",
+        "共同用品先商量"
+      ],
+      "required_answer": [
+        "共同用品先商量"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为买东西没商量闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1661,
+        1663,
+        1675
+      ]
+    },
+    {
+      "id": "reconciliation-08",
+      "kind": "reconciliation",
+      "date": "2024-09-08 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为周末安排太满吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起每周末只排一件大事，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "周末安排太满",
+        "和好",
+        "每周末只排一件大事"
+      ],
+      "required_answer": [
+        "每周末只排一件大事"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为周末安排太满闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1691,
+        1697,
+        1700
+      ]
+    },
+    {
+      "id": "reconciliation-09",
+      "kind": "reconciliation",
+      "date": "2024-10-15 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为说话语气太急吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起情绪上来先暂停十分钟，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "说话语气太急",
+        "和好",
+        "情绪上来先暂停十分钟"
+      ],
+      "required_answer": [
+        "情绪上来先暂停十分钟"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为说话语气太急闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1717,
+        1724,
+        1725
+      ]
+    },
+    {
+      "id": "reconciliation-10",
+      "kind": "reconciliation",
+      "date": "2024-11-21 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为忘记纪念日吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起把日期加入共同提醒，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "忘记纪念日",
+        "和好",
+        "把日期加入共同提醒"
+      ],
+      "required_answer": [
+        "把日期加入共同提醒"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为忘记纪念日闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1751,
+        1761,
+        1763
+      ]
+    },
+    {
+      "id": "reconciliation-11",
+      "kind": "reconciliation",
+      "date": "2024-12-28 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为做饭口味太辣吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起做饭前确认辣度，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "做饭口味太辣",
+        "和好",
+        "做饭前确认辣度"
+      ],
+      "required_answer": [
+        "做饭前确认辣度"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为做饭口味太辣闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1780,
+        1781,
+        1788
+      ]
+    },
+    {
+      "id": "reconciliation-12",
+      "kind": "reconciliation",
+      "date": "2025-02-03 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为出门路线不同吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起前一晚确认路线，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "出门路线不同",
+        "和好",
+        "前一晚确认路线"
+      ],
+      "required_answer": [
+        "前一晚确认路线"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为出门路线不同闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1810,
+        1811,
+        1825
+      ]
+    },
+    {
+      "id": "reconciliation-13",
+      "kind": "reconciliation",
+      "date": "2025-03-12 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为拍照等太久吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起每次只选十张照片，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "拍照等太久",
+        "和好",
+        "每次只选十张照片"
+      ],
+      "required_answer": [
+        "每次只选十张照片"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为拍照等太久闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1840,
+        1841,
+        1848
+      ]
+    },
+    {
+      "id": "reconciliation-14",
+      "kind": "reconciliation",
+      "date": "2025-04-18 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为空调温度不一致吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起睡觉固定二十六度，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "空调温度不一致",
+        "和好",
+        "睡觉固定二十六度"
+      ],
+      "required_answer": [
+        "睡觉固定二十六度"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为空调温度不一致闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1868,
+        1871,
+        1878
+      ]
+    },
+    {
+      "id": "reconciliation-15",
+      "kind": "reconciliation",
+      "date": "2025-05-25 18:00:00",
+      "state": "completed",
+      "category": "event",
+      "evidence": [
+        "昨晚我们因为玩游戏忘了时间吵了一架，两个人都很不开心。",
+        "今天冷静下来把各自的想法说清楚了，也互相道了歉。",
+        "我们已经和好了，还一起设置结束闹钟，以后按这个办法处理。"
+      ],
+      "required_memory": [
+        "玩游戏忘了时间",
+        "和好",
+        "设置结束闹钟"
+      ],
+      "required_answer": [
+        "设置结束闹钟"
+      ],
+      "forbidden_answer": [
+        "还没有和好",
+        "已经分手"
+      ],
+      "question": "那次因为玩游戏忘了时间闹矛盾后，我们怎么和好的？",
+      "evidence_ids": [
+        1899,
+        1905,
+        1910
+      ]
+    }
+  ],
+  "negative_questions": [
+    "我们有没有去南极看过企鹅？",
+    "我生日时收到过绿色唱片机吗？",
+    "我们是不是在冰岛蓝湖办过婚礼？",
+    "我现在喜欢喝榴莲味汽水吗？",
+    "去摩洛哥旅行时住的是哪家酒店？",
+    "我们取消过热气球环球旅行吗？",
+    "上次去月球吃了什么晚饭？",
+    "我是不是最喜欢紫色玫瑰？",
+    "我们因为养羊驼吵过架吗？",
+    "共同养的金毛叫什么名字？",
+    "我们去过里约热内卢几次？",
+    "去年纪念日送的是无人机吗？",
+    "我现在的早餐偏好是椰子水吗？",
+    "我们完成过潜水证考试吗？",
+    "在纽约旅行时看了哪场音乐剧？",
+    "我们取消过沙漠骑骆驼计划吗？",
+    "我最喜欢的香水是玫瑰香吗？",
+    "我们因装修地下室和好了吗？",
+    "去北海道时吃过海胆饭吗？",
+    "我们约好明年移居火星了吗？",
+    "我收到过一台复古打字机吗？",
+    "我们在巴黎铁塔下求婚了吗？",
+    "共同领养的兔子是哪一天到家的？",
+    "我现在喜欢极限跳伞吗？"
+  ]
+}

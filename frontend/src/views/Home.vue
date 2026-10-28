@@ -185,7 +185,7 @@ onMounted(async () => {
   const [coupleResult, reminderResult, anniversaryResult, memoryResult, recentChatResult] = await Promise.allSettled([
     settingsApi.coupleInfo(), aiApi.reminders(), anniversaryApi.list(),
     memoryApi.list({ status: 'confirmed', limit: 1 }),
-    memoryApi.list({ status: 'confirmed', source_type: 'chat', limit: 1 }),
+    memoryApi.list({ status: 'confirmed', source_type: 'chat_event', limit: 1 }),
   ])
   if (coupleResult.status === 'fulfilled') {
     couple.value = coupleResult.value

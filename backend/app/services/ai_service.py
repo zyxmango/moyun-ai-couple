@@ -1,8 +1,11 @@
 """AI 服务封装：兼容 OpenAI 接口，无 API Key 时回退规则模板"""
 import json
+import hashlib
 import logging
 import re
 from typing import List, Dict, Optional
+
+import numpy as np
 
 from ..config import settings
 
@@ -15,6 +18,7 @@ class AIService:
         self.api_key = settings.AI_API_KEY
         self.api_base = settings.AI_API_BASE
         self.model = settings.AI_MODEL
+        self.embedding_model = settings.AI_EMBEDDING_MODEL
         self._client = None
         if self.api_key:
             try:
@@ -52,6 +56,62 @@ class AIService:
                 logger.exception("AI service call failed; using the local fallback")
                 return self._fallback_chat(messages, system_prompt)
         return self._fallback_chat(messages, system_prompt)
+
+    def _chat_strict(
+        self,
+        messages: List[Dict[str, str]],
+        system_prompt: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """用于不可丢失的后台整理：调用失败时抛错，让同步游标留在原处重试。"""
+        full_messages = [{"role": "system", "content": system_prompt}, *messages]
+        resp = self._client.chat.completions.create(
+            model=self.model,
+            messages=full_messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return resp.choices[0].message.content.strip()
+
+    @property
+    def embedding_index_model(self) -> str:
+        return self.embedding_model if self.available else "local-hash-v1"
+
+    def embed_texts(self, texts: List[str]) -> List[np.ndarray]:
+        """返回归一化向量。在线使用语义 embedding；离线使用稳定的字符哈希向量。"""
+        if not texts:
+            return []
+        if self.available:
+            vectors = []
+            batch_size = 10 if "dashscope" in self.api_base else 128
+            for start in range(0, len(texts), batch_size):
+                response = self._client.embeddings.create(
+                    model=self.embedding_model,
+                    input=texts[start:start + batch_size],
+                )
+                vectors.extend(np.asarray(item.embedding, dtype=np.float32) for item in response.data)
+        else:
+            vectors = [self._local_hash_embedding(text) for text in texts]
+        normalized = []
+        for vector in vectors:
+            norm = float(np.linalg.norm(vector))
+            normalized.append(vector / norm if norm else vector)
+        return normalized
+
+    @staticmethod
+    def _local_hash_embedding(text: str, dimensions: int = 384) -> np.ndarray:
+        """无外部模型时的确定性降级索引；用于离线运行和可重复测试。"""
+        clean = re.sub(r"\s+", " ", text.lower()).strip()
+        vector = np.zeros(dimensions, dtype=np.float32)
+        wrapped = f" {clean} "
+        for size in (1, 2, 3):
+            for index in range(max(0, len(wrapped) - size + 1)):
+                token = wrapped[index:index + size].encode("utf-8")
+                digest = hashlib.blake2b(token, digest_size=8).digest()
+                value = int.from_bytes(digest, "little")
+                vector[value % dimensions] += 1.0 if value & 1 else -1.0
+        return vector
 
     def _fallback_chat(self, messages: List[Dict[str, str]], system_prompt: str) -> str:
         """无 API Key 时的规则模板回复，保证测试可用"""
@@ -223,6 +283,195 @@ class AIService:
         except Exception:
             return fallback
 
+    def extract_memory_events(self, messages: List[Dict]) -> List[Dict]:
+        """从一段连续对话中抽取事件级记忆；无记忆价值时返回空列表。"""
+        if not messages:
+            return []
+        fallback = self._fallback_memory_events(messages)
+        if not self.available:
+            return fallback
+
+        compact = [
+            {
+                "id": item["id"],
+                "sender_id": item.get("sender_id"),
+                "created_at": str(item.get("created_at") or ""),
+                "content": str(item.get("content") or "")[:1000],
+            }
+            for item in messages
+        ]
+        system = (
+            "你是长期记忆整理器。阅读一段情侣连续聊天，把相关碎片合并为事件、偏好、事实或计划。"
+            "‘嗯’‘哈哈’‘到了吗’等短句不能单独成为记忆，但可作为上下文。"
+            "不得把计划写成已发生事实，不得推断聊天中没有明确表达的和好、感情状态或动机。"
+            "没有值得长期保存的信息时返回空数组；每批最多提取 6 条，summary 控制在 200 字以内。"
+            "只输出 JSON 数组。每项字段："
+            "title、summary、category(event/preference/fact/plan)、state(planned/ongoing/completed/cancelled/uncertain)、"
+            "event_kind(trip/date/conflict/gift/preference/plan/fact/activity)、event_key、entities、"
+            "event_date、event_end、location、emotion、tags、importance、confidence、source_message_ids。"
+            "event_key 表示可跨批次复用的稳定主题，例如 trip:武汉、plan:哈尔滨旅行、preference:咖啡甜度；"
+            "同一事件的不同状态不得改变 event_key。"
+            "source_message_ids 必须只包含真正支持该结论的输入消息 id；importance 和 confidence 为 0 到 1。"
+        )
+        raw = self._chat_strict(
+            [{"role": "user", "content": json.dumps(compact, ensure_ascii=False)}],
+            system_prompt=system,
+            temperature=0.1,
+            max_tokens=1800,
+        )
+        try:
+            match = re.search(r"\[[\s\S]*\]", raw)
+            data = json.loads(match.group(0) if match else raw)
+            if not isinstance(data, list):
+                raise ValueError("memory extraction response is not a JSON array")
+            allowed_ids = {int(item["id"]) for item in messages}
+            events = []
+            for item in data[:6]:
+                if not isinstance(item, dict):
+                    continue
+                source_ids = []
+                for value in item.get("source_message_ids") or []:
+                    try:
+                        message_id = int(value)
+                    except (TypeError, ValueError):
+                        continue
+                    if message_id in allowed_ids and message_id not in source_ids:
+                        source_ids.append(message_id)
+                summary = str(item.get("summary") or "").strip()
+                if not summary or not source_ids:
+                    continue
+                category = str(item.get("category") or "event").lower()
+                if category not in {"event", "preference", "fact", "plan"}:
+                    category = "event"
+                state = str(item.get("state") or "uncertain").lower()
+                if state not in {"planned", "ongoing", "completed", "cancelled", "uncertain"}:
+                    state = "uncertain"
+                event_kind = str(item.get("event_kind") or category).lower()
+                if event_kind not in {"trip", "date", "conflict", "gift", "preference", "plan", "fact", "activity"}:
+                    event_kind = category
+                entities = [str(value).strip()[:80] for value in (item.get("entities") or []) if str(value).strip()][:12]
+                event = {
+                    "title": str(item.get("title") or summary[:24])[:200],
+                    "summary": summary[:2000],
+                    "category": category,
+                    "event_kind": event_kind,
+                    "event_key": str(item.get("event_key") or item.get("title") or summary[:24]).strip()[:160],
+                    "entities": entities,
+                    "state": state,
+                    "event_date": str(item.get("event_date") or "")[:32],
+                    "event_end": str(item.get("event_end") or "")[:32],
+                    "location": str(item.get("location") or "")[:100],
+                    "emotion": str(item.get("emotion") or "")[:30],
+                    "tags": [str(x)[:30] for x in (item.get("tags") or [])][:8],
+                    "importance": max(0.0, min(1.0, float(item.get("importance", 0.5)))),
+                    "confidence": max(0.0, min(1.0, float(item.get("confidence", 0.5)))),
+                    "source_message_ids": source_ids,
+                }
+                if self._has_long_term_value(event, messages):
+                    events.append(event)
+            return events
+        except Exception:
+            logger.exception("Memory event extraction failed; keeping the sync cursor for retry")
+            raise
+
+    @staticmethod
+    def _has_long_term_value(event: Dict, messages: List[Dict]) -> bool:
+        """对在线模型输出做保守门控，阻止即时生活状态灌入长期记忆。"""
+        message_map = {int(item["id"]): str(item.get("content") or "") for item in messages}
+        evidence = " ".join(message_map.get(int(item), "") for item in event.get("source_message_ids", []))
+        # 门控只信原始证据。否则模型可把临时提议自行命名成“长期计划”并绕过过滤。
+        text = evidence
+        category = event.get("category")
+        signals = {
+            "preference": (
+                "喜欢", "不喜欢", "偏好", "口味", "最爱", "讨厌", "不能吃", "过敏",
+                "以后不要", "现在选择", "明确选择", "不再选",
+            ),
+            "plan": (
+                "计划", "约好", "约定", "下个月", "下周", "明年", "订票", "预订",
+                "报名", "取消", "改期", "不去了", "暂时没有新日期",
+            ),
+            "event": (
+                "旅行", "旅游", "到达", "抵达", "到了", "去了", "一起去", "约会", "纪念日",
+                "生日", "礼物", "吵架", "争执", "矛盾", "道歉", "和好", "求婚",
+                "结婚", "搬家", "毕业", "领养", "第一次",
+            ),
+            "fact": (
+                "生日", "纪念日", "过敏", "不能吃", "住在", "职业", "工作是", "名字是",
+                "结婚", "领养", "第一次", "共同提醒",
+            ),
+        }
+        return any(marker in text for marker in signals.get(category, ()))
+
+    def _fallback_memory_events(self, messages: List[Dict]) -> List[Dict]:
+        """模型不可用时只保留具有明显长期信息信号的对话，避免把寒暄灌入记忆。"""
+        lines = [str(item.get("content") or "").strip() for item in messages]
+        signals = (
+            "第一次", "旅行", "旅游", "去了", "到达", "回来", "生日", "纪念日", "约会",
+            "喜欢", "不喜欢", "讨厌", "爱吃", "不能吃", "以后", "计划", "想去", "一起去",
+            "订票", "酒店", "电影", "礼物", "搬家", "结婚", "吵架", "和好",
+            "取消", "不去了", "不去啦", "改期", "先不去",
+        )
+        selected = [
+            (index, line)
+            for index, line in enumerate(lines)
+            if len(line) >= 4 and any(word in line for word in signals)
+        ]
+        if not selected:
+            return []
+        joined = " ".join(line for _, line in selected)
+        extracted = self._fallback_memory_extract(joined, selected[0][1][:24])
+        category = "preference" if any(word in joined for word in ("喜欢", "不喜欢", "讨厌", "爱吃", "不能吃")) else "event"
+        cancelled = any(word in joined for word in ("取消", "不去了", "不去啦", "改期", "先不去"))
+        planned = not cancelled and any(word in joined for word in ("以后", "计划", "想去", "一起去", "下次"))
+        return [{
+            **extracted,
+            "category": "plan" if planned and category == "event" else category,
+            "event_kind": "preference" if category == "preference" else ("plan" if planned or cancelled else "event"),
+            "event_key": selected[0][1][:80],
+            "entities": [],
+            "state": "cancelled" if cancelled else ("planned" if planned else "completed"),
+            "event_end": "",
+            "confidence": 0.7,
+            "source_message_ids": [int(messages[index]["id"]) for index, _ in selected],
+        }]
+
+    def summarize_memory_candidate(self, candidate: Dict, messages: List[Dict]) -> Dict:
+        """仅根据已聚合证据生成一条正式记忆；不再负责从噪声中寻找事件。"""
+        evidence = [{
+            "id": item["id"], "created_at": str(item.get("created_at") or ""),
+            "content": str(item.get("content") or "")[:1000],
+        } for item in messages]
+        fallback_text = " ".join(item["content"] for item in evidence)
+        fallback = {
+            "title": candidate.get("title_hint") or fallback_text[:24] or "共同记忆",
+            "summary": fallback_text[:800],
+            "location": "", "emotion": "", "tags": [candidate.get("event_kind", "event")],
+            "importance": 0.6,
+        }
+        if not self.available:
+            return fallback
+        system = (
+            "你是长期记忆总结器。输入已经完成事件聚合，不要筛选或拆分，只生成一条完整记忆。"
+            "只能使用原始证据；必须尽量保留证据中的时间、地点、活动、餐食、状态变化和解决办法。"
+            "不得补充证据中没有的人名、原因、结果或情绪。只输出JSON对象，字段为"
+            "title、summary、location、emotion、tags、importance。summary不超过240字。"
+        )
+        prompt = json.dumps({"candidate": candidate, "evidence": evidence}, ensure_ascii=False)
+        raw = self._chat_strict(
+            [{"role": "user", "content": prompt}], system, temperature=0.0, max_tokens=700
+        )
+        match = re.search(r"\{[\s\S]*\}", raw)
+        data = json.loads(match.group(0) if match else raw)
+        return {
+            "title": str(data.get("title") or fallback["title"])[:200],
+            "summary": str(data.get("summary") or fallback["summary"])[:2000],
+            "location": str(data.get("location") or "")[:100],
+            "emotion": str(data.get("emotion") or "")[:30],
+            "tags": [str(value)[:30] for value in (data.get("tags") or [])][:8],
+            "importance": max(0.0, min(1.0, float(data.get("importance", 0.6)))),
+        }
+
     def _fallback_memory_extract(self, text: str, source_title: str = "") -> Dict:
         clean = re.sub(r"\s+", " ", text).strip()
         emotion = ""
@@ -251,18 +500,25 @@ class AIService:
             "importance": 0.7 if any(x in clean for x in ("第一次", "生日", "纪念", "旅行")) else 0.5,
         }
 
-    def memory_answer(self, question: str, context: str, history: List[Dict] | None = None) -> str:
+    def memory_answer(
+        self, question: str, context: str, history: List[Dict] | None = None, strict: bool = False
+    ) -> str:
         system = (
             "你是专属于一对情侣的共同记忆助手。只能依据给出的共同记忆回答，绝对不可编造。"
             "请像熟悉他们故事的温暖朋友一样直接回答：自然、亲切、简洁，不过度煽情，也不要使用客服腔。"
             "不要展示检索过程，不要提到来源、片段、编号或共同记忆库，不要使用[1][2]等引用标记。"
             "记录时间不等于事件发生时间；用户询问具体日期而记录中没有明确日期时，要温和地说明目前只能确认事件，无法确认具体时间。"
             "多条记录互相矛盾时应指出暂时无法确定，并邀请两个人补充或确认。"
-            "信息不足时，用第一人称简短说明自己还没记住这件事，并邀请用户补充。"
+            "planned 只代表计划，不能回答成已经发生；uncertain 只能作为不确定线索。"
+            "信息不足时，只能用第一人称说明‘我还没记住这件事’或‘目前无法确认’，并邀请用户补充；"
+            "绝对不能把‘没有记录’推断成‘你们没有做过、没有收到过、没有计划过或没有发生过’。"
             "不要进行心理诊断，也不要替用户做关系决定。回答通常控制在2到4句话。"
         )
         prompt = f"【共同记忆】\n{context}\n\n【问题】\n{question}"
-        return self.chat((history or []) + [{"role": "user", "content": prompt}], system_prompt=system, max_tokens=1000)
+        messages = (history or []) + [{"role": "user", "content": prompt}]
+        if strict:
+            return self._chat_strict(messages, system, temperature=0.8, max_tokens=1000)
+        return self.chat(messages, system_prompt=system, max_tokens=1000)
 
     def memory_report(self, memories: List[Dict], period_label: str) -> str:
         context = "\n".join(

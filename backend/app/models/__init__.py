@@ -2,7 +2,7 @@
 from datetime import datetime, date
 from sqlalchemy import (
     Column, Integer, String, Text, Boolean, DateTime, Date, ForeignKey, JSON,
-    Float, UniqueConstraint,
+    Float, UniqueConstraint, Index,
 )
 from sqlalchemy.orm import relationship
 
@@ -54,6 +54,9 @@ class VerificationCode(Base):
 
 class Message(Base):
     __tablename__ = "messages"
+    __table_args__ = (
+        Index("ix_messages_couple_created", "couple_id", "created_at"),
+    )
     id = Column(Integer, primary_key=True, index=True)
     couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -181,6 +184,10 @@ class CoupleAISettings(Base):
     include_diary = Column(Boolean, default=True)
     include_album = Column(Boolean, default=True)
     include_anniversary = Column(Boolean, default=True)
+    # 原始聊天仍只保存在 messages；这里只记录已经处理到哪里。
+    last_synced_message_id = Column(Integer, default=0, nullable=False)
+    sync_error = Column(Text, default="")
+    sync_updated_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
@@ -189,6 +196,7 @@ class SharedMemory(Base):
     __tablename__ = "shared_memories"
     __table_args__ = (
         UniqueConstraint("couple_id", "source_type", "source_id", name="uq_memory_source"),
+        Index("ix_memory_retrieval", "couple_id", "status", "is_active"),
     )
     id = Column(Integer, primary_key=True, index=True)
     couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
@@ -206,10 +214,81 @@ class SharedMemory(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     visibility = Column(String(20), default="shared", index=True)  # shared/private
     category = Column(String(30), default="event", index=True)  # event/preference/plan
+    memory_state = Column(String(20), default="completed", index=True)  # planned/ongoing/completed/cancelled/uncertain
+    lifecycle = Column(String(20), default="closed", index=True)  # open/dormant/closed
+    closure_reason = Column(String(40), default="")
+    state_confidence = Column(Float, default=1.0)
+    confidence = Column(Float, default=1.0)
+    event_end = Column(DateTime, nullable=True)
+    # JSON 数组，只引用 messages.id，不复制原始聊天正文。
+    source_message_ids = Column(Text, default="[]")
+    embedding_b64 = Column(Text, default="")
+    embedding_model = Column(String(100), default="", index=True)
+    embedding_dim = Column(Integer, default=0)
+    embedding_updated_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class MemoryCandidate(Base):
+    """跨聊天批次持续聚合的事件候选；候选本身不直接参与检索。"""
+    __tablename__ = "memory_candidates"
+    __table_args__ = (
+        Index("ix_memory_candidate_open", "couple_id", "lifecycle", "event_kind"),
+    )
+    id = Column(Integer, primary_key=True)
+    couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
+    event_key = Column(String(160), nullable=False, index=True)
+    event_kind = Column(String(30), default="event", index=True)
+    category = Column(String(30), default="event")
+    title_hint = Column(String(200), default="")
+    fragments = Column(Text, default="[]")
+    entities = Column(Text, default="[]")
+    source_message_ids = Column(Text, default="[]")
+    event_date = Column(DateTime, nullable=True, index=True)
+    event_end = Column(DateTime, nullable=True)
+    state = Column(String(20), default="uncertain", index=True)
+    lifecycle = Column(String(20), default="open", index=True)
+    closure_reason = Column(String(40), default="")
+    confidence = Column(Float, default=0.5)
+    memory_id = Column(Integer, ForeignKey("shared_memories.id", ondelete="SET NULL"), nullable=True, index=True)
+    first_seen_at = Column(DateTime, default=datetime.utcnow)
+    last_seen_at = Column(DateTime, default=datetime.utcnow, index=True)
+    quiet_until = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class MemoryEventHistory(Base):
+    """正式记忆的状态与摘要版本，避免更新时覆盖可追溯证据。"""
+    __tablename__ = "memory_event_history"
+    id = Column(Integer, primary_key=True)
+    memory_id = Column(Integer, ForeignKey("shared_memories.id", ondelete="CASCADE"), nullable=False, index=True)
+    candidate_id = Column(Integer, ForeignKey("memory_candidates.id", ondelete="SET NULL"), nullable=True)
+    state = Column(String(20), nullable=False)
+    lifecycle = Column(String(20), nullable=False)
+    closure_reason = Column(String(40), default="")
+    title = Column(String(200), default="")
+    content = Column(Text, default="")
+    source_message_ids = Column(Text, default="[]")
+    changed_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class MemoryEmbeddingBucket(Base):
+    """持久化语义向量的 LSH 候选桶，避免大规模查询时扫描全部向量。"""
+    __tablename__ = "memory_embedding_buckets"
+    __table_args__ = (
+        UniqueConstraint("memory_id", "model", "table_index", name="uq_memory_lsh_table"),
+        Index("ix_memory_lsh_lookup", "couple_id", "model", "table_index", "bucket"),
+    )
+    id = Column(Integer, primary_key=True)
+    memory_id = Column(Integer, ForeignKey("shared_memories.id", ondelete="CASCADE"), nullable=False, index=True)
+    couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
+    model = Column(String(100), nullable=False)
+    table_index = Column(Integer, nullable=False)
+    bucket = Column(String(20), nullable=False)
 
 
 class DatePlan(Base):

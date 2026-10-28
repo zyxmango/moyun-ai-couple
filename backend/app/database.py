@@ -38,6 +38,23 @@ def init_db():
         if "relationship_start_date" not in couple_columns:
             with engine.begin() as connection:
                 connection.execute(text("ALTER TABLE couples ADD COLUMN relationship_start_date DATE"))
+    if "couple_ai_settings" in inspector.get_table_names():
+        setting_columns = {column["name"] for column in inspector.get_columns("couple_ai_settings")}
+        setting_additions = {
+            "last_synced_message_id": "INTEGER DEFAULT 0 NOT NULL",
+            "sync_error": "TEXT DEFAULT ''",
+            "sync_updated_at": "DATETIME",
+        }
+        with engine.begin() as connection:
+            for name, definition in setting_additions.items():
+                if name not in setting_columns:
+                    connection.execute(text(f"ALTER TABLE couple_ai_settings ADD COLUMN {name} {definition}"))
+    if "messages" in inspector.get_table_names():
+        with engine.begin() as connection:
+            connection.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_messages_couple_created "
+                "ON messages (couple_id, created_at)"
+            ))
     if "shared_memories" not in inspector.get_table_names():
         return
     existing = {column["name"] for column in inspector.get_columns("shared_memories")}
@@ -47,8 +64,29 @@ def init_db():
         "category": "VARCHAR(30) DEFAULT 'event'",
         "version": "INTEGER DEFAULT 1",
         "is_active": "BOOLEAN DEFAULT 1",
+        "memory_state": "VARCHAR(20) DEFAULT 'completed'",
+        "lifecycle": "VARCHAR(20) DEFAULT 'closed'",
+        "closure_reason": "VARCHAR(40) DEFAULT ''",
+        "state_confidence": "FLOAT DEFAULT 1.0",
+        "confidence": "FLOAT DEFAULT 1.0",
+        "event_end": "DATETIME",
+        "source_message_ids": "TEXT DEFAULT '[]'",
+        "embedding_b64": "TEXT DEFAULT ''",
+        "embedding_model": "VARCHAR(100) DEFAULT ''",
+        "embedding_dim": "INTEGER DEFAULT 0",
+        "embedding_updated_at": "DATETIME",
     }
     with engine.begin() as connection:
         for name, definition in additions.items():
             if name not in existing:
                 connection.execute(text(f"ALTER TABLE shared_memories ADD COLUMN {name} {definition}"))
+        connection.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_memory_retrieval "
+            "ON shared_memories (couple_id, status, is_active)"
+        ))
+        connection.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_shared_memories_embedding_model "
+            "ON shared_memories (embedding_model)"
+        ))
+        # 旧版把每条聊天直接当作记忆；保留数据便于追溯，但停止参与检索。
+        connection.execute(text("UPDATE shared_memories SET is_active = 0 WHERE source_type = 'chat'"))

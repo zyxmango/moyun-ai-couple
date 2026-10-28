@@ -8,19 +8,21 @@
 
 ```text
 用户明确授权
-  -> 按隐私开关同步聊天/日记/相册/纪念日
-  -> 统一 SharedMemory 数据模型
-  -> AI/规则结构化提取（pending）
-  -> 用户确认（confirmed）
-  -> TF-IDF 语义相似度 + 关键词 + 时间/重要度混合排序
-  -> 带来源的 RAG 回答 / 共同记忆周报
+  -> 原始聊天只保存在 messages
+  -> 持久化游标按 ID 分批追赶新增聊天
+  -> 连续对话自动整理为事件/偏好/事实/计划
+  -> 与已有事件合并并关联原始 message id
+  -> 持久化语义向量与多路 LSH 候选桶
+  -> 权限过滤后召回语义候选并进行精确余弦排序
+  -> Top K 事件按需回查原文并生成有依据的回答
 ```
 
 ## 安全边界
 
 - 默认关闭共同记忆，需要用户主动开启。
 - 所有同步和检索均强制使用当前 `couple_id` 过滤。
-- AI 提取的派生事件默认 `pending`，用户确认后才能进入问答。
+- 明确且有来源证据的事件自动进入问答；低置信度内容标记为 `uncertain`，不作为确定事实检索。
+- 用户无需逐条审核，但可随时查看、修改或删除自动整理结果。
 - 用户可按来源关闭同步、删除单条记忆或清空整个 AI 索引。
 - 清空 AI 索引不会删除原始聊天、日记、相册或纪念日。
 - 模型提示明确禁止心理诊断、感情评分和无依据编造。
@@ -28,7 +30,10 @@
 ## 数据模型
 
 - `couple_ai_settings`：情侣级授权和来源开关。
-- `shared_memories`：统一记忆、来源引用、时间、地点、情绪、标签和审核状态。
+- `couple_ai_settings.last_synced_message_id`：聊天整理游标；只有整批成功后才推进，失败后可重试。
+- `shared_memories`：事件级记忆、来源消息 ID、时间、状态、置信度、地点、情绪和标签。
+- `shared_memories.embedding_*`：持久化的归一化语义向量及模型版本；内容变化后自动失效并重建。
+- `memory_embedding_buckets`：按情侣和模型隔离的多路 LSH 索引，数据量较大时避免扫描全部向量。
 - `shared_memories` 同时记录 `owner_id / visibility / category / version / is_active`，用于私密过滤和偏好版本更新。
 - `date_plans`：保存规划条件、生成结果和实际检索来源，支持复盘。
 - `daily_questions`：每对情侣每天唯一的问题。
@@ -39,7 +44,7 @@
 - `GET/PUT /api/ai/memory/settings`
 - `POST /api/ai/memory/sync`
 - `GET/DELETE /api/ai/memory`
-- `POST /api/ai/memory/extract`
+- `POST /api/ai/memory/extract`（兼容入口，触发自动增量整理，不再产生待确认项）
 - `PATCH/DELETE /api/ai/memory/{id}`
 - `POST /api/ai/memory/chat`
 - `POST /api/ai/memory/manual`
@@ -58,3 +63,10 @@ conda run -n couple-app python eval_memory_rag.py
 ```
 
 当前 20 条虚构记忆问答离线集关注 Recall@3、MRR 和检索延迟。该结果只用于回归验证；后续增加困难负样本、权限泄漏率、来源忠实度、拒答率、Token 和成本指标。
+
+## 语义索引
+
+- 在线环境通过 `AI_EMBEDDING_MODEL` 使用 OpenAI 兼容的 embedding 接口。DashScope 默认使用 `text-embedding-v3`，OpenAI 默认使用 `text-embedding-3-small`。
+- 无模型凭据时使用确定性的本地字符哈希向量，保证离线演示和测试可运行；该降级只提供词形相似度，不等同于在线语义模型。
+- 新增和修改的记忆增量写入向量与四路 LSH 桶。模型名称变化时，后台会分批重建，不需要清空记忆。
+- 小规模记忆直接对所有持久化向量精排；超过阈值后通过 LSH 多探针和关键词共同召回，再做精确余弦排序。

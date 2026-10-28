@@ -14,6 +14,10 @@ class Settings:
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
     AI_API_BASE: str = os.getenv("AI_API_BASE", "https://api.openai.com/v1")
     AI_MODEL: str = os.getenv("AI_MODEL", "gpt-4o-mini")
+    AI_EMBEDDING_MODEL: str = os.getenv(
+        "AI_EMBEDDING_MODEL",
+        "text-embedding-v3" if "dashscope" in AI_API_BASE else "text-embedding-3-small",
+    )
     ADMIN_PHONE: str = os.getenv("ADMIN_PHONE", "13800000000")
 
     # 邮件 SMTP（QQ邮箱）

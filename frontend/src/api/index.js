@@ -80,6 +80,7 @@ export const authApi = {
 export const chatApi = {
   history: (params) => api.get('/chat/history', { params }),
   count: () => api.get('/chat/count'),
+  calendar: (timezoneOffset = -new Date().getTimezoneOffset()) => api.get('/chat/calendar', { params: { timezone_offset: timezoneOffset } }),
   upload: (file) => {
     const form = new FormData()
     form.append('file', file)

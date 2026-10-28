@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base
 from app.models import Couple, Message, User
-from app.routers.chat import _message_timestamp, chat_history
+from app.routers.chat import _message_timestamp, chat_calendar, chat_history
 
 
 class ChatTimezoneTest(unittest.TestCase):
@@ -36,5 +36,13 @@ class ChatTimezoneTest(unittest.TestCase):
                 self.assertEqual([row['content'] for row in rows], ['15'])
                 older = chat_history(limit=100, offset=0, before=datetime.fromisoformat(rows[0]['created_at']), user=user, couple=couple, db=db)
                 self.assertEqual(older, [])
+
+                calendar = chat_calendar(timezone_offset=480, user=user, couple=couple, db=db)
+                self.assertEqual(calendar['first_date'], '2026-10-23')
+                self.assertEqual(calendar['last_date'], '2026-10-24')
+                self.assertEqual(calendar['days'], [
+                    {'date': '2026-10-23', 'count': 1},
+                    {'date': '2026-10-24', 'count': 1},
+                ])
         finally:
             engine.dispose()

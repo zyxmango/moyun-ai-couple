@@ -15,6 +15,7 @@ from ..models import (
     Couple,
     DailyAnswer,
     DailyQuestion,
+    MemoryEmbeddingBucket,
     SharedMemory,
     User,
 )
@@ -38,6 +39,9 @@ def _settings_out(settings):
         "include_diary": settings.include_diary,
         "include_album": settings.include_album,
         "include_anniversary": settings.include_anniversary,
+        "last_synced_message_id": settings.last_synced_message_id or 0,
+        "sync_error": settings.sync_error or "",
+        "sync_updated_at": settings.sync_updated_at.isoformat() if settings.sync_updated_at else None,
         "updated_at": settings.updated_at.isoformat() if settings.updated_at else None,
     }
 
@@ -80,7 +84,7 @@ def sync_memories(
 
 @router.get("")
 def list_memories(
-    status: str = Query("confirmed", pattern="^(confirmed|pending|rejected|all)$"),
+    status: str = Query("confirmed", pattern="^(confirmed|uncertain|pending|rejected|all)$"),
     source_type: str | None = None,
     visibility: str | None = Query(None, pattern="^(shared|private)$"),
     limit: int = Query(50, ge=1, le=200),
@@ -135,9 +139,14 @@ def extract_memory_candidates(
     couple: Couple = Depends(get_active_couple),
     db: Session = Depends(get_db),
 ):
-    memory_service.sync_sources(db, couple.id)
-    candidates = memory_service.extract_candidates(db, couple.id)
-    return {"created": len(candidates), "items": [memory_service.serialize(item) for item in candidates]}
+    result = memory_service.sync_sources(db, couple.id)
+    return {
+        "created": result.get("created_events", 0),
+        "merged": result.get("merged_events", 0),
+        "processed_messages": result.get("processed_messages", 0),
+        "remaining_messages": result.get("remaining_messages", 0),
+        "items": [],
+    }
 
 
 @router.patch("/{memory_id}")
@@ -159,8 +168,17 @@ def review_memory(
     if memory.visibility == "private" and memory.owner_id != user.id:
         raise HTTPException(status_code=404, detail="记忆不存在")
     values = data.model_dump(exclude_unset=True)
+    previous_text = memory_service._memory_text(memory)
     for key, value in values.items():
         setattr(memory, key, value)
+    if memory_service._memory_text(memory) != previous_text or "status" in values:
+        memory.embedding_b64 = ""
+        memory.embedding_model = ""
+        memory.embedding_dim = 0
+        memory.embedding_updated_at = None
+        db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete(
+            synchronize_session=False
+        )
     memory.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(memory)
@@ -182,6 +200,9 @@ def delete_memory(
         raise HTTPException(status_code=404, detail="记忆不存在")
     if memory.visibility == "private" and memory.owner_id != user.id:
         raise HTTPException(status_code=404, detail="记忆不存在")
+    db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete(
+        synchronize_session=False
+    )
     db.delete(memory)
     db.commit()
     return {"message": "记忆已删除"}
@@ -196,14 +217,23 @@ def clear_memories(
 ):
     if not confirm:
         raise HTTPException(status_code=400, detail="需要明确确认删除全部 AI 记忆")
-    count = db.query(SharedMemory).filter(
+    memory_ids = [row[0] for row in db.query(SharedMemory.id).filter(
         SharedMemory.couple_id == couple.id,
         or_(
             SharedMemory.visibility == "shared",
             SharedMemory.visibility.is_(None),
             SharedMemory.owner_id == user.id,
         ),
-    ).delete(synchronize_session=False)
+    ).all()]
+    if memory_ids:
+        db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id.in_(memory_ids)).delete(
+            synchronize_session=False
+        )
+    count = db.query(SharedMemory).filter(SharedMemory.id.in_(memory_ids)).delete(synchronize_session=False) if memory_ids else 0
+    settings = memory_service.get_settings(db, couple.id)
+    # 清空的是派生索引；游标归零后可从仍然存在的原始聊天完整重建。
+    settings.last_synced_message_id = 0
+    settings.sync_error = ""
     db.commit()
     return {"message": "AI 共同记忆已清空", "deleted": count}
 
@@ -221,10 +251,17 @@ def memory_chat(
     if not result["enabled"]:
         raise HTTPException(status_code=409, detail="请先开启 AI 共同记忆")
     sources = memory_service.search(db, couple.id, data.question.strip(), top_k=5, user_id=user.id)
-    context = "\n".join(
-        f"- 记录时间：{item['event_date'] or '未知'}；类型：{item['title']}；内容：{item['content']}"
-        for item in sources
-    ) or "没有找到相关共同记忆。"
+    context_parts = []
+    for item in sources:
+        evidence = "；".join(
+            f"{row['created_at']}：{row['content']}" for row in item.get("evidence", [])[:6]
+        )
+        context_parts.append(
+            f"- 事件时间：{item['event_date'] or '未知'}；状态：{item.get('memory_state') or '未知'}；"
+            f"类型：{item['title']}；内容：{item['content']}"
+            + (f"；原始证据：{evidence}" if evidence else "")
+        )
+    context = "\n".join(context_parts) or "没有找到相关共同记忆。"
 
     conversation = None
     if data.conversation_id:
