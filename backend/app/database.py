@@ -73,6 +73,9 @@ def init_db():
         "state_confidence": "FLOAT DEFAULT 1.0",
         "confidence": "FLOAT DEFAULT 1.0",
         "event_end": "DATETIME",
+        "started_at": "DATETIME",
+        "resolved_at": "DATETIME",
+        "forgotten_at": "DATETIME",
         "valid_from": "DATETIME",
         "valid_to": "DATETIME",
         "source_message_ids": "TEXT DEFAULT '[]'",
@@ -101,7 +104,11 @@ def init_db():
         connection.execute(text("UPDATE shared_memories SET is_active = 0 WHERE source_type = 'chat'"))
 
     table_additions = {
-        "memory_candidates": {"facts": "TEXT DEFAULT '[]'"},
+        "memory_candidates": {
+            "facts": "TEXT DEFAULT '[]'",
+            "started_at": "DATETIME",
+            "resolved_at": "DATETIME",
+        },
         "memory_event_history": {"facts": "TEXT DEFAULT '[]'"},
     }
     inspector = inspect(engine)

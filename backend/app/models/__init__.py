@@ -216,7 +216,7 @@ class SharedMemory(Base):
     category = Column(String(30), default="event", index=True)  # event/preference/plan
     event_key = Column(String(160), default="", index=True)
     event_kind = Column(String(30), default="event", index=True)
-    # 结构化原子事实；每项保留 type/value/occurred_at/source_message_ids。
+    # 结构化原子事实；每项保留事实主体、陈述者、时间和原始消息依据。
     facts = Column(Text, default="[]")
     memory_state = Column(String(20), default="completed", index=True)  # planned/ongoing/completed/cancelled/uncertain
     lifecycle = Column(String(20), default="closed", index=True)  # open/dormant/closed
@@ -224,6 +224,8 @@ class SharedMemory(Base):
     state_confidence = Column(Float, default=1.0)
     confidence = Column(Float, default=1.0)
     event_end = Column(DateTime, nullable=True)
+    started_at = Column(DateTime, nullable=True, index=True)
+    resolved_at = Column(DateTime, nullable=True, index=True)
     valid_from = Column(DateTime, nullable=True, index=True)
     valid_to = Column(DateTime, nullable=True, index=True)
     # JSON 数组，只引用 messages.id，不复制原始聊天正文。
@@ -234,6 +236,7 @@ class SharedMemory(Base):
     embedding_updated_at = Column(DateTime, nullable=True)
     version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True, index=True)
+    forgotten_at = Column(DateTime, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -256,6 +259,8 @@ class MemoryCandidate(Base):
     source_message_ids = Column(Text, default="[]")
     event_date = Column(DateTime, nullable=True, index=True)
     event_end = Column(DateTime, nullable=True)
+    started_at = Column(DateTime, nullable=True, index=True)
+    resolved_at = Column(DateTime, nullable=True, index=True)
     state = Column(String(20), default="uncertain", index=True)
     lifecycle = Column(String(20), default="open", index=True)
     closure_reason = Column(String(40), default="")

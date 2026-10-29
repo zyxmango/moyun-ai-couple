@@ -15,6 +15,7 @@ from ..models import (
     Couple,
     DailyAnswer,
     DailyQuestion,
+    Message,
     MemoryEmbeddingBucket,
     SharedMemory,
     User,
@@ -115,6 +116,42 @@ def list_memories(
     return {"total": total, "items": [memory_service.serialize(row) for row in rows]}
 
 
+@router.get("/{memory_id}/evidence")
+def get_memory_evidence(
+    memory_id: int,
+    user: User = Depends(get_current_user),
+    couple: Couple = Depends(get_active_couple),
+    db: Session = Depends(get_db),
+):
+    memory = db.query(SharedMemory).filter(
+        SharedMemory.id == memory_id,
+        SharedMemory.couple_id == couple.id,
+        SharedMemory.is_active.is_(True),
+    ).first()
+    if not memory or (memory.visibility == "private" and memory.owner_id != user.id):
+        raise HTTPException(status_code=404, detail="记忆不存在")
+    source_ids = memory_service._json_ids(memory.source_message_ids)
+    messages = db.query(Message).filter(
+        Message.couple_id == couple.id,
+        Message.id.in_(source_ids),
+    ).order_by(Message.created_at.asc(), Message.id.asc()).all() if source_ids else []
+    user_ids = {item.sender_id for item in messages}
+    names = {
+        item.id: (item.nickname or f"用户{item.id}")
+        for item in db.query(User).filter(User.id.in_(user_ids)).all()
+    } if user_ids else {}
+    return {
+        "memory_id": memory.id,
+        "items": [{
+            "message_id": item.id,
+            "sender_id": item.sender_id,
+            "sender_nickname": names.get(item.sender_id, f"用户{item.sender_id}"),
+            "content": item.content,
+            "created_at": item.created_at.isoformat(),
+        } for item in messages],
+    }
+
+
 @router.post("/manual")
 def create_manual_memory(
     data: ManualMemoryCreate,
@@ -203,9 +240,16 @@ def delete_memory(
     db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete(
         synchronize_session=False
     )
-    db.delete(memory)
+    memory.is_active = False
+    memory.status = "rejected"
+    memory.forgotten_at = datetime.utcnow()
+    memory.embedding_b64 = ""
+    memory.embedding_model = ""
+    memory.embedding_dim = 0
+    memory.embedding_updated_at = None
+    memory.updated_at = datetime.utcnow()
     db.commit()
-    return {"message": "记忆已删除"}
+    return {"message": "这条记忆已忘记，原始聊天仍保留"}
 
 
 @router.delete("")
@@ -219,6 +263,7 @@ def clear_memories(
         raise HTTPException(status_code=400, detail="需要明确确认删除全部 AI 记忆")
     memory_ids = [row[0] for row in db.query(SharedMemory.id).filter(
         SharedMemory.couple_id == couple.id,
+        SharedMemory.forgotten_at.is_(None),
         or_(
             SharedMemory.visibility == "shared",
             SharedMemory.visibility.is_(None),
@@ -254,14 +299,18 @@ def memory_chat(
     context_parts = []
     for item in sources:
         facts = "；".join(
-            f"{fact.get('type', 'fact')}={fact.get('value', '')}"
+            f"{fact.get('type', 'fact')}"
+            + (f"@{fact.get('subject_user_id')}" if fact.get('subject_user_id') is not None else "")
+            + f"={fact.get('value', '')}"
             for fact in item.get("facts", []) if fact.get("value")
         )
         evidence = "；".join(
             f"{row['created_at']}：{row['content']}" for row in item.get("evidence", [])[:6]
         )
         context_parts.append(
-            f"- 事件时间：{item['event_date'] or '未知'}；状态：{item.get('memory_state') or '未知'}；"
+            f"- 事件时间：{item.get('started_at') or item['event_date'] or '未知'}"
+            + (f" 至 {item.get('resolved_at')}" if item.get("resolved_at") else "（尚未记录结束时间）")
+            + f"；状态：{item.get('memory_state') or '未知'}；"
             f"类型：{item['title']}；内容：{item['content']}"
             + (f"；已确认事实：{facts}" if facts else "")
             + (f"；原始证据：{evidence}" if evidence else "")
@@ -283,7 +332,7 @@ def memory_chat(
 
     prior = db.query(AIMessage).filter(AIMessage.conversation_id == conversation.id).order_by(AIMessage.id.desc()).limit(8).all()
     history = [{"role": item.role, "content": item.content} for item in reversed(prior)]
-    answer = ai_service.memory_answer(data.question, context, history)
+    answer = ai_service.memory_answer(data.question, context, history, viewer_user_id=user.id)
     db.add(AIMessage(conversation_id=conversation.id, role="user", content=data.question))
     db.add(AIMessage(
         conversation_id=conversation.id,

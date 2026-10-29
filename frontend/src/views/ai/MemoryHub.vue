@@ -77,7 +77,10 @@
         <el-empty v-if="!memories.items.length" description="同步后，共同记忆会出现在这里" />
         <div v-else class="timeline-list">
           <article v-for="item in memories.items" :key="item.id" class="ink-card memory-card">
-            <div class="memory-date">{{ formatDate(item.event_date || item.created_at) }}</div>
+            <div class="memory-date">
+              {{ formatDate(item.started_at || item.event_date || item.created_at) }}
+              <template v-if="item.resolved_at"><br />至 {{ formatDate(item.resolved_at) }}</template>
+            </div>
             <div class="memory-main">
               <div class="memory-title">
                 <strong>{{ item.title }}</strong>
@@ -94,8 +97,9 @@
               </div>
             </div>
             <div class="memory-actions">
+              <el-button text @click="showEvidence(item)">查看依据</el-button>
               <el-button text @click="editMemory(item)">纠正</el-button>
-              <el-button text type="danger" @click="removeMemory(item)">删除</el-button>
+              <el-button text type="danger" @click="removeMemory(item)">忘记</el-button>
             </div>
           </article>
         </div>
@@ -151,6 +155,18 @@
         </section>
       </el-tab-pane>
     </el-tabs>
+
+    <el-dialog v-model="evidenceVisible" title="这条记忆来自这些聊天" width="min(620px, 92vw)">
+      <el-skeleton v-if="evidenceLoading" :rows="4" animated />
+      <el-empty v-else-if="!evidenceItems.length" description="这条记忆没有关联聊天原文" />
+      <div v-else class="evidence-list">
+        <div v-for="row in evidenceItems" :key="row.message_id" class="evidence-item">
+          <div><strong>{{ row.sender_nickname }}</strong><span>{{ formatTime(row.created_at) }}</span></div>
+          <p>{{ row.content }}</p>
+        </div>
+      </div>
+      <template #footer><el-button @click="evidenceVisible = false">关闭</el-button></template>
+    </el-dialog>
   </div>
 </template>
 
@@ -174,12 +190,16 @@ const messages = ref([])
 const daily = ref(null)
 const dailyAnswer = ref('')
 const report = ref(null)
+const evidenceVisible = ref(false)
+const evidenceLoading = ref(false)
+const evidenceItems = ref([])
 const memories = reactive({ total: 0, items: [] })
 const settings = reactive({ enabled: false, include_chat: true, include_diary: true, include_album: true, include_anniversary: true })
 const manual = reactive({ title: '', content: '', category: 'preference', visibility: 'shared' })
 const starters = ['我们第一次旅行是什么时候？', '最近有哪些值得纪念的开心事情？', '我们讨论过哪些未来计划？']
 
 const formatDate = (value) => value ? new Date(value).toLocaleDateString('zh-CN') : '日期未记录'
+const formatTime = (value) => value ? new Date(value).toLocaleString('zh-CN') : ''
 const sourceLabel = (type) => ({ chat_event: '聊天事件', diary: '日记', photo: '相册', anniversary: '纪念日', manual: '主动记录' }[type] || type)
 
 const loadSettings = async () => Object.assign(settings, await memoryApi.settings())
@@ -266,9 +286,20 @@ const generateReport = async () => {
 }
 
 const removeMemory = async (item) => {
-  await ElMessageBox.confirm(`确定删除“${item.title}”的 AI 记忆索引？`, '删除记忆')
+  await ElMessageBox.confirm(`确定让 AI 忘记“${item.title}”？原始聊天仍会保留，这条记忆不会在同步后自动恢复。`, '忘记这条记忆', { type: 'warning' })
   await memoryApi.delete(item.id)
   await loadMemories()
+  ElMessage.success('AI 已忘记这条记忆')
+}
+
+const showEvidence = async (item) => {
+  evidenceVisible.value = true
+  evidenceLoading.value = true
+  evidenceItems.value = []
+  try {
+    const result = await memoryApi.evidence(item.id)
+    evidenceItems.value = result.items || []
+  } finally { evidenceLoading.value = false }
 }
 
 const editMemory = async (item) => {
@@ -355,5 +386,10 @@ onMounted(async () => {
 .capture-head h3 { margin:0; }.capture-head p { margin:6px 0 0; color:var(--ink-secondary); font-size:12px; }
 .capture-row { display:grid; grid-template-columns:180px 1fr; gap:16px; }
 .privacy-tip { margin:-4px 0 16px; color:var(--ink-light); font-size:12px; line-height:1.6; }
+.evidence-list { max-height:55vh; overflow:auto; display:flex; flex-direction:column; gap:10px; }
+.evidence-item { padding:12px 14px; border:1px solid var(--border-soft); border-radius:10px; background:var(--bg-soft); }
+.evidence-item > div { display:flex; justify-content:space-between; gap:12px; font-size:12px; color:var(--ink-light); }
+.evidence-item strong { color:var(--ink-primary); }
+.evidence-item p { margin:7px 0 0; line-height:1.65; white-space:pre-wrap; color:var(--ink-primary); }
 @media (max-width:600px) { .page-head,.report-actions { align-items:flex-start; flex-direction:column; }.memory-card { flex-direction:column; gap:8px; }.memory-date { width:auto; }.answer-grid,.capture-row { grid-template-columns:1fr; } }
 </style>

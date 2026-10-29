@@ -336,8 +336,11 @@ class AIService:
             "只输出 JSON 数组。每项字段："
             "title、summary、category(event/preference/fact/plan)、state(planned/ongoing/completed/cancelled/uncertain)、"
             "event_kind(trip/date/conflict/gift/preference/plan/fact/activity)、event_key、entities、"
-            "event_date、event_end、location、emotion、tags、importance、confidence、source_message_ids、facts。"
-            "facts 是原子事实数组，每项只包含 type、value、occurred_at、source_message_ids；"
+            "event_date、event_end、started_at、resolved_at、location、emotion、tags、importance、confidence、source_message_ids、facts。"
+            "started_at 是事件开始时间，resolved_at 是事件完成、取消或和好的时间；未结束时 resolved_at 留空。"
+            "facts 是原子事实数组，每项只包含 type、value、subject_user_id、asserted_by_user_id、occurred_at、source_message_ids；"
+            "subject_user_id 是事实所描述的人，asserted_by_user_id 是说出该事实的人；只能使用输入中的 sender_id，"
+            "双方共同事实或无法确定主体时 subject_user_id 填 null，不能把陈述者自动当成主体。"
             "例如抵达、游览、餐食、偏好旧值、偏好新值、取消原因、冲突原因、解决办法分别保存，不能只写概括。"
             "每个事件最多8个facts，每个value不超过100字，输出必须是紧凑且可解析的合法JSON。"
             "event_key 表示可跨批次复用的稳定身份，只能由事件类型和核心主题组成，例如"
@@ -458,6 +461,8 @@ class AIService:
                             event_kind, value, str(fact.get("type") or "fact")
                         ),
                         "value": value[:500],
+                        "subject_user_id": fact.get("subject_user_id"),
+                        "asserted_by_user_id": fact.get("asserted_by_user_id"),
                         "occurred_at": str(fact.get("occurred_at") or "")[:32],
                         "source_message_ids": fact_ids,
                     })
@@ -465,6 +470,8 @@ class AIService:
                     facts = [{
                         "type": event_kind,
                         "value": summary[:500],
+                        "subject_user_id": None,
+                        "asserted_by_user_id": None,
                         "occurred_at": str(item.get("event_date") or "")[:32],
                         "source_message_ids": source_ids,
                     }]
@@ -479,6 +486,8 @@ class AIService:
                     "state": state,
                     "event_date": str(item.get("event_date") or "")[:32],
                     "event_end": str(item.get("event_end") or "")[:32],
+                    "started_at": str(item.get("started_at") or item.get("event_date") or "")[:32],
+                    "resolved_at": str(item.get("resolved_at") or item.get("event_end") or "")[:32],
                     "location": str(item.get("location") or "")[:100],
                     "emotion": str(item.get("emotion") or "")[:30],
                     "tags": [str(x)[:30] for x in (item.get("tags") or [])][:8],
@@ -626,6 +635,8 @@ class AIService:
                 target.setdefault("facts", []).append({
                     "type": canonical_type,
                     "value": text[:500],
+                    "subject_user_id": None,
+                    "asserted_by_user_id": message.get("sender_id"),
                     "occurred_at": str(message.get("created_at") or "")[:32],
                     "source_message_ids": [message_id],
                 })
@@ -713,7 +724,9 @@ class AIService:
         system = (
             "你是事实槽位补全器。只补充missing_slots中有原始消息直接证据的事实；没有证据就不输出。"
             "不得改写事件、不得创造原因或结果。只输出JSON数组，每项为event_index和facts；"
-            "facts每项只含type、value、occurred_at、source_message_ids，type必须来自missing_slots。"
+            "facts每项只含type、value、subject_user_id、asserted_by_user_id、occurred_at、source_message_ids，"
+            "type必须来自missing_slots。subject_user_id 是事实描述的人，asserted_by_user_id 是陈述者；"
+            "二者只能使用输入 sender_id，无法确定事实主体时 subject_user_id 填 null。"
         )
         try:
             raw = self._chat_strict(
@@ -748,6 +761,8 @@ class AIService:
                         continue
                     events[index].setdefault("facts", []).append({
                         "type": fact_type, "value": value[:500],
+                        "subject_user_id": fact.get("subject_user_id"),
+                        "asserted_by_user_id": fact.get("asserted_by_user_id"),
                         "occurred_at": str(fact.get("occurred_at") or "")[:32],
                         "source_message_ids": fact_ids,
                     })
@@ -812,6 +827,8 @@ class AIService:
                 )[:2000]
                 split["title"] = f"{str(event.get('title') or kind)[:160]}（{day}）"
                 split["event_date"] = day
+                split["started_at"] = day
+                split["resolved_at"] = day if event.get("resolved_at") else ""
                 split["event_key"] = f"{event.get('event_key') or kind}:{day}"
                 result.append(split)
         return result
@@ -875,11 +892,15 @@ class AIService:
             "facts": [{
                 "type": "preference" if category == "preference" else ("plan" if planned or cancelled else "event"),
                 "value": joined[:500],
+                "subject_user_id": None,
+                "asserted_by_user_id": None,
                 "occurred_at": "",
                 "source_message_ids": [int(messages[index]["id"]) for index, _ in selected],
             }],
             "state": "cancelled" if cancelled else ("planned" if planned else "completed"),
             "event_end": "",
+            "started_at": "",
+            "resolved_at": "",
             "confidence": 0.7,
             "source_message_ids": [int(messages[index]["id"]) for index, _ in selected],
         }]
@@ -973,13 +994,17 @@ class AIService:
         }
 
     def memory_answer(
-        self, question: str, context: str, history: List[Dict] | None = None, strict: bool = False
+        self, question: str, context: str, history: List[Dict] | None = None, strict: bool = False,
+        viewer_user_id: int | None = None,
     ) -> str:
         if context.strip() == "没有找到相关共同记忆。":
             return "目前没有找到相关记录，所以我无法确认这件事。"
         conflict_answer = self._deterministic_conflict_answer(question, context)
         if conflict_answer:
             return self._sanitize_memory_answer(conflict_answer, question)
+        structured_answer = self._deterministic_structured_answer(question, context, viewer_user_id)
+        if structured_answer:
+            return self._sanitize_memory_answer(structured_answer, question)
         system = (
             "你是专属于一对情侣的共同记忆助手。只能依据给出的共同记忆回答，绝对不可编造。"
             "请像熟悉他们故事的温暖朋友一样直接回答：自然、亲切、简洁，不过度煽情，也不要使用客服腔。"
@@ -1006,6 +1031,73 @@ class AIService:
         return self._sanitize_memory_answer(answer, question)
 
     @staticmethod
+    def _context_line_score(question: str, line: str) -> int:
+        chinese = "".join(re.findall(r"[\u4e00-\u9fa5]+", question))
+        generic = {"什么", "怎么", "如何", "我们", "你们", "那次", "后来", "最后", "当前", "现在"}
+        terms = {
+            chinese[index:index + size]
+            for size in (2, 3, 4)
+            for index in range(max(0, len(chinese) - size + 1))
+        } - generic
+        return sum(1 for term in terms if term in line)
+
+    @staticmethod
+    def _line_facts(line: str) -> Dict[str, List[tuple[int | None, str]]]:
+        facts: Dict[str, List[tuple[int | None, str]]] = {}
+        for fact_type, subject, value in re.findall(
+            r"(?:^|[；：])([a-zA-Z_][a-zA-Z0-9_]*)(?:@(\d+))?=([^；\n]+)", line
+        ):
+            facts.setdefault(fact_type, []).append((int(subject) if subject else None, value.strip()))
+        return facts
+
+    @classmethod
+    def _deterministic_structured_answer(
+        cls, question: str, context: str, viewer_user_id: int | None = None
+    ) -> str:
+        """常见事实问题直接读取结构化槽位，降低模型改写事实或张冠李戴的概率。"""
+        groups = []
+        if any(marker in question for marker in ("偏好", "喜欢", "口味", "选择", "爱吃", "不喜欢")):
+            groups.append(("preference", ("current_preference", "previous_preference")))
+        if any(marker in question for marker in ("计划", "安排", "取消", "改期", "打算", "预订")):
+            groups.append(("plan", ("plan_intent", "plan_status", "cancellation_reason")))
+        if any(marker in question for marker in ("旅行", "旅游", "去了哪里", "吃了什么", "吃什么", "餐", "游览", "做了什么")):
+            groups.append(("trip", ("destination", "activity", "meal", "completion")))
+        if not groups:
+            return ""
+        wanted = {fact_type for _, fact_types in groups for fact_type in fact_types}
+        candidates = []
+        for line in context.splitlines():
+            facts = cls._line_facts(line)
+            if wanted.intersection(facts):
+                candidates.append((cls._context_line_score(question, line), line, facts))
+        if not candidates:
+            return ""
+        _, _, facts = max(candidates, key=lambda row: row[0])
+
+        if "current_preference" in facts:
+            subject, value = facts["current_preference"][-1]
+            owner = "你" if viewer_user_id is not None and subject == viewer_user_id else (
+                "对方" if viewer_user_id is not None and subject is not None else "记录中的偏好"
+            )
+            previous = [row for row in facts.get("previous_preference", []) if row[0] == subject]
+            if previous:
+                return f"{owner}当前的偏好是：{value}。此前记录的是：{previous[-1][1]}。"
+            return f"{owner}当前的偏好是：{value}。"
+
+        if any(key in facts for key in ("plan_intent", "plan_status", "cancellation_reason")):
+            parts = []
+            for key, label in (("plan_intent", "计划"), ("plan_status", "状态"), ("cancellation_reason", "原因")):
+                if facts.get(key):
+                    parts.append(f"{label}：{facts[key][-1][1]}")
+            return "记录显示，" + "；".join(parts) + "。"
+
+        parts = []
+        for key, label in (("destination", "地点"), ("activity", "活动"), ("meal", "餐食"), ("completion", "结果")):
+            if facts.get(key):
+                parts.append(f"{label}：{facts[key][-1][1]}")
+        return ("记录显示，" + "；".join(parts) + "。") if parts else ""
+
+    @staticmethod
     def _deterministic_conflict_answer(question: str, context: str) -> str:
         """冲突类问题直接使用结构化槽位，避免模型泛化或遗漏具体约定。"""
         if not any(marker in question for marker in ("怎么和好", "如何和好", "闹矛盾", "吵架", "争执", "冲突")):
@@ -1024,7 +1116,7 @@ class AIService:
         line = max(lines, key=lambda value: sum(1 for term in terms if term in value))
 
         def fact_value(fact_type: str) -> str:
-            match = re.search(rf"(?:^|[；：]){fact_type}=([^；\n]+)", line)
+            match = re.search(rf"(?:^|[；：]){fact_type}(?:@\d+)?=([^；\n]+)", line)
             return match.group(1).strip() if match else ""
 
         reason = fact_value("conflict_reason")

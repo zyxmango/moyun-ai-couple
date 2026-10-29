@@ -172,6 +172,8 @@ class MemoryService:
             SharedMemory.source_id == str(source_id),
         ).first()
         created = memory is None
+        if memory is not None and memory.forgotten_at is not None:
+            return False
         if not memory:
             memory = SharedMemory(
                 couple_id=couple_id,
@@ -183,6 +185,7 @@ class MemoryService:
         memory.title = title[:200]
         memory.content = content[:8000]
         memory.event_date = event_date
+        memory.started_at = event_date
         memory.created_by = created_by
         memory.owner_id = owner_id
         memory.visibility = visibility
@@ -236,6 +239,7 @@ class MemoryService:
             title=title.strip()[:200],
             content=content.strip()[:8000],
             event_date=event_date or datetime.utcnow(),
+            started_at=event_date or datetime.utcnow(),
             location=location.strip()[:100],
             emotion=emotion.strip()[:30],
             tags=json.dumps(["手动记录", category], ensure_ascii=False),
@@ -450,6 +454,36 @@ class MemoryService:
             return parsed
         return anchor
 
+    def _resolve_event_times(
+        self, event: Dict, message_map: Dict[int, Message], source_ids: List[int]
+    ) -> tuple[datetime | None, datetime | None]:
+        """把事件发生时间与结束/解决时间分开，且始终以原始消息时间校验模型输出。"""
+        source_dates = [message_map[item].created_at for item in source_ids if item in message_map]
+        if not source_dates:
+            return None, None
+        kind = str(event.get("event_kind") or event.get("category") or "event").lower()
+        evidence = " ".join(message_map[item].content or "" for item in source_ids if item in message_map)
+        has_absolute_date = bool(re.search(r"(?:19|20)\d{2}\s*(?:年|[-/.])\s*\d{1,2}", evidence))
+
+        def trusted(raw, anchor):
+            parsed = self._parse_datetime(raw)
+            if parsed is None:
+                return None
+            return parsed if has_absolute_date or abs((parsed - anchor).total_seconds()) <= 7 * 86400 else None
+
+        default_start = max(source_dates) if kind == "preference" else min(source_dates)
+        started_at = trusted(event.get("started_at"), default_start)
+        if started_at is None:
+            started_at = self._resolve_event_date(event, message_map, source_ids) or default_start
+
+        resolved_at = trusted(event.get("resolved_at") or event.get("event_end"), max(source_dates))
+        resolution_markers = ("和好", "道歉", "说清楚", "说开了", "解决", "完成了", "结束", "取消", "不去了")
+        if resolved_at is None and any(marker in evidence for marker in resolution_markers):
+            resolved_at = max(source_dates)
+        if resolved_at and resolved_at < started_at:
+            resolved_at = started_at
+        return started_at, resolved_at
+
     def _normalize_event_facts(
         self, event: Dict, message_map: Dict[int, Message], source_ids: List[int]
     ) -> List[Dict]:
@@ -479,6 +513,22 @@ class MemoryService:
             occurred = self._parse_datetime(raw.get("occurred_at"))
             if occurred is None:
                 occurred = min(message_map[item].created_at for item in fact_ids)
+            subject_user_id = raw.get("subject_user_id")
+            try:
+                subject_user_id = int(subject_user_id) if subject_user_id is not None else None
+            except (TypeError, ValueError):
+                subject_user_id = None
+            evidence_senders = {message_map[item].sender_id for item in fact_ids if item in message_map}
+            event_senders = {message_map[item].sender_id for item in source_ids if item in message_map}
+            if subject_user_id not in event_senders:
+                subject_user_id = None
+            asserted_by_user_id = raw.get("asserted_by_user_id")
+            try:
+                asserted_by_user_id = int(asserted_by_user_id) if asserted_by_user_id is not None else None
+            except (TypeError, ValueError):
+                asserted_by_user_id = None
+            if asserted_by_user_id not in evidence_senders:
+                asserted_by_user_id = next(iter(evidence_senders)) if len(evidence_senders) == 1 else None
             facts.append({
                 "type": ai_service._canonical_fact_type(
                     str(event.get("event_kind") or event.get("category") or "fact"),
@@ -486,6 +536,8 @@ class MemoryService:
                     str(raw.get("type") or "fact"),
                 ),
                 "value": value,
+                "subject_user_id": subject_user_id,
+                "asserted_by_user_id": asserted_by_user_id,
                 "occurred_at": occurred.isoformat(),
                 "source_message_ids": fact_ids,
             })
@@ -494,10 +546,12 @@ class MemoryService:
     @staticmethod
     def _merge_facts(existing: List[Dict], incoming: List[Dict]) -> List[Dict]:
         current_types = {"current_preference", "preference_current", "current_value"}
-        incoming_current_values = {
-            re.sub(r"\s+", "", str(fact.get("value") or "")).lower()
-            for fact in incoming if str(fact.get("type") or "").lower() in current_types
-        }
+        incoming_current_values = defaultdict(set)
+        for fact in incoming:
+            if str(fact.get("type") or "").lower() in current_types:
+                incoming_current_values[fact.get("subject_user_id")].add(
+                    re.sub(r"\s+", "", str(fact.get("value") or "")).lower()
+                )
         merged = []
         seen = set()
         for fact in [*existing, *incoming]:
@@ -506,11 +560,11 @@ class MemoryService:
             if (
                 fact in existing
                 and str(fact.get("type") or "").lower() in current_types
-                and incoming_current_values
-                and value not in incoming_current_values
+                and incoming_current_values.get(fact.get("subject_user_id"))
+                and value not in incoming_current_values[fact.get("subject_user_id")]
             ):
                 fact["type"] = "previous_preference"
-            key = (str(fact.get("type") or "fact").lower(), value)
+            key = (str(fact.get("type") or "fact").lower(), fact.get("subject_user_id"), value)
             if not value or key in seen:
                 continue
             seen.add(key)
@@ -688,7 +742,8 @@ class MemoryService:
         source_ids = sorted({int(item) for item in event.get("source_message_ids", []) if int(item) in message_map})
         if not source_ids:
             return None, False
-        event_at = self._resolve_event_date(event, message_map, source_ids)
+        started_at, resolved_at = self._resolve_event_times(event, message_map, source_ids)
+        event_at = started_at
         candidate, event_key = self._find_candidate(db, couple_id, event, event_at)
         created = candidate is None
         if candidate is None:
@@ -696,6 +751,7 @@ class MemoryService:
                 couple_id=couple_id, event_key=event_key,
                 event_kind=event.get("event_kind") or event.get("category") or "event",
                 category=event.get("category") or "event", event_date=event_at,
+                started_at=started_at, resolved_at=resolved_at,
                 first_seen_at=min(message_map[item].created_at for item in source_ids),
             )
             db.add(candidate)
@@ -721,8 +777,11 @@ class MemoryService:
         candidate.source_message_ids = json.dumps(combined_ids)
         dates = [value for value in (candidate.event_date, event_at) if value is not None]
         candidate.event_date = max(dates) if candidate.event_kind == "preference" else min(dates)
-        evidence_dates = [row[0] for row in db.query(Message.created_at).filter(Message.id.in_(combined_ids)).all()]
-        candidate.event_end = max(evidence_dates) if evidence_dates else event_at
+        start_dates = [value for value in (candidate.started_at, started_at) if value is not None]
+        candidate.started_at = max(start_dates) if candidate.event_kind == "preference" else min(start_dates)
+        resolved_dates = [value for value in (candidate.resolved_at, resolved_at) if value is not None]
+        candidate.resolved_at = max(resolved_dates) if resolved_dates else None
+        candidate.event_end = candidate.resolved_at
         candidate.confidence = max(candidate.confidence or 0.0, event.get("confidence", 0.5))
         candidate.last_seen_at = max(message_map[item].created_at for item in source_ids)
         candidate.quiet_until = candidate.last_seen_at + timedelta(hours=48)
@@ -744,6 +803,9 @@ class MemoryService:
         ).order_by(Message.id.asc()).all()
         if not messages:
             return False
+        memory = db.query(SharedMemory).filter(SharedMemory.id == candidate.memory_id).first() if candidate.memory_id else None
+        if memory is not None and memory.forgotten_at is not None:
+            return False
         candidate_payload = {
             "event_key": candidate.event_key, "event_kind": candidate.event_kind,
             "category": candidate.category, "state": candidate.state,
@@ -755,7 +817,6 @@ class MemoryService:
         summary = ai_service.summarize_memory_candidate(candidate_payload, [{
             "id": item.id, "content": item.content, "created_at": item.created_at.isoformat()
         } for item in messages])
-        memory = db.query(SharedMemory).filter(SharedMemory.id == candidate.memory_id).first() if candidate.memory_id else None
         created = memory is None
         if memory is None:
             memory = SharedMemory(
@@ -779,6 +840,8 @@ class MemoryService:
         memory.facts = json.dumps(facts, ensure_ascii=False)
         memory.event_date = candidate.event_date
         memory.event_end = candidate.event_end
+        memory.started_at = candidate.started_at or candidate.event_date
+        memory.resolved_at = candidate.resolved_at
         memory.valid_from = candidate.event_date if candidate.event_kind == "preference" else None
         memory.valid_to = None
         memory.location = summary.get("location", "")
@@ -1056,6 +1119,8 @@ class MemoryService:
             "title": memory.title,
             "content": memory.content,
             "event_date": memory.event_date.isoformat() if memory.event_date else None,
+            "started_at": memory.started_at.isoformat() if memory.started_at else None,
+            "resolved_at": memory.resolved_at.isoformat() if memory.resolved_at else None,
             "location": memory.location,
             "emotion": memory.emotion,
             "tags": tags,
@@ -1078,6 +1143,7 @@ class MemoryService:
             "source_message_ids": self._json_ids(memory.source_message_ids),
             "version": memory.version or 1,
             "is_active": memory.is_active if memory.is_active is not None else True,
+            "forgotten_at": memory.forgotten_at.isoformat() if memory.forgotten_at else None,
             "created_at": memory.created_at.isoformat(),
         }
         if score is not None:

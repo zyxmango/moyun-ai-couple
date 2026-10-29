@@ -235,6 +235,8 @@ class MemoryReviewRequest(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     event_date: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
     location: Optional[str] = None
     emotion: Optional[str] = None
 

@@ -749,6 +749,104 @@ class MemoryAPITest(unittest.TestCase):
         self.assertIn("互相道歉并和好", answer)
         self.assertIn("最后约定：列了家务轮值表", answer)
 
+    def test_04bbo_fact_subject_and_event_interval_are_preserved(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        started = datetime(2052, 2, 1, 20, 0)
+        resolved = started + timedelta(hours=2)
+        messages = [
+            Message(couple_id=couple_id, sender_id=self.user1_id, content="我因为你忘记倒垃圾很生气。",
+                    msg_type="text", created_at=started),
+            Message(couple_id=couple_id, sender_id=self.user2_id, content="我道歉了，我们说开并和好了。",
+                    msg_type="text", created_at=resolved),
+        ]
+        db.add_all(messages)
+        db.commit()
+        for item in messages:
+            db.refresh(item)
+        candidate, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+            "title": "倒垃圾冲突", "summary": "双方因倒垃圾争执后和好。",
+            "category": "event", "event_kind": "conflict", "event_key": "conflict:倒垃圾",
+            "entities": ["倒垃圾"], "state": "completed", "started_at": started.isoformat(),
+            "resolved_at": resolved.isoformat(), "confidence": 0.95,
+            "source_message_ids": [item.id for item in messages],
+            "facts": [
+                {"type": "conflict_reason", "value": "忘记倒垃圾", "subject_user_id": self.user1_id,
+                 "source_message_ids": [messages[0].id]},
+                {"type": "resolution", "value": "道歉并说开和好", "subject_user_id": self.user2_id,
+                 "source_message_ids": [messages[1].id]},
+            ],
+        }, messages)
+        facts = memory_service._json_list(candidate.facts)
+        self.assertEqual(facts[0]["subject_user_id"], self.user1_id)
+        self.assertEqual(facts[1]["subject_user_id"], self.user2_id)
+        self.assertEqual(facts[0]["asserted_by_user_id"], self.user1_id)
+        self.assertEqual(facts[1]["asserted_by_user_id"], self.user2_id)
+        self.assertEqual(candidate.started_at, started)
+        self.assertEqual(candidate.resolved_at, resolved)
+        db.close()
+
+    def test_04bbp_structured_answer_keeps_subject_and_exact_values(self):
+        context = (
+            f"- 事件时间：2052-03-01；状态：ongoing；类型：咖啡偏好；内容：偏好变化；"
+            f"已确认事实：previous_preference@{self.user1_id}=半糖拿铁；"
+            f"current_preference@{self.user1_id}=无糖燕麦拿铁"
+        )
+        answer = ai_service.memory_answer("我现在喜欢什么咖啡？", context, viewer_user_id=self.user1_id)
+        self.assertIn("你当前的偏好", answer)
+        self.assertIn("无糖燕麦拿铁", answer)
+        self.assertIn("半糖拿铁", answer)
+
+    def test_04bbq_evidence_is_visible_and_forgotten_memory_stays_inactive(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        message = Message(
+            couple_id=couple_id, sender_id=self.user1_id, content="请记住我现在只喝无糖咖啡。",
+            msg_type="text", created_at=datetime(2052, 4, 1, 9, 0),
+        )
+        db.add(message)
+        db.flush()
+        memory = SharedMemory(
+            couple_id=couple_id, source_type="chat_event", source_id=f"forget-{message.id}",
+            title="咖啡偏好", content="只喝无糖咖啡", event_date=message.created_at,
+            started_at=message.created_at, status="confirmed", visibility="shared", category="preference",
+            source_message_ids=json.dumps([message.id]), is_active=True,
+        )
+        db.add(memory)
+        db.commit()
+        memory_id = memory.id
+        message_id = message.id
+        db.close()
+
+        evidence = self.client.get(f"/api/ai/memory/{memory_id}/evidence", headers=self.headers1)
+        self.assertEqual(evidence.status_code, 200)
+        self.assertEqual(evidence.json()["items"][0]["sender_nickname"], "小墨")
+        self.assertIn("无糖咖啡", evidence.json()["items"][0]["content"])
+
+        forgotten = self.client.delete(f"/api/ai/memory/{memory_id}", headers=self.headers1)
+        self.assertEqual(forgotten.status_code, 200)
+        db = self.Session()
+        row = db.query(SharedMemory).filter(SharedMemory.id == memory_id).one()
+        self.assertFalse(row.is_active)
+        self.assertIsNotNone(row.forgotten_at)
+        candidate = MemoryCandidate(
+            couple_id=couple_id, event_key="preference:无糖咖啡", event_kind="preference",
+            category="preference", source_message_ids=json.dumps([message_id]), memory_id=memory_id,
+        )
+        db.add(candidate)
+        db.commit()
+        summarize = ai_service.summarize_memory_candidate
+        ai_service.summarize_memory_candidate = Mock(side_effect=AssertionError("忘记后不应重新调用模型整理"))
+        try:
+            self.assertFalse(memory_service._materialize_candidate(db, candidate))
+        finally:
+            ai_service.summarize_memory_candidate = summarize
+        db.close()
+        self.assertEqual(
+            self.client.get(f"/api/ai/memory/{memory_id}/evidence", headers=self.headers1).status_code,
+            404,
+        )
+
     def test_04c_failed_extraction_keeps_cursor_for_retry(self):
         db = self.Session()
         settings = db.query(CoupleAISettings).first()

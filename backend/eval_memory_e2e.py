@@ -222,7 +222,9 @@ def make_context(sources: list[dict]) -> str:
     parts = []
     for item in sources:
         facts = "；".join(
-            f"{fact.get('type', 'fact')}={fact.get('value', '')}"
+            f"{fact.get('type', 'fact')}"
+            + (f"@{fact.get('subject_user_id')}" if fact.get('subject_user_id') is not None else "")
+            + f"={fact.get('value', '')}"
             for fact in item.get("facts", []) if fact.get("value")
         )
         evidence = "；".join(f"{row['created_at']}：{row['content']}" for row in item.get("evidence", [])[:6])

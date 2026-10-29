@@ -153,6 +153,7 @@ export const memoryApi = {
   createManual: (data) => api.post('/ai/memory/manual', data),
   extract: () => api.post('/ai/memory/extract'),
   review: (id, data) => api.patch(`/ai/memory/${id}`, data),
+  evidence: (id) => api.get(`/ai/memory/${id}/evidence`),
   delete: (id) => api.delete(`/ai/memory/${id}`),
   clear: () => api.delete('/ai/memory', { params: { confirm: true } }),
   chat: (data) => api.post('/ai/memory/chat', data),
