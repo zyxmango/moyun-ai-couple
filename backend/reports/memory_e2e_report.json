@@ -1,45 +1,45 @@
 {
-  "generated_at": "2026-10-28T20:05:53",
-  "chat_model": "qwen-plus",
+  "generated_at": "2026-10-29T13:58:55",
+  "chat_model": "qwen3.8-max",
   "embedding_model": "text-embedding-v3",
-  "sync_seconds": 2449.38,
+  "sync_seconds": 5960.34,
   "dataset": {
-    "messages": 2400,
-    "truth_events": 64,
-    "noise_batches": 16,
-    "positive_questions": 64,
-    "negative_questions": 24,
-    "extracted_memories": 77,
+    "messages": 1200,
+    "truth_events": 32,
+    "noise_batches": 8,
+    "positive_questions": 32,
+    "negative_questions": 12,
+    "extracted_memories": 37,
     "extra_memories": 0
   },
   "metrics": {
     "extraction_recall": 1.0,
-    "memory_content_accuracy": 0.765625,
+    "memory_content_accuracy": 0.96875,
     "extraction_state_accuracy": 1.0,
-    "extraction_date_accuracy": 0.96875,
+    "extraction_date_accuracy": 0.75,
     "extraction_category_accuracy": 1.0,
     "extraction_precision": 1.0,
-    "granularity_accuracy": 0.796875,
+    "granularity_accuracy": 0.84375,
     "noise_rejection_rate": 1.0,
-    "retrieval_recall_at_5": 0.96875,
-    "answer_accuracy": 0.78125,
+    "retrieval_recall_at_5": 1.0,
+    "answer_accuracy": 0.90625,
     "answer_supported_rate": 0.96875,
-    "negative_abstention_rate": 0.9583333333333334,
-    "negative_non_fabrication_rate": 0.9583333333333334,
-    "median_answer_latency_ms": 2915.5996999979834
+    "negative_abstention_rate": 1.0,
+    "negative_non_fabrication_rate": 1.0,
+    "median_answer_latency_ms": 9883.963050000602
   },
   "extraction_cases": [
     {
       "id": "event-00",
       "kind": "event",
       "found": true,
-      "memory_correct": false,
-      "content_correct": false,
+      "memory_correct": true,
+      "content_correct": true,
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
       "memory_id": 1,
-      "memory_text": "东湖绿道散步拍照及晚饭不等通知 2019-01-06T18:10:00在东湖绿道散步拍照；2019-01-06T18:28:00发出‘晚饭先不用等我’通知。活动由消息10和15共同证实，地点为东湖绿道，状态已完成，闭合原因为显式完成。；晚饭先不用等我。 东湖绿道",
+      "memory_text": "武汉旅行 2019年1月6日抵达武汉。下午在东湖绿道散步拍照。中午吃青菜面，有点淡；晚上吃藕汤，很香。 武汉",
       "actual_state": "completed",
       "actual_date": "2019-01-06T00:00:00",
       "actual_category": "event"
@@ -54,7 +54,7 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 2,
-      "memory_text": "2019年2月12日重庆之行：抵达、鹅岭二厂游览与小面晚餐 2019年02月12日18:22抵达重庆；当日18:32起下午游览鹅岭二厂并散步拍照；18:48晚餐吃小面，觉得香。此前早间消息提及窗台清洁、洗衣机停运、便利店换招牌等居家细节，但未影响行程。；2019年02月12日抵达重庆 重庆",
+      "memory_text": "2019-02-12重庆旅行 2019年2月12日已到重庆；下午在鹅岭二厂慢慢散步拍照；晚上吃小面，觉得香。事件已完成。 重庆",
       "actual_state": "completed",
       "actual_date": "2019-02-12T00:00:00",
       "actual_category": "event"
@@ -69,7 +69,7 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 3,
-      "memory_text": "南京旅行：2019年3月21日抵达与颐和路散步 2019年3月21日18:10抵达南京；18:16在颐和路散步并拍照；18:24食用盐水鸭，评价‘很香’。；在颐和路拍照；觉得盐水鸭很香 南京",
+      "memory_text": "2019年3月21日南京旅行 2019年3月21日抵达南京，下午在颐和路散步拍照，晚上食用盐水鸭。 南京",
       "actual_state": "completed",
       "actual_date": "2019-03-21T00:00:00",
       "actual_category": "event"
@@ -84,7 +84,7 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 4,
-      "memory_text": "trip:杭州:2019-04-27 2019年04月27日18:10抵达杭州；18:36在九溪散步拍照；18:40晚上吃片儿川。；下午在九溪散步拍照 杭州",
+      "memory_text": "杭州旅行 2019年4月27日，抵达杭州；下午在九溪散步拍照；晚上吃片儿川。 杭州",
       "actual_state": "completed",
       "actual_date": "2019-04-27T00:00:00",
       "actual_category": "event"
@@ -99,7 +99,7 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 5,
-      "memory_text": "2019年6月3日成都短途旅行 2019-06-03T18:12:00抵达成都；T18:39:00在杜甫草堂散步拍照；T18:44:00晚餐食用甜水面；T18:04:00曾发消息‘晚饭先不用等我’。该 trip 为已完成短期旅行。；晚饭先不用等我。 成都",
+      "memory_text": "成都旅行：抵达与杜甫草堂游览 2019-06-03 18:12已抵达成都；18:30记录中午的青菜面有点淡；18:36记录下午只去了杜甫草堂，在那里慢慢散步拍照；18:44记录晚上吃甜水面，觉得香。 成都",
       "actual_state": "completed",
       "actual_date": "2019-06-03T00:00:00",
       "actual_category": "event"
@@ -114,7 +114,7 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 6,
-      "memory_text": "2019年7月10日厦门行程 2019年07月10日18:14抵达厦门；18:24在沙坡尾散步拍照；18:36晚上吃花生汤，觉得很香。；下午在沙坡尾散步拍照；觉得花生汤很香 厦门",
+      "memory_text": "厦门旅行抵达与沙坡尾活动 2019-07-10抵达厦门；下午只去了沙坡尾，在那里慢慢散步拍照；晚上吃花生汤，说话人觉得很香。；2019年07月10日抵达厦门 厦门",
       "actual_state": "completed",
       "actual_date": "2019-07-10T00:00:00",
       "actual_category": "event"
@@ -129,7 +129,7 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 7,
-      "memory_text": "2019年8月16日青岛行程：抵达、小麦岛散步拍照、鲅鱼水饺晚餐 2019年08月16日18:22抵达青岛；18:26下午前往小麦岛散步拍照；18:40晚上食用鲅鱼水饺；18:44发出‘晚饭先不用等我’。所有活动均发生在青岛，含明确时间戳、地点、活动内容、餐食名称及临时状态调整。；晚饭先不用等我。 青岛",
+      "memory_text": "青岛旅行 2019-08-16两人抵达青岛；下午在小麦岛慢慢散步拍照；晚上吃鲅鱼水饺，觉得很香。 青岛",
       "actual_state": "completed",
       "actual_date": "2019-08-16T00:00:00",
       "actual_category": "event"
@@ -144,129 +144,9 @@
       "state_correct": true,
       "category_correct": true,
       "memory_id": 8,
-      "memory_text": "2019年9月22日苏州旅行 2019-09-22T18:20:00抵达苏州；18:22:00游览虎丘并散步拍照；18:28:00晚餐为桂花糖粥，一方评价‘很香’；18:38:00提出‘晚饭先不用等我’。全程无冲突或取消记录。；认为桂花糖粥很香；晚饭先不用等我。 苏州",
+      "memory_text": "苏州旅行 2019年9月22日抵达苏州；下午在虎丘散步拍照；晚上吃桂花糖粥，觉得很香。 苏州",
       "actual_state": "completed",
       "actual_date": "2019-09-22T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-08",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 9,
-      "memory_text": "2019年10月29日长沙之行 2019-10-29T18:30:00抵达长沙；18:32:00起在梅溪湖散步拍照；18:32:00发出‘晚饭先不用等我’；18:40:00吃米粉，觉得很香。；下午在梅溪湖散步拍照；晚上吃米粉，觉得很香；晚饭先不用等我。 长沙",
-      "actual_state": "completed",
-      "actual_date": "2019-10-29T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-09",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 11,
-      "memory_text": "2019年12月5日西安旅行抵达与活动 2019-12-05T18:20:00抵达西安；18:24:00下午游览城墙并散步拍照；18:28:00晚餐食用甑糕；18:22:00风有一点大；18:34:00开始下小雨。 西安",
-      "actual_state": "completed",
-      "actual_date": "2019-12-05T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-10",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 12,
-      "memory_text": "2020年1月11日大理旅行 2020-01-11T18:06:00抵达大理；18:14:00下午游览喜洲古镇，散步拍照；18:20:00发出‘晚饭先不用等我’；18:22:00观察到云形如猫；18:34:00晚餐食用乳扇，评价‘很香’；当日有风（18:16:00）、下小雨（18:36:00）。；当日下小雨；云看起来像一只猫；晚饭先不用等我。 大理",
-      "actual_state": "completed",
-      "actual_date": "2020-01-11T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-11",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 13,
-      "memory_text": "2020年2月17日泉州旅行 2020-02-17T18:14:00晚饭先不用等我；T18:16:00抵达泉州；T18:22:00下午游览蟳埔村，散步拍照；T18:26:00晚上食用四果汤，觉得很香。全程无明确冲突或计划变更。；晚饭先不用等我。 泉州",
-      "actual_state": "completed",
-      "actual_date": "2020-02-17T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-12",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 14,
-      "memory_text": "2020年3月25日广州之行 2020年3月25日18:25抵达广州；18:07风有一点大，18:19开始下小雨、电梯稍微有点慢；18:45下午游览永庆坊，散步拍照；同时间晚上吃艇仔粥。；外面开始下小雨；今天风有一点大；电梯今天稍微有点慢 广州",
-      "actual_state": "completed",
-      "actual_date": "2020-03-25T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-13",
-      "kind": "event",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 15,
-      "memory_text": "景山公园散步与拍照 2020年5月1日18:22，双方在景山公园散步拍照。 景山公园",
-      "actual_state": "completed",
-      "actual_date": "2020-05-01T18:22:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-14",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 16,
-      "memory_text": "trip:上海:2020-06-07 2020年6月7日18:10抵达上海；18:28下午游览西岸美术馆，散步拍照；18:42晚上共进排骨年糕；18:48因故未同步用餐，留言‘晚饭先不用等我’。事件全程发生于上海，属明确完成的共同旅行。；晚饭先不用等我。 上海",
-      "actual_state": "completed",
-      "actual_date": "2020-06-07T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "event-15",
-      "kind": "event",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 17,
-      "memory_text": "2020年7月14日昆明旅行 2020年7月14日18:30抵达昆明；18:32游览斗南花市并散步拍照；18:34晚餐为烧饵块；18:34当日行程完成；18:42发出‘晚饭先不用等我’。无其他行程细节或后续安排。；在斗南花市散步拍照；晚饭先不用等我。 昆明",
-      "actual_state": "completed",
-      "actual_date": "2020-07-14T00:00:00",
       "actual_category": "event"
     },
     {
@@ -278,10 +158,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 18,
-      "memory_text": "咖啡甜度偏好变更 用户1曾长期选择半糖拿铁；2020-08-20 18:18起，用户2明确表示口味改变，要求不再按半糖准备，并于18:46确认当前偏好为无糖燕麦拿铁。；咖啡甜度；不过现在口味变了，以后不要再按半糖拿铁准备。 ",
+      "memory_id": 9,
+      "memory_text": "咖啡甜度与类型偏好更新：从半糖拿铁改为无糖燕麦拿铁 2019-10-29，sender_1的咖啡甜度与类型偏好发生变化：以前一直选半糖拿铁；18:36表示口味变了，以后不要再按半糖拿铁准备；18:40明确当前选择无糖燕麦拿铁。旧值：半糖拿铁；当前值：无糖燕麦拿铁。；说到咖啡甜度，我以前一直选半糖拿铁。；不过现在口味变了，以后不要再按半糖拿铁准备。 ",
       "actual_state": "ongoing",
-      "actual_date": "2020-08-20T18:18:00",
+      "actual_date": "2019-10-29T00:00:00",
       "actual_category": "preference"
     },
     {
@@ -293,10 +173,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 20,
-      "memory_text": "偏好更新：火锅辣度 用户2在2020-09-26T18:26:00明确火锅辣度偏好由中辣改为微辣；2020-09-26T18:34:00强调口味已变，要求今后不再按中辣准备；2020-09-26T18:46:00再次确认当前偏好为微辣。；不过现在口味变了，以后不要再按中辣准备。；请记住我现在明确选择微辣。 ",
+      "memory_id": 10,
+      "memory_text": "火锅辣度偏好更新：旧中辣，当前微辣 2019-12-05 18:18提到火锅辣度以前一直选中辣；18:26表示现在口味变了，以后不要再按中辣准备；18:32明确当前选择微辣，并要求记住。当前火锅辣度偏好为微辣，旧值为中辣。；不过现在口味变了，以后不要再按中辣准备。 ",
       "actual_state": "ongoing",
-      "actual_date": "2020-09-26T00:00:00",
+      "actual_date": "2019-12-05T00:00:00",
       "actual_category": "preference"
     },
     {
@@ -308,10 +188,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 21,
-      "memory_text": "偏好更新：早餐饮品由豆浆改为热牛奶 2020-11-02T18:28:00起用户原偏好早餐饮品为豆浆；T18:32:00明确口味已变，要求今后不再按豆浆准备；T18:36:00确认当前偏好为热牛奶，并强调‘请记住我现在明确选择热牛奶’。；不过现在口味变了，以后不要再按豆浆准备。 ",
+      "memory_id": 11,
+      "memory_text": "早餐饮品偏好改为热牛奶 2020-01-11 18:10，sender2的早餐饮品旧偏好为豆浆；18:14因口味变化，当前偏好为以后不要再按豆浆准备；18:30当前偏好明确为热牛奶。 ",
       "actual_state": "ongoing",
-      "actual_date": "2020-11-02T18:32:00",
+      "actual_date": "2020-01-11T00:00:00",
       "actual_category": "preference"
     },
     {
@@ -323,10 +203,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 23,
-      "memory_text": "电影类型偏好更新：从悬疑片转为纪录片 2020-12-09T18:12:00用户明确过去偏好悬疑片；T18:18:00声明口味已变，要求‘以后不要再按悬疑片准备’；T18:48:00重申‘现在明确选择纪录片’。当前偏好为纪录片，旧偏好为悬疑片，变更发生于2020-12-09，无地点信息，无情绪标记，属持续有效的偏好设定。；电影类型；不过现在口味变了，以后不要再按悬疑片准备。 ",
+      "memory_id": 12,
+      "memory_text": "电影类型偏好更新 2020-02-17T18:16:00，电影类型的旧偏好为悬疑片；2020-02-17T18:28:00，当前偏好更新为纪录片，并明确以后不要再按悬疑片准备。；纪录片；以后不要再按悬疑片准备 ",
       "actual_state": "ongoing",
-      "actual_date": "2020-12-09T00:00:00",
+      "actual_date": "2020-02-17T00:00:00",
       "actual_category": "preference"
     },
     {
@@ -338,25 +218,25 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 24,
-      "memory_text": "偏好变更：周末运动从跑步改为骑行 2021-01-15T18:28:00，周末运动方式偏好主题确立；此前偏好为跑步（2021-01-15T18:28:00）；2021-01-15T18:34:00确认‘以后不要再按跑步准备’，并表述‘不过现在口味变了’；2021-01-15T18:42:00明确当前偏好为骑行。所有变更含时间戳、新旧值及指令性确认。；不过现在口味变了，以后不要再按跑步准备。 ",
+      "memory_id": 13,
+      "memory_text": "周末运动方式偏好更新 2020-03-25，周末运动方式偏好发生变化：以前一直选跑步；现在明确选择骑行，以后不要按跑步准备。 ",
       "actual_state": "ongoing",
-      "actual_date": "2021-01-15T18:28:00",
+      "actual_date": "2020-03-25T00:00:00",
       "actual_category": "preference"
     },
     {
       "id": "preference-05",
       "kind": "preference",
       "found": true,
-      "memory_correct": false,
-      "content_correct": false,
+      "memory_correct": true,
+      "content_correct": true,
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 26,
-      "memory_text": "座位偏好变更：从靠窗改为靠过道 2021-02-21T18:22:00 sender_id=2表示‘以前一直选靠窗’；T18:28:00称‘现在口味变了，以后不要再按靠窗准备’；T18:30:00明确要求‘请记住我现在明确选择靠过道’。当前偏好为靠过道，旧偏好为靠窗，变更指令直接、重复、具约束力。；不过现在口味变了，以后不要再按靠窗准备。 ",
+      "memory_id": 15,
+      "memory_text": "座位位置偏好：由靠窗改为靠过道 2020-05-01，sender_id 2的座位位置偏好更新：旧偏好为靠窗；2020-05-01 18:22表示“不过现在口味变了，以后不要再按靠窗准备。”；2020-05-01 18:26明确当前偏好为靠过道。当前值：靠过道；旧值：靠窗。 ",
       "actual_state": "ongoing",
-      "actual_date": "2021-02-21T00:00:00",
+      "actual_date": "2020-05-01T00:00:00",
       "actual_category": "preference"
     },
     {
@@ -368,145 +248,25 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 27,
-      "memory_text": "蛋糕口味偏好变更：从抹茶改为海盐芝士 2021-03-30T18:12:00用户声明过去偏好抹茶；18:42:00明确口味已变，要求‘以后不要再按抹茶准备’；18:48:00再次确认当前偏好为海盐芝士。该变更在同日三次消息（667、682、685）中稳定呈现，无冲突或回退。；蛋糕口味；不过现在口味变了，以后不要再按抹茶准备。 ",
+      "memory_id": 16,
+      "memory_text": "蛋糕口味偏好更新 2020-06-07，蛋糕口味偏好更新：18:18提到以前一直选抹茶；18:28表示现在口味变了，以后不要再按抹茶准备；18:42明确当前选择海盐芝士。旧偏好：抹茶；当前偏好：海盐芝士。；不过现在口味变了，以后不要再按抹茶准备。 ",
       "actual_state": "ongoing",
-      "actual_date": "2021-03-30T00:00:00",
+      "actual_date": "2020-06-07T18:22:00",
       "actual_category": "preference"
     },
     {
       "id": "preference-07",
       "kind": "preference",
       "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 28,
-      "memory_text": "旅行节奏偏好更新：从一天四个景点改为每天两个地方 2021-05-06T18:12:00用户1提及旧偏好‘一天四个景点’；T18:24:00明确表示‘口味变了，以后不要再按一天四个景点准备’；T18:42:00确认当前偏好为‘每天两个地方’。该变更覆盖此前习惯，构成完整偏好更新，由用户1提出、用户2确认。；旅行节奏；不过现在口味变了，以后不要再按一天四个景点准备。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2021-05-06T00:00:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-08",
-      "kind": "preference",
-      "found": true,
       "memory_correct": false,
       "content_correct": false,
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 29,
-      "memory_text": "preference:主食选择:2021-06-12 2021-06-12T18:10:00用户2原偏好为米饭；18:18明确表示口味变化，要求不再按米饭准备；18:40强调当前偏好为杂粮饭，并要求‘请记住我现在明确选择杂粮饭’。该偏好变更含完整时间戳与双向确认，状态ongoing。；主食选择；用户1明确要求记住新选择；不过现在口味变了，以后不要再按米饭准备。 ",
+      "memory_id": 17,
+      "memory_text": "旅行节奏偏好调整 2020-07-14，旅行节奏偏好更新：旧偏好为一天安排四个景点；当前偏好为每天安排两个地方，并确认以后不再按一天四个景点准备。 ",
       "actual_state": "ongoing",
-      "actual_date": "2021-06-12T00:00:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-09",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 30,
-      "memory_text": "奶茶小料偏好变更 用户1于2021-07-19T18:18:00曾偏好珍珠；T18:24:00声明口味变化，要求不再按珍珠准备；T18:44:00明确当前偏好为‘不加小料’。此前偏好‘珍珠’，现偏好‘不加小料’，变更发生于2021-07-19，无地点信息，状态持续有效。；奶茶小料；不过现在口味变了，以后不要再按珍珠准备。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2021-07-19T18:20:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-10",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 31,
-      "memory_text": "偏好变更：音乐风格从民谣改为轻爵士 2021-08-25T18:22:00用户确认此前偏好为‘民谣’；18:24:00发出指令‘以后不要再按民谣准备’；18:28:00重申‘现在口味变了，以后不要再按民谣准备’；18:46:00明确当前偏好为‘轻爵士’。全过程含旧值、新值、时间戳及禁止性指令。；音乐风格；不过现在口味变了，以后不要再按民谣准备。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2021-08-25T00:00:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-11",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 33,
-      "memory_text": "偏好更新：拍照风格从胶片复古改为自然抓拍 2021-10-01T18:24:00用户2确认原拍照风格为胶片复古；2021-10-01T18:26:00更新当前偏好为自然抓拍，并明确指令‘以后不要再按胶片复古准备’；2021-10-01T18:46:00再次强调当前选择为自然抓拍。该偏好变更已生效，无地点依赖，无情绪标记，属长期有效偏好。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2021-10-01T18:26:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-12",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 35,
-      "memory_text": "住宿偏好变更：从设计酒店转为安静民宿 2021-11-07T18:14:00用户确认以前偏好‘设计酒店’；2021-11-07T18:38:00声明‘现在口味变了，以后不要再按设计酒店准备’；2021-11-07T18:44:00明确当前偏好为‘安静民宿’。该变更含明确新旧对比与执行指令。；住宿类型 ",
-      "actual_state": "ongoing",
-      "actual_date": "2021-11-07T00:00:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-13",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 37,
-      "memory_text": "偏好变更：交通方式由网约车转为地铁优先 2021-12-14T18:32:00用户明确此前偏好为网约车；2021-12-14T18:44:00变更为地铁优先，指令‘以后不要再按网约车准备’，并强调‘明确选择地铁优先’；变更原因为‘口味变了’，无条件限制。；交通方式；口味变了，以后不要再按网约车准备；不过现在口味变了，以后不要再按网约车准备。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2021-12-14T00:00:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-14",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 40,
-      "memory_text": "鲜花偏好更新：从向日葵改为洋桔梗 2022-01-20T18:36:00，鲜花种类偏好原为向日葵；2022-01-20T18:46:00，用户声明‘现在口味变了，以后不要再按向日葵准备’；2022-01-20T18:48:00，当前偏好明确变更为洋桔梗。；不过现在口味变了，以后不要再按向日葵准备。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2022-01-20T00:00:00",
-      "actual_category": "preference"
-    },
-    {
-      "id": "preference-15",
-      "kind": "preference",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 42,
-      "memory_text": "香味类型偏好更新：2022-02-26由木质香改为柑橘香 2022-02-26T18:18:00，用户确认香味类型偏好主题；此前偏好为木质香；2022-02-26T18:30:00明确表示口味已变，要求不再按木质香准备；2022-02-26T18:34:00确定当前偏好为柑橘香。；不过现在口味变了，以后不要再按木质香准备。 ",
-      "actual_state": "ongoing",
-      "actual_date": "2022-02-26T00:00:00",
+      "actual_date": "2020-07-14T00:00:00",
       "actual_category": "preference"
     },
     {
@@ -518,10 +278,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 43,
-      "memory_text": "哈尔滨看雪旅行取消 2022-04-04约定去哈尔滨看雪，因一方临时工作时间完全冲突，于同日18:40明确取消，暂无新日期安排。；cancelled 哈尔滨",
+      "memory_id": 18,
+      "memory_text": "哈尔滨看雪计划取消 双方原计划2020年9月去哈尔滨看雪；因那几天临时有工作，时间完全冲突，该计划已取消，暂时没有新日期。 哈尔滨",
       "actual_state": "cancelled",
-      "actual_date": "2022-04-04T18:28:00",
+      "actual_date": "2020-08-20T18:16:00",
       "actual_category": "plan"
     },
     {
@@ -533,10 +293,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 44,
-      "memory_text": "陶艺课报名取消 双方曾约定2022年6月报名陶艺课，因一方于2022-05-11临时工作时间冲突，于当日18:48正式取消该计划，暂无新日期安排。；cancelled ",
+      "memory_id": 20,
+      "memory_text": "报名陶艺课计划取消 2020-09-26提到原约好下个月报名陶艺课；因那几天临时有工作，时间完全冲突；这次报名陶艺课已经取消，暂时没有新日期。 ",
       "actual_state": "cancelled",
-      "actual_date": "2022-05-11T18:42:00",
+      "actual_date": "2020-09-26T00:00:00",
       "actual_category": "plan"
     },
     {
@@ -548,10 +308,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 46,
-      "memory_text": "plan:城市夜跑:2022-06-17 原定下个月参加的城市夜跑于2022-06-17因工作时间完全冲突被取消，暂无新日期。；参加城市夜跑；cancelled ",
+      "memory_id": 22,
+      "memory_text": "城市夜跑计划取消 2020-11-02，原来约好下个月参加城市夜跑；因那几天临时有工作、时间完全冲突，这次参加城市夜跑已取消，暂时没有新日期。；那几天临时有工作，时间完全冲突 ",
       "actual_state": "cancelled",
-      "actual_date": "2022-06-17T00:00:00",
+      "actual_date": "2020-11-02T00:00:00",
       "actual_category": "plan"
     },
     {
@@ -563,10 +323,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 47,
-      "memory_text": "周末露营计划取消 双方曾约定2022年8月某个周末露营，计划于2022-07-24T18:24:00确立；因一方于2022-07-24T18:42:00告知临时工作时间完全冲突，该计划于2022-07-24T18:44:00被明确取消，暂无新日期安排。；cancelled ",
+      "memory_id": 23,
+      "memory_text": "周末露营计划取消 2020-12-09记录：原约好2021年1月周末露营；因临时有工作，时间冲突，周末露营计划状态为已取消，暂时没有新日期。；cancelled ",
       "actual_state": "cancelled",
-      "actual_date": "2022-07-24T18:24:00",
+      "actual_date": "2020-12-09T18:12:00",
       "actual_category": "plan"
     },
     {
@@ -578,10 +338,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 49,
-      "memory_text": "plan:草莓音乐节 2022年8月30日，原定下个月观看草莓音乐节的计划因工作时间冲突被明确取消，暂无新日期。；cancelled ",
+      "memory_id": 25,
+      "memory_text": "草莓音乐节观看计划取消 2021-01-15记录：原计划下个月看草莓音乐节；因临时有工作，时间完全冲突，该计划已取消，暂时没有新日期。；cancelled ",
       "actual_state": "cancelled",
-      "actual_date": "2022-08-30T00:00:00",
+      "actual_date": "2021-01-15T00:00:00",
       "actual_category": "plan"
     },
     {
@@ -593,25 +353,25 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 50,
-      "memory_text": "温泉酒店预订取消 双方曾约定2022年11月订温泉酒店，但因一方于2022-10-06临时有工作、时间完全冲突，导致无法履约，该计划已于2022-10-06 18:46明确取消，暂无新日期安排。；下个月订温泉酒店；临时有工作，时间完全冲突；已取消；工作时间冲突导致无法履约原计划 ",
+      "memory_id": 26,
+      "memory_text": "温泉酒店计划取消 2021-02-21，双方确认原来约好下个月订温泉酒店；因那几天临时有工作、时间完全冲突，这次订温泉酒店已经取消，暂时没有新日期。；双方原来约好下个月订温泉酒店。；那几天临时有工作，时间完全冲突。 ",
       "actual_state": "cancelled",
-      "actual_date": "2022-10-06T18:12:00",
+      "actual_date": "2021-02-21T00:00:00",
       "actual_category": "plan"
     },
     {
       "id": "plan-06",
       "kind": "plan",
       "found": true,
-      "memory_correct": false,
-      "content_correct": false,
+      "memory_correct": true,
+      "content_correct": true,
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 52,
-      "memory_text": "周年写真拍摄取消 原定下个月拍摄周年写真，因一方临时工作时间完全冲突而取消，暂无新日期。；cancelled ",
+      "memory_id": 27,
+      "memory_text": "周年写真拍摄计划取消 2021-03-30，原计划下个月（2021年4月）拍周年写真；因那几天临时有工作，时间完全冲突，该计划已取消，暂时没有新日期。 ",
       "actual_state": "cancelled",
-      "actual_date": "2022-11-12T00:00:00",
+      "actual_date": "2021-03-30T18:12:00",
       "actual_category": "plan"
     },
     {
@@ -623,130 +383,10 @@
       "date_correct": true,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 53,
-      "memory_text": "双人舞学习计划取消 原计划2023年1月下个月学习双人舞，因一方临时工作时间完全冲突，于2022-12-19T18:20:00明确取消，暂无新日期安排。；cancelled ",
+      "memory_id": 29,
+      "memory_text": "学习双人舞计划取消 2021-05-06，双方原约好下个月学习双人舞；因那几天临时有工作，时间完全冲突，学习双人舞已经取消，暂时没有新日期。 ",
       "actual_state": "cancelled",
-      "actual_date": "2022-12-19T00:00:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-08",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": true,
-      "date_correct": false,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 54,
-      "memory_text": "烘焙课取消 双方曾约定2023年2月参加烘焙课，因一方于2023-01-25T18:42:00提出临时工作时间冲突，该计划于2023-01-25T18:46:00被明确取消，暂无新日期。；cancelled ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-02-01T00:00:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-09",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 55,
-      "memory_text": "夜游轮船计划取消 原定下个月坐夜游轮船（2023-03-03计划），因工作时间冲突于2023-03-03T18:42:00被明确取消，状态于2023-03-03T18:46:00变更为cancelled，暂无新日期。 ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-03-03T00:00:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-10",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 56,
-      "memory_text": "下月话剧观演计划取消 原定2023年5月观看话剧的计划于2023-04-09T18:30:00被取消，因一方于2023-04-09T18:28:00提出时间完全冲突（临时有工作），暂无新日期。；去看话剧；cancelled ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-04-09T00:00:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-11",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 57,
-      "memory_text": "骑行环湖计划取消 双方原约定下个月骑行环湖，因一方临时工作时间完全冲突，于2023-05-16T18:36:00确认取消，暂无新日期安排。；cancelled ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-05-16T18:32:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-12",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 58,
-      "memory_text": "植物园拍花计划取消 原定2023-06-22去植物园拍花的计划因工作时间临时冲突、水杯忘在桌上及外面开始下小雨被取消，状态为cancelled，暂无新日期。 植物园",
-      "actual_state": "cancelled",
-      "actual_date": "2023-06-22T00:00:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-13",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 59,
-      "memory_text": "读书会参与计划取消 原定下个月参加读书会的计划于2023-07-29因临时有工作、时间完全冲突而取消，状态变更为cancelled，暂无新日期。；临时有工作，时间完全冲突 ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-07-29T00:00:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-14",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 60,
-      "memory_text": "海洋馆行程取消 原计划2023年10月去海洋馆，发生于2023-09-04T18:30:00；因临时工作时间冲突，于2023-09-04T18:36:00取消，状态变更为cancelled，发生于2023-09-04T18:38:00；暂无新日期安排。 ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-09-04T18:30:00",
-      "actual_category": "plan"
-    },
-    {
-      "id": "plan-15",
-      "kind": "plan",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 61,
-      "memory_text": "plan:郊外观星:202311 双方原约定2023年11月下个月郊外观星，因一方于2023-10-11T18:24:00确认工作时间完全冲突，于2023-10-11T18:38:00正式取消，暂无新日期安排。；cancelled ",
-      "actual_state": "cancelled",
-      "actual_date": "2023-10-11T18:20:00",
+      "actual_date": "2021-05-06T18:12:00",
       "actual_category": "plan"
     },
     {
@@ -754,14 +394,14 @@
       "kind": "reconciliation",
       "found": true,
       "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
+      "content_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 62,
-      "memory_text": "conflict:忘记倒垃圾:2023-11-17 2023-11-17T18:10:00因忘记倒垃圾发生冲突，双方都不开心；18:12:00冷静沟通、互相道歉；18:30:00共同制定家务轮值表，并约定以后按此执行；另约定‘我到家以后再给你发消息’。；两个人都很不开心；冷静下来把各自的想法说清楚；互相道了歉；一起列了家务轮值表；以后按家务轮值表处理；我到家以后再给你发消息。 ",
+      "memory_id": 30,
+      "memory_text": "2021-06-11因忘记倒垃圾发生冲突并于2021-06-12和好 2021-06-11，双方因为忘记倒垃圾吵了一架，两个人都很不开心。2021-06-12，双方冷静下来，把各自的想法说清楚，并互相道歉。随后双方已经和好，并一起列了家务轮值表，约定以后按这个办法处理。；双方已经和好，并一起列了家务轮值表，以后按这个办法处理；我们已经和好了，还一起列了家务轮值表，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2023-11-17T00:00:00",
+      "actual_date": "2021-06-11T00:00:00",
       "actual_category": "event"
     },
     {
@@ -773,70 +413,70 @@
       "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 63,
-      "memory_text": "conflict:回消息太晚:2023-12-23 2023-12-23因回消息太晚发生冲突，双方均感不开心；2023-12-24T18:16:00冷静沟通、互相道歉；2023-12-24T18:24:00达成 agreement：以后忙时发一句简短说明；2023-12-24T18:32:00确认和好，并约定今后按此办法处理。；两个人都很不开心；冷静下来把各自的想法说清楚；互相道了歉；我们已经和好了，还一起忙时发一句简短说明，以后按这个办法处理。 ",
+      "memory_id": 31,
+      "memory_text": "回消息太晚冲突与和好约定 2021-07-18，两人因为回消息太晚吵了一架。2021-07-19，冷静下来把各自的想法说清楚了，也互相道了歉；我们已经和好了。约定一起忙时发一句简短说明，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2023-12-23T00:00:00",
+      "actual_date": "2021-07-18T00:00:00",
       "actual_category": "event"
     },
     {
       "id": "reconciliation-02",
       "kind": "reconciliation",
       "found": true,
-      "memory_correct": true,
+      "memory_correct": false,
       "content_correct": true,
-      "date_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 64,
-      "memory_text": "旅行预算超支引发冲突及和好 2024-01-30T18:19:00因旅行预算超支发生争吵，双方都很不开心；T18:40:00冷静沟通并互相道歉；T18:42:00共同建立单独旅行预算机制，已达成共识并实施，以后按此办法处理。；两个人都很不开心；冷静下来把各自的想法说清楚；一起单独建立旅行预算；我们已经和好了，还一起单独建立旅行预算，以后按这个办法处理。 ",
+      "memory_id": 32,
+      "memory_text": "2021-08-24旅行预算超支冲突与和好及预算约定 2021-08-24，情侣双方因旅行预算超支发生争吵。2021-08-25，双方冷静下来把各自的想法说清楚，并互相道歉；2021-08-25 18:46确认已经和好，并约定一起单独建立旅行预算，以后按这个办法处理。；我们已经和好了，还一起单独建立旅行预算，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2024-01-30T18:19:00",
+      "actual_date": "2021-08-24T00:00:00",
       "actual_category": "event"
     },
     {
       "id": "reconciliation-03",
       "kind": "reconciliation",
       "found": true,
-      "memory_correct": true,
+      "memory_correct": false,
       "content_correct": true,
-      "date_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 65,
-      "memory_text": "conflict:临时改变计划:2024-03-07 2024-03-07T18:06:00因临时改变计划发生冲突，双方都不开心；18:10:00冷静沟通并互相道歉；18:34:00约定‘我到家以后再给你发消息’；18:42:00达成共识‘以后改变计划前先询问对方’；18:46:00确认和好并明确按此办法处理。；两个人都很不开心；冷静下来把各自的想法说清楚；互相道了歉；我到家以后再给你发消息。；我们已经和好了，还一起改计划前先询问，以后按这个办法处理。 ",
+      "memory_id": 33,
+      "memory_text": "因临时改变计划争吵后和好 2021-09-30，双方因临时改变计划发生争吵，两个人都很不开心。2021-10-01，双方冷静下来把各自的想法说清楚，并互相道歉，已经和好。双方约定改计划前先询问对方，以后按这个办法处理。；冷静下来把各自的想法说清楚，互相道歉；我们已经和好了，还一起改计划前先询问，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2024-03-07T18:06:00",
+      "actual_date": "2021-09-30T00:00:00",
       "actual_category": "event"
     },
     {
       "id": "reconciliation-04",
       "kind": "reconciliation",
       "found": true,
-      "memory_correct": true,
+      "memory_correct": false,
       "content_correct": true,
-      "date_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 66,
-      "memory_text": "conflict:约会迟到:2024-04-13 2024-04-13T18:19:00因约会迟到发生冲突，双方都很不开心；18:23:00冷静沟通并互相道歉；18:28:00约定‘我到家以后再给你发消息’；18:35:00达成‘迟到十分钟就提前通知’共识；18:34:00确认和好并决定此后按此办法处理。；两个人都很不开心；冷静下来把各自的想法说清楚；我到家以后再给你发消息。；我们已经和好了，还一起迟到十分钟就提前通知，以后按这个办法处理。 ",
+      "memory_id": 34,
+      "memory_text": "2021-11-06约会迟到冲突与和好约定 2021-11-06晚，双方因约会迟到吵了一架，两人不开心。2021-11-07，双方冷静下来把各自的想法说清楚，并互相道歉；双方表示已经和好，并约定迟到十分钟就提前通知，以后按这个办法处理。；因为约会迟到吵了一架。；冷静下来把各自的想法说清楚，并互相道歉。；双方表示已经和好。 ",
       "actual_state": "completed",
-      "actual_date": "2024-04-13T00:00:00",
+      "actual_date": "2021-11-06T00:00:00",
       "actual_category": "event"
     },
     {
       "id": "reconciliation-05",
       "kind": "reconciliation",
       "found": true,
-      "memory_correct": true,
+      "memory_correct": false,
       "content_correct": true,
-      "date_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 67,
-      "memory_text": "因睡前看手机引发冲突并和好 2024-05-20T18:10:00，因睡前一直看手机发生争吵，双方都很不开心；18:12:00冷静沟通后互相道歉；18:22:00约定‘我到家以后再给你发消息’；18:30:00达成共识‘以后睡前半小时共同放下手机’，并确认已执行、今后按此办法处理。；昨晚因睡前一直看手机发生争吵；两个人都很不开心；冷静下来把各自想法说清楚，互相道歉；我到家以后再给你发消息。；我们已经和好了，还一起睡前半小时放下手机，以后按这个办法处理。 ",
+      "memory_id": 35,
+      "memory_text": "2021-12-13睡前看手机冲突及解决 2021-12-13晚因睡前一直看手机发生争执，两人都不开心。2021-12-14冷静下来把各自的想法说清楚，并互相道歉；双方已和好。约定睡前半小时放下手机，以后按这个办法处理。；我们已经和好了，还一起睡前半小时放下手机，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2024-05-20T00:00:00",
+      "actual_date": "2021-12-13T00:00:00",
       "actual_category": "event"
     },
     {
@@ -844,14 +484,14 @@
       "kind": "reconciliation",
       "found": true,
       "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
+      "content_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 68,
-      "memory_text": "conflict:未提前告知加班:2024-06-26 2024-06-26 18:00，因一方未提前告知加班导致另一方在家等待，双方都很不开心；18:16约定‘我到家以后再给你发消息’；18:22冷静沟通、互相道歉；18:42达成最终共识：加班后马上发消息告知，并按此办法处理。；一方未提前告知加班，导致另一方在家等待；冷静下来后把各自想法说清楚；双方互相道了歉；我到家以后再给你发消息。；我们已经和好了，还一起确定加班后马上发消息，以后按这个办法处理。 ",
+      "memory_id": 36,
+      "memory_text": "2022-01-19未提前告知加班冲突及解决 2022-01-19，情侣因没有提前说加班发生争吵，两个人都很不开心。2022-01-20，双方冷静下来把各自想法说清楚，互相道歉。随后已和好，并一起确定加班后马上发消息，以后按这个办法处理。；冷静沟通，互相道歉；我们已经和好了，还一起确定加班后马上发消息，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2024-06-26T00:00:00",
+      "actual_date": "2022-01-19T00:00:00",
       "actual_category": "event"
     },
     {
@@ -859,134 +499,14 @@
       "kind": "reconciliation",
       "found": true,
       "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 69,
-      "memory_text": "conflict:购物未商量:2024-08-02 2024-08-02T18:12:00因购物前未商量导致分歧，双方都很不开心；T18:24:00冷静沟通后互相道歉；达成两项共识：‘共同用品先商量’及‘我到家以后再给你发消息’；T18:48:00确认已和好，并约定今后按此办法处理。；两个人都很不开心；我到家以后再给你发消息。；我们已经和好了，还一起共同用品先商量，以后按这个办法处理。 ",
-      "actual_state": "completed",
-      "actual_date": "2024-08-02T18:12:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-08",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": true,
       "content_correct": true,
-      "date_correct": true,
+      "date_correct": false,
       "state_correct": true,
       "category_correct": true,
-      "memory_id": 70,
-      "memory_text": "conflict:周末安排太满:2024-09-08 2024-09-08T18:20:00因周末安排太满发生冲突，双方都不开心；18:24:00冷静沟通并互相道歉；18:34:00达成共识：每周末只排一件大事；18:38:00确认和好并约定今后按此执行。；两个人都很不开心；冷静下来把各自的想法说清楚了，也互相道了歉；我们已经和好了，还一起每周末只排一件大事，以后按这个办法处理。 ",
+      "memory_id": 37,
+      "memory_text": "conflict:买东西没商量:2022-02-25 2022-02-25，情侣双方因买东西没商量发生争吵；2022-02-26，双方冷静下来把各自的想法说清楚，互相道歉，已经和好，并约定共同用品先商量，以后按这个办法处理。 ",
       "actual_state": "completed",
-      "actual_date": "2024-09-08T18:20:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-09",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 71,
-      "memory_text": "conflict:说话语气太急:2024-10-15 2024-10-15T18:17:00因说话语气太急引发冲突，双方均感不快；T18:24:00冷静交流、互相道歉；T18:28:00约定情绪激动时暂停十分钟再沟通，并确认已和好。；两个人都很不开心；冷静下来把各自的想法说清楚；情绪上来先暂停十分钟，以后按此办法处理；我们已经和好了，还一起情绪上来先暂停十分钟，以后按这个办法处理。 ",
-      "actual_state": "completed",
-      "actual_date": "2024-10-15T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-10",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 72,
-      "memory_text": "conflict:忘记纪念日:2024-11-21 2024-11-20因忘记纪念日发生冲突，双方均感不开心；2024-11-21 18:22冷静沟通、说清想法并互相道歉；18:44达成和好，并将纪念日加入共同提醒以预防复发。；两个人都很不开心；冷静下来把各自的想法说清楚；互相道了歉；已经和好了 ",
-      "actual_state": "completed",
-      "actual_date": "2024-11-21T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-11",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 73,
-      "memory_text": "因做饭口味太辣发生冲突并和好 2024-12-28T18:20:00，因晚饭口味太辣引发争执，双方都很不开心；T18:22:00冷静沟通并互相道歉；T18:34:00达成约定：以后做饭前确认辣度，并确认按此办法处理；T18:38:00补充约定‘我到家以后再给你发消息’。；两个人都很不开心；冷静下来把各自想法说清楚并互相道歉；我们已经和好了，还一起做饭前确认辣度，以后按这个办法处理。；我到家以后再给你发消息。 ",
-      "actual_state": "completed",
-      "actual_date": "2024-12-28T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-12",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 74,
-      "memory_text": "因出门路线不同发生争吵并和好 2025-02-03 18:10因出门路线不同发生争吵，双方都很不开心；18:20冷静沟通、互相道歉；18:32约定‘我到家以后再给你发消息’；18:50共同确认今后按前一晚确认路线的方式处理，且以后按此办法执行。；两个人都很不开心；冷静下来把各自的想法说清楚；互相道了歉；一起前一晚确认路线；以后按这个办法处理；我到家以后再给你发消息。 ",
-      "actual_state": "completed",
-      "actual_date": "2025-02-03T18:10:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-13",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 75,
-      "memory_text": "因拍照等待时间过长发生争执并和好 2025-03-12T18:20:00因拍照等待时间过长发生冲突，双方均感不开心；当晚冷静沟通、说清各自想法、互相道歉；达成约定：每次只选十张照片，且我到家后再发消息；2025-03-12T18:34:00确认已和好并按此办法处理。；两个人都很不开心；冷静下来把各自想法说清楚；以后每次只选十张照片；我到家以后再给你发消息。；我们已经和好了，还一起每次只选十张照片，以后按这个办法处理。 ",
-      "actual_state": "completed",
-      "actual_date": "2025-03-12T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-14",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": false,
-      "content_correct": false,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 76,
-      "memory_text": "空调温度冲突及和解 2025-04-18T18:18:00，因空调温度设定不一致发生争执，双方都很不开心；T18:20:00冷静沟通并互相道歉；T18:34:00达成协议：睡眠时空调统一设为26℃，并约定未来类似问题均按此方案处理。；两个人都很不开心；冷静下来把各自想法说清楚并互相道歉；按26℃方案处理未来类似问题；我们已经和好了，还一起睡觉固定二十六度，以后按这个办法处理。 ",
-      "actual_state": "completed",
-      "actual_date": "2025-04-18T00:00:00",
-      "actual_category": "event"
-    },
-    {
-      "id": "reconciliation-15",
-      "kind": "reconciliation",
-      "found": true,
-      "memory_correct": true,
-      "content_correct": true,
-      "date_correct": true,
-      "state_correct": true,
-      "category_correct": true,
-      "memory_id": 77,
-      "memory_text": "conflict:忘记游戏时间:2025-05-25 2025-05-24因昨晚玩游戏忘时间引发争吵，双方均不开心；2025-05-2518:14约定‘我到家以后再给你发消息’，18:20互相道歉并说清想法，18:30共同约定使用‘结束闹钟’机制，18:38确认和好并落实该办法。；昨晚因玩游戏忘了时间导致争吵；两个人都很不开心；今天冷静下来把各自想法说清楚并互相道歉；一起设置结束闹钟，以后按此办法处理；我到家以后再给你发消息。；我们已经和好了，还一起设置结束闹钟，以后按这个办法处理。 ",
-      "actual_state": "completed",
-      "actual_date": "2025-05-25T00:00:00",
+      "actual_date": "2022-02-25T00:00:00",
       "actual_category": "event"
     }
   ],
@@ -994,19 +514,21 @@
     {
       "id": "event-00",
       "question": "2019年1月去武汉时逛了哪里，晚饭吃了什么？",
-      "retrieved": false,
-      "required_ok": false,
+      "retrieved": true,
+      "required_ok": true,
       "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
+      "answer_correct": true,
+      "answer": "你们当时去了东湖绿道，慢慢散步、拍照。晚饭吃的是藕汤，觉得很香。",
       "judgment": {
         "supported": true,
         "answered": true,
         "covers_expected": true,
         "unsupported_claims": []
       },
-      "source_ids": [],
-      "latency_ms": 1069.59
+      "source_ids": [
+        1
+      ],
+      "latency_ms": 8506.13
     },
     {
       "id": "event-01",
@@ -1015,7 +537,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2019年2月12日那天，你们下午逛了鹅岭二厂，慢慢散步、拍照；晚饭吃的是小面，还特别记得“很香”。",
+      "answer": "那天下午你们在鹅岭二厂慢慢散步拍照。晚上吃的是小面，觉得很香。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1025,7 +547,7 @@
       "source_ids": [
         2
       ],
-      "latency_ms": 2280.78
+      "latency_ms": 10442.74
     },
     {
       "id": "event-02",
@@ -1034,7 +556,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2019年3月21日你们去了南京颐和路，慢慢散步、拍照；晚饭吃了盐水鸭，你还说“很香”。",
+      "answer": "你们当时在南京去了颐和路，慢慢散步、拍照。晚饭吃的是盐水鸭。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1044,7 +566,7 @@
       "source_ids": [
         3
       ],
-      "latency_ms": 2214.48
+      "latency_ms": 10179.42
     },
     {
       "id": "event-03",
@@ -1053,7 +575,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2019年4月27日那天，你们下午在九溪散步、拍照，玩得很悠闲；晚饭吃的是片儿川，你还记得特别香～",
+      "answer": "2019年4月去杭州时，你们下午在九溪散步拍照。晚饭吃的是片儿川。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1063,7 +585,7 @@
       "source_ids": [
         4
       ],
-      "latency_ms": 2397.68
+      "latency_ms": 9148.48
     },
     {
       "id": "event-04",
@@ -1071,18 +593,20 @@
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "2019年6月3日你们去了杜甫草堂，慢慢散步、拍照；晚饭吃的是甜水面，你还说“我觉得很香”～",
+      "answer_correct": false,
+      "answer": "那天下午你们去了杜甫草堂，在那儿慢慢散步、拍照。晚饭吃的是甜水面，你们觉得很香。",
       "judgment": {
-        "supported": true,
+        "supported": false,
         "answered": true,
         "covers_expected": true,
-        "unsupported_claims": []
+        "unsupported_claims": [
+          "你们觉得很香"
+        ]
       },
       "source_ids": [
         5
       ],
-      "latency_ms": 2435.04
+      "latency_ms": 20075.16
     },
     {
       "id": "event-05",
@@ -1091,7 +615,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2019年7月10日你们去了厦门沙坡尾，下午慢慢散步、拍照；晚饭吃了花生汤，你还特别说“觉得很香”。",
+      "answer": "那天下午你们只去了沙坡尾，在那边慢慢散步、拍照。晚饭吃的是花生汤，当时觉得很香。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1101,7 +625,7 @@
       "source_ids": [
         6
       ],
-      "latency_ms": 2177.12
+      "latency_ms": 10826.36
     },
     {
       "id": "event-06",
@@ -1110,7 +634,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2019年8月16日你们去了青岛的小麦岛，慢慢散步、拍照；晚饭吃的是鲅鱼水饺，你还说“很香”～",
+      "answer": "2019年8月去青岛时，你们下午在小麦岛慢慢散步拍照。晚饭吃的是鲅鱼水饺，觉得很香。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1120,7 +644,7 @@
       "source_ids": [
         7
       ],
-      "latency_ms": 2326.85
+      "latency_ms": 11250.42
     },
     {
       "id": "event-07",
@@ -1129,7 +653,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "那天你们逛了虎丘，慢慢散步、拍照，挺悠闲的。晚饭吃了桂花糖粥，一方还特别说“很香”。  \n不过记得当时有句“晚饭先不用等我”，看来是有人稍晚一点才加入～",
+      "answer": "你们在苏州去了虎丘，下午在那边慢慢散步、拍照。晚饭吃的是桂花糖粥，当时觉得很香。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1139,16 +663,16 @@
       "source_ids": [
         8
       ],
-      "latency_ms": 2803.36
+      "latency_ms": 7754.48
     },
     {
-      "id": "event-08",
-      "question": "2019年10月去长沙时逛了哪里，晚饭吃了什么？",
+      "id": "preference-00",
+      "question": "我现在关于咖啡甜度的偏好是什么？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2019年10月29日你们去了长沙梅溪湖，下午慢慢散步、拍照；晚饭吃了米粉，你还特意说“觉得很香”～",
+      "answer": "你现在的咖啡偏好是无糖燕麦拿铁。  \n也就是不再按以前的半糖拿铁来准备了。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1158,16 +682,16 @@
       "source_ids": [
         9
       ],
-      "latency_ms": 2329.39
+      "latency_ms": 7548.83
     },
     {
-      "id": "event-09",
-      "question": "2019年12月去西安时逛了哪里，晚饭吃了什么？",
+      "id": "preference-01",
+      "question": "我现在关于火锅辣度的偏好是什么？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "那天你们逛了西安城墙，慢慢散步、拍照，风有点大，后来还下起了小雨～晚饭吃的是甑糕，你还说“很香”呢。",
+      "answer": "你现在火锅辣度的偏好是**微辣**。之前是中辣，但后来口味变了，以后不要再按中辣准备。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1175,18 +699,38 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        11
+        10
       ],
-      "latency_ms": 2359.26
+      "latency_ms": 9224.78
     },
     {
-      "id": "event-10",
-      "question": "2020年1月去大理时逛了哪里，晚饭吃了什么？",
+      "id": "preference-02",
+      "question": "我现在关于早餐饮品的偏好是什么？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "2020年1月11日你们去了大理的喜洲古镇，慢慢散步、拍照。晚饭吃了乳扇，还说“很香”～",
+      "answer": "你现在的早餐饮品偏好是热牛奶。你也明确说过，以后不要再按豆浆准备。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        11,
+        16
+      ],
+      "latency_ms": 12324.88
+    },
+    {
+      "id": "preference-03",
+      "question": "我现在关于电影类型的偏好是什么？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "你现在关于电影类型的偏好是纪录片，而且以后不要再按悬疑片准备。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1196,16 +740,16 @@
       "source_ids": [
         12
       ],
-      "latency_ms": 2641.66
+      "latency_ms": 8563.24
     },
     {
-      "id": "event-11",
-      "question": "2020年2月去泉州时逛了哪里，晚饭吃了什么？",
+      "id": "preference-04",
+      "question": "我现在关于周末运动的偏好是什么？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "那天下午你们逛了蟳埔村，慢慢散步、拍照；晚饭吃的是四果汤，你还说“觉得很香”。  \n（对了，你出发前还特意发了句“晚饭先不用等我”呢～）",
+      "answer": "你现在明确选择骑行，以后不要按跑步准备。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1213,73 +757,59 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        13
-      ],
-      "latency_ms": 2580.86
-    },
-    {
-      "id": "event-12",
-      "question": "2020年3月去广州时逛了哪里，晚饭吃了什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "2020年3月25日那天，你们下午逛了永庆坊，慢慢散步、拍照；晚上吃了艇仔粥，你还记得特别香～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
+        13,
         14
       ],
-      "latency_ms": 2397.3
+      "latency_ms": 10108.22
     },
     {
-      "id": "event-13",
-      "question": "2020年5月去北京时逛了哪里，晚饭吃了什么？",
-      "retrieved": false,
+      "id": "preference-05",
+      "question": "我现在关于座位位置的偏好是什么？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "你现在关于座位位置的偏好是靠过道。之前你偏好的是靠窗，但后来明确改成靠过道了。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        15
+      ],
+      "latency_ms": 9444.24
+    },
+    {
+      "id": "preference-06",
+      "question": "我现在关于蛋糕口味的偏好是什么？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "你现在关于蛋糕口味的偏好是**海盐芝士**。抹茶已经是之前的偏好了，以后不要再按抹茶准备。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        16,
+        9,
+        11
+      ],
+      "latency_ms": 9100.33
+    },
+    {
+      "id": "preference-07",
+      "question": "我现在关于旅行节奏的偏好是什么？",
+      "retrieved": true,
       "required_ok": false,
       "forbidden_ok": true,
       "answer_correct": false,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": false,
-        "unsupported_claims": []
-      },
-      "source_ids": [],
-      "latency_ms": 1012.46
-    },
-    {
-      "id": "event-14",
-      "question": "2020年6月去上海时逛了哪里，晚饭吃了什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "2020年6月7日你们逛了西岸美术馆，还在那里慢慢散步、拍照；晚饭吃的是排骨年糕，你还说“我觉得很香”。不过后来临时有事，留言说了句“晚饭先不用等我”。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        16
-      ],
-      "latency_ms": 2696.18
-    },
-    {
-      "id": "event-15",
-      "question": "2020年7月去昆明时逛了哪里，晚饭吃了什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "2020年7月14日你们逛了昆明的斗南花市，还在那里慢慢散步、拍照；晚饭吃的是烧饵块，你还说“我觉得很香”～",
+      "answer": "你现在关于旅行节奏的偏好是：每天安排两个地方。之前那种一天安排四个景点的方式，已经不再按它准备了。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1289,16 +819,16 @@
       "source_ids": [
         17
       ],
-      "latency_ms": 2333.67
+      "latency_ms": 10723.1
     },
     {
-      "id": "preference-00",
-      "question": "我现在关于咖啡甜度的偏好是什么？",
+      "id": "plan-00",
+      "question": "原来安排的“去哈尔滨看雪”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在关于咖啡甜度的偏好是无糖燕麦拿铁。  \n从2020年8月20日18:46起，你明确说“请记住我现在明确选择无糖燕麦拿铁”，并强调不再按半糖拿铁准备。  \n这个偏好一直持续到现在，没有变更记录。",
+      "answer": "这个计划已经取消了。原本约的是2020年9月去哈尔滨看雪，因为那几天临时有工作、时间完全冲突，所以没有去成；新日期当时暂时没有确定。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1306,21 +836,19 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        18,
         19,
-        22,
-        21
+        18
       ],
-      "latency_ms": 3162.01
+      "latency_ms": 21148.59
     },
     {
-      "id": "preference-01",
-      "question": "我现在关于火锅辣度的偏好是什么？",
+      "id": "plan-01",
+      "question": "原来安排的“报名陶艺课”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在火锅辣度的偏好是微辣。  \n2020年9月26日那天，你明确说了“不过现在口味变了，以后不要再按中辣准备”，还特别强调“请记住我现在明确选择微辣”。  \n这个偏好一直没变过，我记着呢。",
+      "answer": "那次报名陶艺课后来取消了，因为临时有工作，时间完全冲突。目前这次报名已取消，暂时没有新日期。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1328,19 +856,38 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        20,
+        21,
+        20
+      ],
+      "latency_ms": 9983.79
+    },
+    {
+      "id": "plan-02",
+      "question": "原来安排的“参加城市夜跑”最后怎么样了？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "因为那几天临时有工作、时间完全冲突，这次参加城市夜跑已经取消了。暂时没有新日期。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
         22
       ],
-      "latency_ms": 3043.95
+      "latency_ms": 10264.62
     },
     {
-      "id": "preference-02",
-      "question": "我现在关于早餐饮品的偏好是什么？",
+      "id": "plan-03",
+      "question": "原来安排的“周末露营”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在早餐饮品的偏好是热牛奶。  \n从2020年11月2日起，你明确把豆浆换成了热牛奶，并强调“请记住我现在明确选择热牛奶”。  \n之后没有新的变更记录，所以这个偏好一直持续到现在。",
+      "answer": "那次周末露营后来取消了，因为临时有工作、时间冲突。当时暂时没有定下新的日期。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1348,21 +895,19 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        21,
-        29,
-        32,
-        39
+        24,
+        23
       ],
-      "latency_ms": 2915.29
+      "latency_ms": 9784.14
     },
     {
-      "id": "preference-03",
-      "question": "我现在关于电影类型的偏好是什么？",
+      "id": "plan-04",
+      "question": "原来安排的“看草莓音乐节”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在明确偏好纪录片，2020年12月9日就已确认，并特别说明“以后不要再按悬疑片准备”。这个偏好一直持续到现在，没变过。",
+      "answer": "这个计划后来取消了，因为临时有工作，时间完全冲突。目前暂时没有新日期。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1370,21 +915,18 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        23,
-        25,
-        36,
-        34
+        25
       ],
-      "latency_ms": 3145.83
+      "latency_ms": 10905.48
     },
     {
-      "id": "preference-04",
-      "question": "我现在关于周末运动的偏好是什么？",
+      "id": "plan-05",
+      "question": "原来安排的“订温泉酒店”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在周末运动的偏好是骑行。  \n之前一直选跑步，但2021年1月15日那天明确说了“不过现在口味变了，以后不要再按跑步准备”，并确认“我现在明确选择骑行”。  \n所以，现在默认安排周末运动时，就按骑行来啦～",
+      "answer": "这次订温泉酒店已经取消，暂时没有新日期。原因是那几天临时有工作，时间完全冲突。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1392,63 +934,18 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        24
+        26
       ],
-      "latency_ms": 2915.91
+      "latency_ms": 11410.9
     },
     {
-      "id": "preference-05",
-      "question": "我现在关于座位位置的偏好是什么？",
+      "id": "plan-06",
+      "question": "原来安排的“拍周年写真”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在关于座位位置的偏好是靠过道。  \n之前一直选靠窗，但2021年2月21日你明确说“现在口味变了，以后不要再按靠窗准备”，并强调“请记住我现在明确选择靠过道”。  \n这个偏好至今没变过。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        26,
-        39,
-        38,
-        35
-      ],
-      "latency_ms": 3214.48
-    },
-    {
-      "id": "preference-06",
-      "question": "我现在关于蛋糕口味的偏好是什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你现在喜欢海盐芝士口味的蛋糕，已经明确说过“以后不要再按抹茶准备”啦～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        27,
-        21,
-        18,
-        42,
-        41
-      ],
-      "latency_ms": 2124.95
-    },
-    {
-      "id": "preference-07",
-      "question": "我现在关于旅行节奏的偏好是什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你现在关于旅行节奏的偏好是每天两个地方。  \n你曾在2021年5月6日明确说：“不过现在口味变了，以后不要再按一天四个景点准备”，并确认“我现在明确选择每天两个地方”。  \n这个偏好一直持续到现在，没再改过。",
+      "answer": "原来约好 2021 年 4 月拍周年写真，但那几天临时有工作，时间完全冲突。所以这次拍周年写真已经取消，暂时没有新日期。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1457,19 +954,18 @@
       },
       "source_ids": [
         28,
-        38,
-        35
+        27
       ],
-      "latency_ms": 2900.48
+      "latency_ms": 10087.88
     },
     {
-      "id": "preference-08",
-      "question": "我现在关于晚餐主食的偏好是什么？",
+      "id": "plan-07",
+      "question": "原来安排的“学习双人舞”最后怎么样了？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在晚餐主食的偏好是杂粮饭。  \n2021年6月12日18:40你明确说：“请记住我现在明确选择杂粮饭”，并强调“不过现在口味变了，以后不要再按米饭准备”。  \n这个偏好一直持续到现在，状态是 ongoing。",
+      "answer": "那次学习双人舞后来取消了，因为那几天临时有工作，时间完全冲突。目前暂时没有新日期。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1477,20 +973,18 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        29,
-        21,
-        20
+        29
       ],
-      "latency_ms": 2956.05
+      "latency_ms": 11497.99
     },
     {
-      "id": "preference-09",
-      "question": "我现在关于奶茶配料的偏好是什么？",
+      "id": "reconciliation-00",
+      "question": "那次因为忘记倒垃圾闹矛盾后，我们怎么和好的？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在奶茶配料的偏好是“不加小料”。  \n从2021年7月19日起，你明确说过：“请记住我现在明确选择不加小料”，并强调“以后不要再按珍珠准备”。  \n这个偏好一直持续到现在，没再变过。",
+      "answer": "那次是因为双方因为忘记倒垃圾吵了一架产生了矛盾。后来你们双方冷静下来，把各自的想法说清楚，并互相道歉。最后约定：双方已经和好，并一起列了家务轮值表，以后按这个办法处理。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1499,20 +993,85 @@
       },
       "source_ids": [
         30,
-        21,
-        18,
-        27
+        33,
+        31
       ],
-      "latency_ms": 3112.83
+      "latency_ms": 10852.92
     },
     {
-      "id": "preference-10",
-      "question": "我现在关于音乐风格的偏好是什么？",
+      "id": "reconciliation-01",
+      "question": "那次因为回消息太晚闹矛盾后，我们怎么和好的？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在关于音乐风格的偏好是轻爵士。  \n这是你在2021年8月25日明确选择的，还特别叮嘱“以后不要再按民谣准备”——那会儿你刚从民谣换成轻爵士，语气很笃定呢。",
+      "answer": "那次是因为因为回消息太晚吵了一架产生了矛盾。后来你们冷静下来把各自的想法说清楚了，也互相道了歉。最后约定：一起忙时发一句简短说明，以后按这个办法处理。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        31,
+        34,
+        36,
+        33,
+        30
+      ],
+      "latency_ms": 7752.14
+    },
+    {
+      "id": "reconciliation-02",
+      "question": "那次因为旅行预算超支闹矛盾后，我们怎么和好的？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "那次是因为旅行预算超支产生了矛盾。后来你们冷静下来把各自的想法说清楚，并互相道歉。最后约定：一起单独建立旅行预算。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        32,
+        33
+      ],
+      "latency_ms": 4483.76
+    },
+    {
+      "id": "reconciliation-03",
+      "question": "那次因为临时改变计划闹矛盾后，我们怎么和好的？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "那次是因为临时改变计划产生了矛盾。后来你们冷静下来把各自的想法说清楚，互相道歉。最后约定：改计划前先询问对方。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        33,
+        32,
+        30,
+        31,
+        34
+      ],
+      "latency_ms": 7845.99
+    },
+    {
+      "id": "reconciliation-04",
+      "question": "那次因为约会迟到闹矛盾后，我们怎么和好的？",
+      "retrieved": true,
+      "required_ok": true,
+      "forbidden_ok": true,
+      "answer_correct": true,
+      "answer": "那次是因为因为约会迟到吵了一架。产生了矛盾。后来你们冷静下来把各自的想法说清楚，并互相道歉。。最后约定：迟到十分钟就提前通知，以后按这个办法处理。。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1522,20 +1081,42 @@
       "source_ids": [
         34,
         31,
+        33,
         36,
-        23,
-        25
+        30
       ],
-      "latency_ms": 2923.37
+      "latency_ms": 9640.31
     },
     {
-      "id": "preference-11",
-      "question": "我现在关于拍照风格的偏好是什么？",
+      "id": "reconciliation-05",
+      "question": "那次因为睡前一直看手机闹矛盾后，我们怎么和好的？",
       "retrieved": true,
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "你现在关于拍照风格的偏好是自然抓拍。  \n这是你在2021年10月1日明确选择并强调的，还特别叮嘱“以后不要再按胶片复古准备”。  \n这个偏好一直持续到现在，没变过。",
+      "answer": "那次是因为睡前一直看手机产生了矛盾。后来你们冷静下来把各自的想法说清楚，并互相道歉。最后约定：睡前半小时放下手机。",
+      "judgment": {
+        "supported": true,
+        "answered": true,
+        "covers_expected": true,
+        "unsupported_claims": []
+      },
+      "source_ids": [
+        35,
+        31,
+        34,
+        30
+      ],
+      "latency_ms": 6976.97
+    },
+    {
+      "id": "reconciliation-06",
+      "question": "那次因为没有提前说加班闹矛盾后，我们怎么和好的？",
+      "retrieved": true,
+      "required_ok": false,
+      "forbidden_ok": true,
+      "answer_correct": false,
+      "answer": "那次是因为没有提前说加班产生了矛盾。后来你们冷静沟通，互相道歉。最后约定：加班后马上发消息。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -1545,556 +1126,11 @@
       "source_ids": [
         36,
         33,
-        23,
-        25
+        31,
+        34,
+        30
       ],
-      "latency_ms": 3049.0
-    },
-    {
-      "id": "preference-12",
-      "question": "我现在关于住宿类型的偏好是什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你现在关于住宿类型的偏好是安静民宿。  \n之前喜欢设计酒店，但2021年11月7日你明确说：“现在口味变了，以后不要再按设计酒店准备”，并请记住“现在明确选择安静民宿”。  \n这个偏好一直持续到现在，没再改过。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        35,
-        38,
-        23,
-        39,
-        25
-      ],
-      "latency_ms": 3004.4
-    },
-    {
-      "id": "preference-13",
-      "question": "我现在关于交通方式的偏好是什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你现在交通方式的偏好是地铁优先。  \n2021年12月14日你明确说过：“不过现在口味变了，以后不要再按网约车准备”，并强调“请记住我现在明确选择地铁优先”。  \n这个偏好一直持续到现在，没再改过。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        39,
-        37,
-        28,
-        24,
-        26
-      ],
-      "latency_ms": 3825.56
-    },
-    {
-      "id": "preference-14",
-      "question": "我现在关于花的种类的偏好是什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你现在喜欢洋桔梗，已经明确说“现在口味变了，以后不要再按向日葵准备”啦～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        40,
-        41
-      ],
-      "latency_ms": 2222.54
-    },
-    {
-      "id": "preference-15",
-      "question": "我现在关于香味偏好的偏好是什么？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你现在偏爱柑橘香。  \n之前是木质香，但2022年2月26日那天你明确说“不过现在口味变了，以后不要再按木质香准备”，并确认“我现在明确选择柑橘香”。  \n这个偏好一直持续到现在哦。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        42,
-        22,
-        21,
-        27,
-        41
-      ],
-      "latency_ms": 3133.2
-    },
-    {
-      "id": "plan-00",
-      "question": "原来安排的“去哈尔滨看雪”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次“去哈尔滨看雪”的计划在2022年4月4日当天取消了，原因是临时工作时间完全冲突。你们当时就确认了取消，也说暂时没有安排新的日期。目前我还没记住后来有没有重新约成哦～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        43
-      ],
-      "latency_ms": 2617.2
-    },
-    {
-      "id": "plan-01",
-      "question": "原来安排的“报名陶艺课”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次报名陶艺课最后取消了，原因是2022年5月11日临时有工作，时间完全冲突。你们在当天18:48正式确认取消，之后也一直没重新安排新日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        44,
-        45
-      ],
-      "latency_ms": 2624.37
-    },
-    {
-      "id": "plan-02",
-      "question": "原来安排的“参加城市夜跑”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "原来安排的“参加城市夜跑”在2022年6月17日因工作时间完全冲突被取消了，当时就确认暂无新日期。  \n你们后来也没再提过重新计划这件事——我还没记住后续有恢复或改期。  \n如果现在还想一起跑，随时可以商量个新日子呀 🌃",
-      "judgment": {
-        "supported": false,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": [
-          "你们后来也没再提过重新计划这件事",
-          "我还没记住后续有恢复或改期",
-          "如果现在还想一起跑，随时可以商量个新日子呀 🌃"
-        ]
-      },
-      "source_ids": [
-        46
-      ],
-      "latency_ms": 4730.8
-    },
-    {
-      "id": "plan-03",
-      "question": "原来安排的“周末露营”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次周末露营最后取消了，原因是临时工作时间完全冲突。当时约定的是2022年8月某个周末，但7月24日当天就确认取消，之后也没定新日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        48,
-        47
-      ],
-      "latency_ms": 3348.71
-    },
-    {
-      "id": "plan-04",
-      "question": "原来安排的“看草莓音乐节”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "原来安排的草莓音乐节计划，因为那几天临时有工作、时间完全冲突，在2022年8月30日那天明确取消了。当时说好暂时没有新日期，目前我还没记住后续有没有重新约上。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        49
-      ],
-      "latency_ms": 2750.03
-    },
-    {
-      "id": "plan-05",
-      "question": "原来安排的“订温泉酒店”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "原来安排的“订温泉酒店”计划在2022年10月6日当天就取消了，原因是其中一方临时有工作、时间完全冲突，导致无法履约。你们当时确认了这次预订已取消，也说了“暂时没有新日期”。后来好像一直没再重新定上——我还没记住后续有没有补上这个约定。",
-      "judgment": {
-        "supported": false,
-        "answered": true,
-        "covers_expected": false,
-        "unsupported_claims": [
-          "后来好像一直没再重新定上——我还没记住后续有没有补上这个约定"
-        ]
-      },
-      "source_ids": [
-        50,
-        51
-      ],
-      "latency_ms": 4275.88
-    },
-    {
-      "id": "plan-06",
-      "question": "原来安排的“拍周年写真”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次周年写真拍摄最后取消了，原因是临时工作时间完全冲突。目前还没有重新安排新日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        52
-      ],
-      "latency_ms": 2240.16
-    },
-    {
-      "id": "plan-07",
-      "question": "原来安排的“学习双人舞”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "原来安排的双人舞学习，已经在2022年12月19日取消了，原因是那段时间工作时间完全冲突。当时说好是2023年1月下个月开始，但后来没再定新日期。目前这事儿还搁着呢，没重启也没再提。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        53
-      ],
-      "latency_ms": 3335.99
-    },
-    {
-      "id": "plan-08",
-      "question": "原来安排的“参加烘焙课”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "原来安排的烘焙课在2023年1月25日因为临时工作时间冲突被取消了，当时就确认了没有新日期。目前我还没记住你们后来有没有重新约上哦～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        54
-      ],
-      "latency_ms": 2608.78
-    },
-    {
-      "id": "plan-09",
-      "question": "原来安排的“坐夜游轮船”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次夜游轮船计划，因为工作时间突然冲突，在2023年3月3日当天取消了，之后一直没定新的日期。你们当时还特意确认过：原计划是下个月坐，但最终没能成行。目前我还没记住后续有没有重新安排。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        55
-      ],
-      "latency_ms": 3044.31
-    },
-    {
-      "id": "plan-10",
-      "question": "原来安排的“去看话剧”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "原来安排的“去看话剧”计划在2023年4月9日被取消了，原因是那几天临时有工作，时间完全冲突。当时说好暂时没有新日期，目前我还没记住后续有没有重新约上。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        56
-      ],
-      "latency_ms": 2532.88
-    },
-    {
-      "id": "plan-11",
-      "question": "原来安排的“骑行环湖”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次骑行环湖计划最后取消了，原因是其中一方临时工作时间完全冲突。你们在2023年5月16日确认了取消，当时也说了暂时没有安排新的日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        57
-      ],
-      "latency_ms": 2613.33
-    },
-    {
-      "id": "plan-12",
-      "question": "原来安排的“去植物园拍花”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那天的植物园拍花计划取消了，因为工作时间临时冲突、水杯忘在桌上，又刚好开始下小雨。目前还没重新约上新日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        58
-      ],
-      "latency_ms": 3113.56
-    },
-    {
-      "id": "plan-13",
-      "question": "原来安排的“参加读书会”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "原来安排的读书会最后取消了，因为那天你临时有工作，时间完全冲突。我们当时确认过，状态变成了 cancelled，也暂时没定新的日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        59
-      ],
-      "latency_ms": 5015.8
-    },
-    {
-      "id": "plan-14",
-      "question": "原来安排的“去海洋馆”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次海洋馆行程最后取消了，原因是临时工作时间冲突。你们在2023年9月4日傍晚确认了这件事，当时说暂时没有重新安排的新日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        60
-      ],
-      "latency_ms": 3237.02
-    },
-    {
-      "id": "plan-15",
-      "question": "原来安排的“去郊外观星”最后怎么样了？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次原定2023年11月的郊外观星，因为一方临时工作时间完全冲突，在2023年10月11日当天就取消了。目前还没有重新安排新的日期。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        61
-      ],
-      "latency_ms": 2630.17
-    },
-    {
-      "id": "reconciliation-00",
-      "question": "那次因为忘记倒垃圾闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次因为忘记倒垃圾闹矛盾后，你们冷静下来把各自的想法说清楚了，也互相道了歉；还一起列了家务轮值表，约定以后按这个执行；另外重申了“我到家以后再给你发消息”这个小约定。和好得挺踏实的～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        62,
-        77,
-        72,
-        69
-      ],
-      "latency_ms": 3215.56
-    },
-    {
-      "id": "reconciliation-01",
-      "question": "那次因为回消息太晚闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "那次因为回消息太晚闹矛盾后，你们冷静下来把各自的想法说清楚了，也互相道了歉；之后达成共识：以后忙的时候先发一句简短说明；最后确认和好，并约定今后都按这个办法处理。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        63,
-        66,
-        77,
-        68,
-        67
-      ],
-      "latency_ms": 2928.19
-    },
-    {
-      "id": "reconciliation-02",
-      "question": "那次因为旅行预算超支闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们冷静下来，把各自的想法说清楚了，也互相道了歉；然后一起单独建立了旅行预算机制，已经达成共识并开始实施——现在就按这个办法处理以后的旅行开销。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        64
-      ],
-      "latency_ms": 3004.46
-    },
-    {
-      "id": "reconciliation-03",
-      "question": "那次因为临时改变计划闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们冷静下来，把各自的想法说清楚了，也互相道了歉；  \n还约定了“我到家以后再给你发消息”，并一起确认：以后改变计划前一定先问对方；  \n最后在18:46明确和好了，还说好就按这个办法继续相处。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        65
-      ],
-      "latency_ms": 3198.99
-    },
-    {
-      "id": "reconciliation-04",
-      "question": "那次因为约会迟到闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次约会迟到后，你们冷静下来把各自的想法说清楚了，也互相道了歉；  \n还一起约定了“迟到十分钟就提前通知”，以及“我到家以后再给你发消息”；  \n最后确认和好，并决定以后都按这个办法处理。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        66,
-        77,
-        63,
-        65,
-        75
-      ],
-      "latency_ms": 2901.54
-    },
-    {
-      "id": "reconciliation-05",
-      "question": "那次因为睡前一直看手机闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们冷静下来后，把各自的想法说清楚了，也互相道了歉。  \n还一起约定了两件事：一是“我到家以后再给你发消息”，二是“以后睡前半小时共同放下手机”。  \n现在这个约定已经执行啦，也确认今后都按这个办法处理。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        67
-      ],
-      "latency_ms": 2813.42
-    },
-    {
-      "id": "reconciliation-06",
-      "question": "那次因为没有提前说加班闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们冷静下来后，把各自的想法说清楚了，也互相道了歉；  \n18:16约定“我到家以后再给你发消息”，18:42达成共识：以后加班后马上发消息告知；  \n现在这件事已经翻篇啦，还一起定下了这个小约定。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        68
-      ],
-      "latency_ms": 3113.14
+      "latency_ms": 5253.58
     },
     {
       "id": "reconciliation-07",
@@ -2103,7 +1139,7 @@
       "required_ok": true,
       "forbidden_ok": true,
       "answer_correct": true,
-      "answer": "那次因为买东西没商量闹矛盾后，你们在18:24冷静沟通、说清各自想法，还互相道了歉；18:48确认已经和好，并一起约定：共同用品先商量，还有“我到家以后再给你发消息”。",
+      "answer": "那次是因为买东西没商量产生了矛盾。后来你们冷静下来把各自的想法说清楚，互相道歉。最后约定：共同用品先商量。",
       "judgment": {
         "supported": true,
         "answered": true,
@@ -2111,181 +1147,13 @@
         "unsupported_claims": []
       },
       "source_ids": [
-        69,
-        73,
-        67,
-        65,
-        75
+        37,
+        33,
+        30,
+        31,
+        34
       ],
-      "latency_ms": 2824.37
-    },
-    {
-      "id": "reconciliation-08",
-      "question": "那次因为周末安排太满闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次因为周末安排太满闹矛盾后，你们冷静下来把各自的想法说清楚了，也互相道了歉；后来达成共识——每周末只排一件大事，并约定以后都按这个办法处理。现在你们已经和好了，还一起坚持着这个约定呢。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        70,
-        64,
-        65,
-        77,
-        66
-      ],
-      "latency_ms": 3069.44
-    },
-    {
-      "id": "reconciliation-09",
-      "question": "那次因为说话语气太急闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "那次你们在2024年10月15日傍晚因为说话语气太急起了冲突，两个人都很不开心。后来冷静下来，把各自的想法说清楚了，也互相道了歉。和好时还一起约定：以后情绪上来就先暂停十分钟，再继续沟通——这个办法你们当时就确认要一直用下去。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        71,
-        73,
-        65,
-        63,
-        66
-      ],
-      "latency_ms": 3436.49
-    },
-    {
-      "id": "reconciliation-10",
-      "question": "那次因为忘记纪念日闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们在2024年11月21日18:22冷静沟通，把各自的想法说清楚，18:44互相道了歉、确认和好，还一起把纪念日加进了共同提醒里，约定以后按这个办法预防再忘。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        72,
-        77,
-        70,
-        65
-      ],
-      "latency_ms": 3027.69
-    },
-    {
-      "id": "reconciliation-11",
-      "question": "那次因为做饭口味太辣闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们冷静下来，把各自的想法说清楚了，也互相道了歉。  \n之后一起约定：以后做饭前先确认辣度，并且你到家后再发消息。  \n现在真的在用这个办法，还一起实践过呢。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        73
-      ],
-      "latency_ms": 3035.65
-    },
-    {
-      "id": "reconciliation-12",
-      "question": "那次因为出门路线不同闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "那次因为出门路线不同闹矛盾后，你们冷静下来把各自的想法说清楚了，也互相道了歉；还约定“我到家以后再给你发消息”，并一起决定以后都提前一晚确认路线——这个办法后来也一直按着执行呢。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        74,
-        65,
-        64,
-        69,
-        77
-      ],
-      "latency_ms": 3179.82
-    },
-    {
-      "id": "reconciliation-13",
-      "question": "那次因为拍照等太久闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": true,
-      "forbidden_ok": true,
-      "answer_correct": true,
-      "answer": "你们冷静下来，把各自的想法说清楚了，也互相道了歉。  \n当晚就和好了，还一起约定：以后每次只选十张照片，而且我到家后再给你发消息。  \n现在这个办法已经用起来了，挺管用的～",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        75
-      ],
-      "latency_ms": 3016.57
-    },
-    {
-      "id": "reconciliation-14",
-      "question": "那次因为空调温度不一致闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们冷静下来，把各自的想法说清楚了，也互相道了歉；然后和好了，还一起睡觉时把空调固定在26℃，约定以后类似问题都按这个办法处理。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        76
-      ],
-      "latency_ms": 2510.58
-    },
-    {
-      "id": "reconciliation-15",
-      "question": "那次因为玩游戏忘了时间闹矛盾后，我们怎么和好的？",
-      "retrieved": true,
-      "required_ok": false,
-      "forbidden_ok": true,
-      "answer_correct": false,
-      "answer": "你们在2025年5月25日傍晚冷静下来，把各自的想法说清楚了，也互相道了歉。  \n18:30一起设置了“结束闹钟”机制，约定以后玩游戏时用它来提醒时间；  \n18:38确认和好，并落实了这个办法——还重申了“我到家以后再给你发消息”这句默契。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": [
-        77,
-        75
-      ],
-      "latency_ms": 3294.68
+      "latency_ms": 4703.07
     }
   ],
   "negative_cases": [
@@ -2456,190 +1324,6 @@
     },
     {
       "question": "去年纪念日送的是无人机吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我现在的早餐偏好是椰子水吗？",
-      "abstained": false,
-      "refused": true,
-      "non_fabricated": false,
-      "passed": false,
-      "answer": "不是哦，你现在明确的早餐饮品偏好是热牛奶——2020年11月2日那天就改了，还特别强调“请记住我现在明确选择热牛奶”。椰子水目前没有在记忆里出现过呢。",
-      "judgment": {
-        "supported": false,
-        "answered": true,
-        "covers_expected": false,
-        "unsupported_claims": [
-          "椰子水目前没有在记忆里出现过呢"
-        ]
-      },
-      "source_ids": [
-        21
-      ]
-    },
-    {
-      "question": "我们完成过潜水证考试吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "在纽约旅行时看了哪场音乐剧？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我们取消过沙漠骑骆驼计划吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我最喜欢的香水是玫瑰香吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我们因装修地下室和好了吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "去北海道时吃过海胆饭吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我们约好明年移居火星了吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我收到过一台复古打字机吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我们在巴黎铁塔下求婚了吗？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "共同领养的兔子是哪一天到家的？",
-      "abstained": true,
-      "refused": true,
-      "non_fabricated": true,
-      "passed": true,
-      "answer": "目前没有找到相关记录，所以我无法确认这件事。",
-      "judgment": {
-        "supported": true,
-        "answered": true,
-        "covers_expected": true,
-        "unsupported_claims": []
-      },
-      "source_ids": []
-    },
-    {
-      "question": "我现在喜欢极限跳伞吗？",
       "abstained": true,
       "refused": true,
       "non_fabricated": true,
