@@ -598,6 +598,8 @@ class MemoryService:
         best_text_score = 0.0
         best_entity_score = 0.0
         best_adjacent = False
+        best_source_overlap = 0.0
+        best_same_day = False
         for candidate in candidates:
             existing_entities = set(str(item).lower() for item in self._json_list(candidate.entities)) - generic_entities
             entity_score = len(incoming_entities & existing_entities) / max(1, min(len(incoming_entities), len(existing_entities)))
@@ -608,13 +610,18 @@ class MemoryService:
             })
             text_score = SequenceMatcher(None, incoming_topic, existing_topic).ratio()
             old_ids = self._json_ids(candidate.source_message_ids)
+            source_overlap = len(set(incoming_source_ids) & set(old_ids)) / max(
+                1, min(len(incoming_source_ids), len(old_ids))
+            )
             adjacent = bool(incoming_source_ids and old_ids) and min(
                 abs(left - right) for left in incoming_source_ids for right in old_ids
             ) <= 6
-            score = max(entity_score, text_score, 0.75 if adjacent else 0.0)
+            same_day = bool(event_at and candidate.event_date and event_at.date() == candidate.event_date.date())
+            score = max(entity_score, text_score, source_overlap, 0.75 if adjacent else 0.0)
             if score > best_score:
                 best, best_score = candidate, score
                 best_text_score, best_entity_score, best_adjacent = text_score, entity_score, adjacent
+                best_source_overlap, best_same_day = source_overlap, same_day
         # 计划和偏好必须有明确稳定主题，禁止仅靠相似措辞或实体值跨日期合并。
         if kind in {"preference", "plan"}:
             strong_match = bool(
@@ -629,6 +636,7 @@ class MemoryService:
                         "entities": self._json_list(best.entities),
                     })
                     or (best_text_score >= 0.92 and best_entity_score >= 0.5)
+                    or (best_same_day and best_source_overlap > 0 and best_text_score >= 0.45)
                 )
             )
         else:

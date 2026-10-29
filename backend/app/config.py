@@ -14,6 +14,10 @@ class Settings:
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
     AI_API_BASE: str = os.getenv("AI_API_BASE", "https://api.openai.com/v1")
     AI_MODEL: str = os.getenv("AI_MODEL", "gpt-4o-mini")
+    AI_ENABLE_THINKING: bool = os.getenv("AI_ENABLE_THINKING", "false").lower() in ("true", "1", "yes")
+    AI_MEMORY_SUMMARY_WITH_MODEL: bool = os.getenv(
+        "AI_MEMORY_SUMMARY_WITH_MODEL", "false"
+    ).lower() in ("true", "1", "yes")
     AI_EMBEDDING_MODEL: str = os.getenv(
         "AI_EMBEDDING_MODEL",
         "text-embedding-v3" if "dashscope" in AI_API_BASE else "text-embedding-3-small",

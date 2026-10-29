@@ -404,11 +404,14 @@ def run(resume: bool = False, rescore: bool = False, full: bool = False):
         sync_started = time.perf_counter()
         batch_count = (memory_service.get_settings(db, 1).last_synced_message_id or 0) // BATCH_SIZE
         total_batches = len(cases) + noise_batches
+        print(
+            f"开始抽取：共 {total_batches} 批 / {len(messages)} 条聊天，模型 {ai_service.model}",
+            flush=True,
+        )
         while True:
             result = memory_service.sync_chat_events(db, 1, max_batches=1)
             batch_count += 1
-            if batch_count % 10 == 0:
-                print(f"抽取进度：{min(batch_count, total_batches)}/{total_batches} 批", flush=True)
+            print(f"抽取进度：{min(batch_count, total_batches)}/{total_batches} 批", flush=True)
             if result["remaining_messages"] == 0:
                 break
             if not result["processed_messages"]:

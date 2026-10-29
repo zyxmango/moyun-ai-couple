@@ -37,6 +37,8 @@ class AIService:
         self.api_base = settings.AI_API_BASE
         self.model = settings.AI_MODEL
         self.embedding_model = settings.AI_EMBEDDING_MODEL
+        self.enable_thinking = settings.AI_ENABLE_THINKING
+        self.memory_summary_with_model = settings.AI_MEMORY_SUMMARY_WITH_MODEL
         self._client = None
         if self.api_key:
             try:
@@ -68,12 +70,19 @@ class AIService:
                     messages=full_messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    **self._thinking_options(),
                 )
                 return resp.choices[0].message.content.strip()
             except Exception:
                 logger.exception("AI service call failed; using the local fallback")
                 return self._fallback_chat(messages, system_prompt)
         return self._fallback_chat(messages, system_prompt)
+
+    def _thinking_options(self) -> Dict:
+        """Qwen 3.8 默认使用最高思考强度；结构化记忆任务显式按配置关闭。"""
+        if "dashscope" in self.api_base and self.model.startswith("qwen3.8"):
+            return {"extra_body": {"enable_thinking": self.enable_thinking}}
+        return {}
 
     def _chat_strict(
         self,
@@ -89,6 +98,7 @@ class AIService:
             messages=full_messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            **self._thinking_options(),
         )
         return resp.choices[0].message.content.strip()
 
@@ -400,6 +410,10 @@ class AIService:
                     state = "uncertain"
                 event_kind = str(item.get("event_kind") or category).lower()
                 if event_kind not in {"trip", "date", "conflict", "reconciliation", "gift", "preference", "plan", "fact", "activity"}:
+                    event_kind = category
+                # 计划和偏好是业务类别，也必须是事件身份类型。模型偶尔会把“旅行计划”
+                # 标成 trip、把“约会计划”标成 date，造成同一计划保存两遍。
+                if category in {"plan", "preference"}:
                     event_kind = category
                 entities = [str(value).strip()[:80] for value in (item.get("entities") or []) if str(value).strip()][:12]
                 facts = []
@@ -876,14 +890,35 @@ class AIService:
             "id": item["id"], "created_at": str(item.get("created_at") or ""),
             "content": str(item.get("content") or "")[:1000],
         } for item in messages]
-        fallback_text = " ".join(item["content"] for item in evidence)
+        fragments = [item for item in candidate.get("fragments", []) if isinstance(item, dict)]
+        summaries = []
+        for fragment in fragments:
+            summary = re.sub(r"\s+", " ", str(fragment.get("summary") or "")).strip()
+            if summary and summary not in summaries:
+                summaries.append(summary)
+        fact_values = []
+        for fact in candidate.get("facts", []):
+            value = re.sub(r"\s+", " ", str(fact.get("value") or "")).strip()
+            if value and value not in fact_values:
+                fact_values.append(value)
+        fallback_text = "；".join(summaries) or "；".join(fact_values)
+        if not fallback_text:
+            fallback_text = " ".join(item["content"] for item in evidence)
+        fragment_title = next((
+            str(item.get("title") or "").strip() for item in reversed(fragments)
+            if str(item.get("title") or "").strip()
+        ), "")
+        location = next((
+            str(item.get("location") or "").strip() for item in reversed(fragments)
+            if str(item.get("location") or "").strip()
+        ), "")
         fallback = {
-            "title": candidate.get("title_hint") or fallback_text[:24] or "共同记忆",
-            "summary": fallback_text[:800],
-            "location": "", "emotion": "", "tags": [candidate.get("event_kind", "event")],
+            "title": fragment_title or candidate.get("title_hint") or fallback_text[:24] or "共同记忆",
+            "summary": fallback_text[:2000],
+            "location": location[:100], "emotion": "", "tags": [candidate.get("event_kind", "event")],
             "importance": 0.6,
         }
-        if not self.available:
+        if not self.available or not self.memory_summary_with_model:
             return fallback
         system = (
             "你是长期记忆总结器。输入已经完成事件聚合，不要筛选或拆分，只生成一条完整记忆。"

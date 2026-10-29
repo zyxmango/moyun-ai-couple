@@ -582,6 +582,95 @@ class MemoryAPITest(unittest.TestCase):
         self.assertGreaterEqual(len(previous), 1)
         db.close()
 
+    def test_04bbhe_same_day_overlapping_plan_fragments_merge(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        created_at = datetime(2050, 6, 1, 18)
+        messages = [
+            Message(couple_id=couple_id, sender_id=self.user1_id, content="原来约好报名陶艺课。",
+                    msg_type="text", created_at=created_at),
+            Message(couple_id=couple_id, sender_id=self.user2_id, content="临时工作时间冲突。",
+                    msg_type="text", created_at=created_at + timedelta(minutes=2)),
+            Message(couple_id=couple_id, sender_id=self.user1_id, content="这次报名陶艺课取消了。",
+                    msg_type="text", created_at=created_at + timedelta(minutes=4)),
+        ]
+        db.add_all(messages)
+        db.commit()
+        for item in messages:
+            db.refresh(item)
+        first, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+            "title": "报名陶艺课计划取消", "summary": "报名陶艺课因时间冲突取消。",
+            "category": "plan", "event_kind": "plan", "event_key": "plan:报名陶艺课",
+            "entities": ["陶艺课"], "state": "cancelled", "event_date": created_at.isoformat(),
+            "confidence": 0.95, "source_message_ids": [item.id for item in messages],
+        }, messages)
+        second, _ = memory_service._merge_candidate_fragment(db, couple_id, {
+            "title": "陶艺课报名取消", "summary": "陶艺课报名已经取消。",
+            "category": "plan", "event_kind": "plan", "event_key": "plan:陶艺课报名",
+            "entities": ["陶艺课"], "state": "cancelled", "event_date": created_at.isoformat(),
+            "confidence": 0.9, "source_message_ids": [messages[-1].id],
+        }, messages)
+        db.commit()
+        self.assertEqual(first.id, second.id)
+        self.assertEqual(
+            db.query(MemoryCandidate).filter(
+                MemoryCandidate.couple_id == couple_id,
+                MemoryCandidate.event_date >= created_at,
+            ).count(),
+            1,
+        )
+        db.close()
+
+    def test_04bbhf_qwen_non_thinking_and_local_candidate_summary(self):
+        response = Mock()
+        response.choices = [Mock(message=Mock(content=json.dumps([{
+            "title": "哈尔滨看雪计划取消", "summary": "哈尔滨看雪计划因工作冲突取消。",
+            "category": "plan", "event_kind": "trip", "event_key": "plan:哈尔滨看雪",
+            "entities": ["哈尔滨"], "state": "cancelled", "event_date": "2051-01-01",
+            "location": "哈尔滨", "emotion": "", "tags": ["计划"], "importance": 0.8,
+            "confidence": 0.95, "source_message_ids": [1, 2, 3],
+            "facts": [
+                {"type": "plan_intent", "value": "去哈尔滨看雪", "source_message_ids": [1]},
+                {"type": "cancellation_reason", "value": "临时工作时间冲突", "source_message_ids": [2]},
+                {"type": "plan_status", "value": "已经取消", "source_message_ids": [3]},
+            ],
+        }], ensure_ascii=False)))]
+        client = Mock()
+        client.chat.completions.create.return_value = response
+        original = (
+            ai_service._client, ai_service.api_base, ai_service.model,
+            ai_service.enable_thinking, ai_service.memory_summary_with_model,
+        )
+        ai_service._client = client
+        ai_service.api_base = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        ai_service.model = "qwen3.8-max"
+        ai_service.enable_thinking = False
+        ai_service.memory_summary_with_model = False
+        try:
+            events = ai_service.extract_memory_events([
+                {"id": 1, "sender_id": 1, "created_at": "2051-01-01T10:00:00", "content": "约好去哈尔滨看雪。"},
+                {"id": 2, "sender_id": 2, "created_at": "2051-01-01T10:02:00", "content": "临时工作时间冲突。"},
+                {"id": 3, "sender_id": 1, "created_at": "2051-01-01T10:04:00", "content": "哈尔滨看雪已经取消。"},
+            ])
+            summary = ai_service.summarize_memory_candidate({
+                "event_kind": "plan", "title_hint": "plan:哈尔滨看雪",
+                "fragments": [{"title": "哈尔滨看雪计划取消", "summary": "计划因工作冲突取消。"}],
+                "facts": [{"type": "plan_status", "value": "已经取消"}],
+            }, [])
+        finally:
+            (
+                ai_service._client, ai_service.api_base, ai_service.model,
+                ai_service.enable_thinking, ai_service.memory_summary_with_model,
+            ) = original
+        self.assertEqual(events[0]["event_kind"], "plan")
+        self.assertEqual(client.chat.completions.create.call_count, 1)
+        self.assertEqual(
+            client.chat.completions.create.call_args.kwargs["extra_body"],
+            {"enable_thinking": False},
+        )
+        self.assertEqual(summary["title"], "哈尔滨看雪计划取消")
+        self.assertIn("工作冲突", summary["summary"])
+
     def test_04bbi_empty_context_uses_deterministic_abstention(self):
         answer = ai_service.memory_answer("我们约好移居火星了吗？", "没有找到相关共同记忆。", [], strict=True)
         self.assertEqual(answer, "目前没有找到相关记录，所以我无法确认这件事。")

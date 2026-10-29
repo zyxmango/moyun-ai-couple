@@ -100,6 +100,10 @@ cd backend
 
 两种规模均统计抽取内容、日期、状态、Recall@5、回答正确率、来源忠实度和拒答率。
 
+`qwen3.8-max` 默认会开启高强度思考。共同记忆抽取是结构化任务，项目默认设置
+`AI_ENABLE_THINKING=false`，并直接使用已抽取的结构化事实生成正式记忆，避免为每条事件
+再调用一次模型润色。需要实验模型摘要时可设置 `AI_MEMORY_SUMMARY_WITH_MODEL=true`。
+
 ## 语义索引
 
 - 在线环境通过 `AI_EMBEDDING_MODEL` 使用 OpenAI 兼容的 embedding 接口。DashScope 默认使用 `text-embedding-v3`，OpenAI 默认使用 `text-embedding-3-small`。
