@@ -600,7 +600,7 @@ class MemoryAPITest(unittest.TestCase):
             db.refresh(item)
         first, _ = memory_service._merge_candidate_fragment(db, couple_id, {
             "title": "报名陶艺课计划取消", "summary": "报名陶艺课因时间冲突取消。",
-            "category": "plan", "event_kind": "plan", "event_key": "plan:报名陶艺课",
+            "category": "plan", "event_kind": "plan", "event_key": "plan:报名陶艺课:205006",
             "entities": ["陶艺课"], "state": "cancelled", "event_date": created_at.isoformat(),
             "confidence": 0.95, "source_message_ids": [item.id for item in messages],
         }, messages)

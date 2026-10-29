@@ -524,7 +524,9 @@ class MemoryService:
         hint = str(event.get("event_key") or event.get("title") or "").lower()
         if hint.startswith(f"{kind}:"):
             hint = hint[len(kind) + 1:]
-        hint = re.sub(r":?(?:19|20)\d{2}-\d{1,2}-\d{1,2}$", "", hint)
+        # 模型可能把计划月份写成 :202101、:2021-01 或完整日期；日期属于状态时间，
+        # 不属于计划/偏好的稳定主题，否则同一计划会因键格式不同保存两遍。
+        hint = re.sub(r":?(?:19|20)\d{2}(?:[-/.]?\d{1,2}){0,2}$", "", hint)
         hint = re.sub(r"(?:planned|ongoing|completed|cancelled|uncertain|计划中|已完成|已取消)", "", hint)
         hint = re.sub(r"(?:偏好变化|偏好更新|当前偏好|旅行事件|共同事件|计划状态)", "", hint)
         hint = re.sub(r"[^a-z0-9\u4e00-\u9fa5:]+", "", hint)[:100]
