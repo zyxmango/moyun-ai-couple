@@ -358,7 +358,6 @@ def run(resume: bool = False, rescore: bool = False, full: bool = False):
     negative_count = FULL_NEGATIVE_QUESTIONS if full else DEFAULT_NEGATIVE_QUESTIONS
     messages, cases, noise_batches = build_messages(cases_per_kind, noise_batch_count)
     negative_questions = NO_ANSWER[:negative_count]
-    TRUTH_PATH.write_text(json.dumps({"cases": cases, "negative_questions": negative_questions}, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     if DB_PATH.exists() and not resume:
         DB_PATH.unlink()
     if resume and not DB_PATH.exists():
@@ -368,7 +367,25 @@ def run(resume: bool = False, rescore: bool = False, full: bool = False):
     Session = sessionmaker(bind=engine)
     db = Session()
     try:
-        if not resume:
+        if resume:
+            stored_messages = db.query(Message).order_by(Message.id.asc()).all()
+            mismatch = len(stored_messages) != len(messages)
+            if not mismatch:
+                mismatch = any(
+                    stored.id != expected["id"]
+                    or stored.sender_id != expected["sender_id"]
+                    or stored.content != expected["content"]
+                    or stored.created_at != expected["created_at"]
+                    for stored, expected in zip(stored_messages, messages)
+                )
+            if mismatch:
+                mode = "--full" if full else "默认减半"
+                raise RuntimeError(
+                    f"现有评测数据库与{mode}数据集不一致：数据库含{len(stored_messages)}条，"
+                    f"本次期望{len(messages)}条。请移除 --resume/--rescore 重新运行，"
+                    "或使用与该数据库相同的 --full 参数。"
+                )
+        else:
             db.add_all([
                 User(id=1, email="e2e.a@example.test", password_hash="unused", nickname="小墨", couple_id=1),
                 User(id=2, email="e2e.b@example.test", password_hash="unused", nickname="小韵", couple_id=1),
@@ -376,6 +393,10 @@ def run(resume: bool = False, rescore: bool = False, full: bool = False):
             ])
             db.bulk_insert_mappings(Message, messages)
             db.commit()
+
+        TRUTH_PATH.write_text(json.dumps({
+            "cases": cases, "negative_questions": negative_questions,
+        }, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
         previous_sync_seconds = 0.0
         if resume and REPORT_JSON.exists():
