@@ -10,6 +10,7 @@ from ..models import AICallLog, Couple, DatePlan, User
 from ..schemas import DatePlanRequest
 from ..services.ai_service import ai_service
 from ..services.memory_service import memory_service
+from ..services.memory_jobs import enqueue_memory_sync
 
 router = APIRouter(prefix="/api/ai/date-plan", tags=["AI约会规划"])
 
@@ -42,7 +43,8 @@ def create_date_plan(
 ):
     settings = memory_service.get_settings(db, couple.id)
     if settings.enabled:
-        memory_service.sync_sources(db, couple.id)
+        enqueue_memory_sync(db, couple.id)
+        db.commit()
     query = " ".join(filter(None, [
         data.city, data.preferences, data.avoid,
         "约会 喜欢 偏好 计划 旅行 美食 电影",

@@ -50,6 +50,9 @@ if errorlevel 1 (
     echo [OK] Backend is already running at http://localhost:8000
 )
 
+echo [*] Starting independent memory worker
+start "Couple App Memory Worker" cmd /k "cd /d "%~dp0backend" && conda run -n couple-app --no-capture-output python -m app.memory_worker"
+
 netstat -ano | findstr /R /C:":5173 .*LISTENING" >nul
 if errorlevel 1 (
     echo [*] Starting frontend at http://localhost:5173

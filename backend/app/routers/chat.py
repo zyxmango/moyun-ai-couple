@@ -13,6 +13,7 @@ from ..schemas import MessageOut, ApiResponse
 from ..deps import get_current_user, get_active_couple, get_partner
 from ..utils import decode_access_token
 from ..config import settings
+from ..services.memory_jobs import enqueue_memory_sync
 
 router = APIRouter(prefix="/api/chat", tags=["聊天"])
 
@@ -123,6 +124,8 @@ async def chat_websocket(websocket: WebSocket, token: str):
                 db.add(msg)
                 db.commit()
                 db.refresh(msg)
+                enqueue_memory_sync(db, couple.id)
+                db.commit()
 
                 msg_data = {
                     "type": "message",
@@ -250,6 +253,8 @@ async def upload_chat_image(
     db.add(msg)
     db.commit()
     db.refresh(msg)
+    enqueue_memory_sync(db, couple.id)
+    db.commit()
 
     msg_data = {
         "type": "message",

@@ -4,9 +4,12 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 from .config import settings
 
+DATABASE_URL = settings.database_url
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
 engine = create_engine(
-    settings.sqlite_url,
-    connect_args={"check_same_thread": False},  # SQLite 多线程支持
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if IS_SQLITE else {},
+    pool_pre_ping=not IS_SQLITE,
     echo=False,
 )
 

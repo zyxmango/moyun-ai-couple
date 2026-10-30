@@ -6,6 +6,8 @@ from ..database import get_db
 from ..models import User, Couple, Diary
 from ..schemas import DiaryCreate, DiaryUpdate
 from ..deps import get_current_user, get_active_couple
+from ..services.memory_jobs import enqueue_memory_sync
+from ..services.memory_service import memory_service
 
 router = APIRouter(prefix="/api/diaries", tags=["情侣日记"])
 
@@ -42,6 +44,8 @@ def create_diary(
     db.add(diary)
     db.commit()
     db.refresh(diary)
+    enqueue_memory_sync(db, couple.id)
+    db.commit()
     return _diary_out(diary, db)
 
 
@@ -77,6 +81,8 @@ def update_diary(
         diary.mood = data.mood
     db.commit()
     db.refresh(diary)
+    enqueue_memory_sync(db, couple.id)
+    db.commit()
     return _diary_out(diary, db)
 
 
@@ -90,6 +96,8 @@ def delete_diary(
     diary = db.query(Diary).filter(Diary.id == diary_id, Diary.couple_id == couple.id).first()
     if not diary:
         raise HTTPException(status_code=404, detail="日记不存在")
+    memory_service.deactivate_source(db, couple.id, "diary", diary.id)
     db.delete(diary)
+    enqueue_memory_sync(db, couple.id)
     db.commit()
     return {"message": "已删除"}

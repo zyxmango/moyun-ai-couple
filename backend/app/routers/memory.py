@@ -29,6 +29,7 @@ from ..schemas import (
 )
 from ..services.ai_service import ai_service
 from ..services.memory_service import DEFAULT_QUESTIONS, memory_service
+from ..services.memory_jobs import enqueue_memory_sync
 
 router = APIRouter(prefix="/api/ai/memory", tags=["AI共同记忆"])
 
@@ -68,7 +69,8 @@ def update_memory_settings(
     settings.updated_at = datetime.utcnow()
     db.commit()
     if settings.enabled:
-        memory_service.sync_sources(db, couple.id)
+        enqueue_memory_sync(db, couple.id)
+        db.commit()
     return _settings_out(settings)
 
 
@@ -292,9 +294,11 @@ def memory_chat(
 ):
     if not data.question.strip():
         raise HTTPException(status_code=400, detail="问题不能为空")
-    result = memory_service.sync_sources(db, couple.id)
-    if not result["enabled"]:
+    settings = memory_service.get_settings(db, couple.id)
+    if not settings.enabled:
         raise HTTPException(status_code=409, detail="请先开启 AI 共同记忆")
+    enqueue_memory_sync(db, couple.id)
+    db.commit()
     sources = memory_service.search(db, couple.id, data.question.strip(), top_k=5, user_id=user.id)
     context_parts = []
     for item in sources:

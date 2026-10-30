@@ -1,4 +1,18 @@
 services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: couple_app
+      POSTGRES_USER: couple_app
+      POSTGRES_PASSWORD: couple_app_local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U couple_app -d couple_app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -8,15 +22,35 @@ services:
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8000
       SERVER_RELOAD: "false"
+      DATABASE_URL: postgresql+psycopg://couple_app:couple_app_local@db:5432/couple_app
+      MEMORY_WORKER_IN_PROCESS: "false"
     ports:
       - "8000:8000"
     volumes:
-      - couple_data:/app/data
+      - couple_uploads:/app/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s
       timeout: 3s
       retries: 5
+
+  memory-worker:
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.memory_worker"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://couple_app:couple_app_local@db:5432/couple_app
+      MEMORY_WORKER_IN_PROCESS: "false"
+    volumes:
+      - couple_uploads:/app/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
     build:
@@ -30,4 +64,5 @@ services:
       - "5173:80"
 
 volumes:
-  couple_data:
+  postgres_data:
+  couple_uploads:

@@ -212,6 +212,7 @@ export const recipeApi = {
 // ---------- 管理后台 ----------
 export const adminApi = {
   stats: () => api.get('/admin/stats'),
+  memoryHealth: () => api.get('/admin/memory-health'),
   users: () => api.get('/admin/users'),
   couples: () => api.get('/admin/couples'),
   aiLogs: (params) => api.get('/admin/ai-logs', { params }),

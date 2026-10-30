@@ -10,7 +10,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Dict, List
 
 import numpy as np
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, text
 from sqlalchemy.orm import Session
 
 from ..models import (
@@ -98,6 +98,60 @@ class MemoryService:
             buckets.append(str(value))
         return buckets
 
+    @staticmethod
+    def _pgvector_table(dimension: int) -> str:
+        if not (1 <= int(dimension) <= 8192):
+            raise ValueError("invalid embedding dimension")
+        return f"memory_vectors_{int(dimension)}"
+
+    def _ensure_pgvector_schema(self, db: Session, dimension: int):
+        """PostgreSQL 使用 pgvector HNSW；SQLite 继续使用持久化 LSH。"""
+        if db.bind.dialect.name != "postgresql":
+            return False
+        table = self._pgvector_table(dimension)
+        db.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        db.execute(text(
+            f"CREATE TABLE IF NOT EXISTS {table} ("
+            "memory_id BIGINT PRIMARY KEY REFERENCES shared_memories(id) ON DELETE CASCADE, "
+            "couple_id BIGINT NOT NULL, model VARCHAR(100) NOT NULL, "
+            f"embedding vector({dimension}) NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+        ))
+        db.execute(text(
+            f"CREATE INDEX IF NOT EXISTS ix_{table}_couple_model ON {table} (couple_id, model)"
+        ))
+        db.execute(text(
+            f"CREATE INDEX IF NOT EXISTS ix_{table}_hnsw ON {table} "
+            "USING hnsw (embedding vector_cosine_ops)"
+        ))
+        return True
+
+    def _upsert_pgvector(self, db: Session, memory: SharedMemory, vector: np.ndarray, model: str):
+        table = self._pgvector_table(len(vector))
+        vector_text = "[" + ",".join(f"{float(value):.8g}" for value in vector) + "]"
+        db.execute(text(
+            f"INSERT INTO {table} (memory_id, couple_id, model, embedding, updated_at) "
+            "VALUES (:memory_id, :couple_id, :model, CAST(:embedding AS vector), CURRENT_TIMESTAMP) "
+            "ON CONFLICT (memory_id) DO UPDATE SET couple_id=EXCLUDED.couple_id, "
+            "model=EXCLUDED.model, embedding=EXCLUDED.embedding, updated_at=CURRENT_TIMESTAMP"
+        ), {"memory_id": memory.id, "couple_id": memory.couple_id, "model": model, "embedding": vector_text})
+
+    def _pgvector_candidate_ids(
+        self, db: Session, couple_id: int, model: str, vector: np.ndarray, limit: int = 1500
+    ) -> List[int]:
+        if db.bind.dialect.name != "postgresql":
+            return []
+        table = self._pgvector_table(len(vector))
+        vector_text = "[" + ",".join(f"{float(value):.8g}" for value in vector) + "]"
+        try:
+            rows = db.execute(text(
+                f"SELECT memory_id FROM {table} WHERE couple_id=:couple_id AND model=:model "
+                "ORDER BY embedding <=> CAST(:embedding AS vector) LIMIT :limit"
+            ), {"couple_id": couple_id, "model": model, "embedding": vector_text, "limit": limit}).all()
+            return [int(row[0]) for row in rows]
+        except Exception:
+            db.rollback()
+            return []
+
     def ensure_embeddings(self, db: Session, couple_id: int, limit: int = 128) -> Dict:
         """增量补齐或重建持久化语义向量与 LSH 桶。"""
         model = ai_service.embedding_index_model
@@ -112,6 +166,14 @@ class MemoryService:
         vectors = ai_service.embed_texts([self._memory_text(row) for row in rows])
         if len(vectors) != len(rows):
             raise RuntimeError("embedding service returned an unexpected vector count")
+        pgvector_ready = False
+        if vectors and db.bind.dialect.name == "postgresql":
+            row_ids = [row.id for row in rows]
+            try:
+                pgvector_ready = self._ensure_pgvector_schema(db, len(vectors[0]))
+            except Exception:
+                db.rollback()
+                rows = db.query(SharedMemory).filter(SharedMemory.id.in_(row_ids)).order_by(SharedMemory.id.asc()).all()
         for memory, vector in zip(rows, vectors):
             db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete(
                 synchronize_session=False
@@ -120,6 +182,8 @@ class MemoryService:
             memory.embedding_model = model
             memory.embedding_dim = len(vector)
             memory.embedding_updated_at = datetime.utcnow()
+            if pgvector_ready:
+                self._upsert_pgvector(db, memory, vector, model)
             for table_index, bucket in enumerate(self._vector_buckets(vector, model)):
                 db.add(MemoryEmbeddingBucket(
                     memory_id=memory.id,
@@ -256,6 +320,23 @@ class MemoryService:
         db.commit()
         db.refresh(memory)
         return memory
+
+    def deactivate_source(self, db: Session, couple_id: int, source_type: str, source_id) -> bool:
+        memory = db.query(SharedMemory).filter(
+            SharedMemory.couple_id == couple_id,
+            SharedMemory.source_type == source_type,
+            SharedMemory.source_id == str(source_id),
+        ).first()
+        if not memory:
+            return False
+        memory.is_active = False
+        memory.embedding_b64 = ""
+        memory.embedding_model = ""
+        memory.embedding_dim = 0
+        db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete(
+            synchronize_session=False
+        )
+        return True
 
     def sync_sources(self, db: Session, couple_id: int) -> Dict:
         settings = self.get_settings(db, couple_id)
@@ -1017,7 +1098,10 @@ class MemoryService:
         )
         distinctive_terms = [term for term in query_terms if term not in generic_query_text]
         total = base.count()
-        if query_vector is not None and total <= self.EXACT_VECTOR_LIMIT:
+        if query_vector is not None and db.bind.dialect.name == "postgresql":
+            candidate_ids = self._pgvector_candidate_ids(db, couple_id, model, query_vector)
+            memories = base.filter(SharedMemory.id.in_(candidate_ids)).all() if candidate_ids else []
+        elif query_vector is not None and total <= self.EXACT_VECTOR_LIMIT:
             memories = base.all()
         else:
             candidate_ids = self._lsh_candidate_ids(db, couple_id, model, query_vector) if query_vector is not None else []
@@ -1073,11 +1157,23 @@ class MemoryService:
                 continue
             if wants_cancelled and memory.memory_state != "cancelled":
                 continue
+            date_exact = bool(
+                memory_date
+                and (not query_year or memory_date.year == query_year)
+                and (not query_month or memory_date.month == query_month)
+                and (query_year or query_month)
+            )
             age_days = (now - (memory.event_date or memory.created_at)).days
             recency = max(0.0, 1.0 - max(age_days, 0) / 3650) * 0.05
             relevance = max(0.0, semantic) * 0.75 + keyword * 0.25
+            if date_exact:
+                relevance += 0.12
             # 低相关语义分在大库中普遍存在；必须有词面证据或很强的语义证据才可进入答案上下文。
-            supported = keyword >= self.MIN_KEYWORD_SUPPORT or semantic >= self.STRONG_SEMANTIC_SUPPORT
+            supported = (
+                keyword >= self.MIN_KEYWORD_SUPPORT
+                or semantic >= self.STRONG_SEMANTIC_SUPPORT
+                or (date_exact and semantic >= 0.1)
+            )
             if existence_question and not (
                 any(len(term) >= 3 for term in distinctive_matches) or len(distinctive_matches) >= 2
             ):

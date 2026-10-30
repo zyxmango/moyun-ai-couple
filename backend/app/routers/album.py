@@ -7,6 +7,8 @@ from ..database import get_db
 from ..models import User, Couple, Photo
 from ..deps import get_current_user, get_active_couple
 from ..config import settings
+from ..services.memory_jobs import enqueue_memory_sync
+from ..services.memory_service import memory_service
 
 router = APIRouter(prefix="/api/album", tags=["共享相册"])
 
@@ -48,6 +50,8 @@ async def upload_photo(
     db.add(photo)
     db.commit()
     db.refresh(photo)
+    enqueue_memory_sync(db, couple.id)
+    db.commit()
     return {"id": photo.id, "url": f"/uploads/photos/{filename}", "message": "上传成功"}
 
 
@@ -67,6 +71,8 @@ def delete_photo(
         (settings.PHOTOS_DIR / fname).unlink(missing_ok=True)
     except Exception:
         pass
+    memory_service.deactivate_source(db, couple.id, "photo", photo.id)
     db.delete(photo)
+    enqueue_memory_sync(db, couple.id)
     db.commit()
     return {"message": "已删除"}

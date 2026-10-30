@@ -350,14 +350,18 @@ def write_report(payload: dict):
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def run(resume: bool = False, rescore: bool = False, full: bool = False):
+def run(
+    resume: bool = False, rescore: bool = False, full: bool = False,
+    cases_per_kind: int | None = None, noise_batch_count: int | None = None,
+    negative_count: int | None = None,
+):
     if not ai_service.available:
         raise RuntimeError("端到端真实性评测需要可用的 AI_API_KEY，当前只能使用离线规则模板")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    cases_per_kind = FULL_CASES_PER_KIND if full else DEFAULT_CASES_PER_KIND
-    noise_batch_count = FULL_NOISE_BATCHES if full else DEFAULT_NOISE_BATCHES
-    negative_count = FULL_NEGATIVE_QUESTIONS if full else DEFAULT_NEGATIVE_QUESTIONS
+    cases_per_kind = cases_per_kind or (FULL_CASES_PER_KIND if full else DEFAULT_CASES_PER_KIND)
+    noise_batch_count = noise_batch_count or (FULL_NOISE_BATCHES if full else DEFAULT_NOISE_BATCHES)
+    negative_count = negative_count or (FULL_NEGATIVE_QUESTIONS if full else DEFAULT_NEGATIVE_QUESTIONS)
     messages, cases, noise_batches = build_messages(cases_per_kind, noise_batch_count)
     negative_questions = NO_ANSWER[:negative_count]
     if DB_PATH.exists() and not resume:
@@ -441,18 +445,28 @@ def run(resume: bool = False, rescore: bool = False, full: bool = False):
         for case in cases:
             evidence = set(case["evidence_ids"])
             matches = [m for m in extracted if ids(m.source_message_ids) & evidence]
+            def covers_date(memory):
+                """跨日事件只要标准日期落在开始/结束边界内，就属于日期正确。"""
+                if not memory:
+                    return False
+                target = case["date"].date()
+                start_at = memory.started_at or memory.event_date
+                end_at = memory.resolved_at or memory.event_end or memory.event_date
+                if start_at and end_at and start_at.date() <= target <= end_at.date():
+                    return True
+                return bool(memory.event_date and memory.event_date.date() == target)
             def match_score(memory):
                 text = memory_text(memory)
                 return (
                     sum(term in text for term in case["required_memory"]),
-                    bool(memory.event_date and memory.event_date.date() == case["date"].date()),
+                    covers_date(memory),
                     memory.memory_state == case["state"], memory.category == case["category"],
                     len(ids(memory.source_message_ids) & evidence),
                 )
             best = max(matches, key=match_score, default=None)
             text = memory_text(best) if best else ""
             content_ok = bool(best) and all(term in text for term in case["required_memory"])
-            date_ok = bool(best and best.event_date and best.event_date.date() == case["date"].date())
+            date_ok = covers_date(best)
             state_ok = bool(best and best.memory_state == case["state"])
             category_ok = bool(best and best.category == case["category"])
             extraction_rows.append({
@@ -570,5 +584,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true", help="从独立评测库保存的同步游标继续")
     parser.add_argument("--rescore", action="store_true", help="按当前门控清理现有候选并重新执行问答")
     parser.add_argument("--full", action="store_true", help="运行原始全量数据；默认使用一半数据以节省模型额度")
+    parser.add_argument("--smoke", action="store_true", help="运行约600条聊天的低额度最终复测")
     options = parser.parse_args()
-    run(resume=options.resume or options.rescore, rescore=options.rescore, full=options.full)
+    smoke = {"cases_per_kind": 4, "noise_batch_count": 4, "negative_count": 6} if options.smoke else {}
+    run(resume=options.resume or options.rescore, rescore=options.rescore, full=options.full, **smoke)

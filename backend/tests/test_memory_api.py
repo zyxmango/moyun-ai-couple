@@ -14,10 +14,11 @@ from app.database import Base, get_db
 from app.main import app
 from app.models import (
     Couple, CoupleAISettings, Diary, MemoryCandidate, MemoryEmbeddingBucket,
-    MemoryEventHistory, Message, SharedMemory, User,
+    MemoryEventHistory, MemorySyncJob, MemorySyncRun, Message, SharedMemory, User,
 )
 from app.services.ai_service import ai_service
 from app.services.memory_service import memory_service
+from app.services.memory_jobs import enqueue_memory_sync, claim_next_job, execute_claimed_job
 from app.utils import create_access_token, hash_password
 
 
@@ -103,6 +104,9 @@ class MemoryAPITest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["enabled"])
 
+        response = self.client.post("/api/ai/memory/sync", headers=self.headers1)
+        self.assertEqual(response.status_code, 200)
+
         response = self.client.get("/api/ai/memory", headers=self.headers1)
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(response.json()["total"], 2)
@@ -153,8 +157,8 @@ class MemoryAPITest(unittest.TestCase):
     def test_04b_cursor_advances_past_noise_without_creating_fragment_memory(self):
         db = self.Session()
         settings = db.query(CoupleAISettings).first()
-        old_cursor = settings.last_synced_message_id
         couple_id = settings.couple_id
+        old_cursor = settings.last_synced_message_id
         db.add_all([
             Message(couple_id=couple_id, sender_id=self.user1_id, content="哈哈", msg_type="text"),
             Message(couple_id=couple_id, sender_id=self.user2_id, content="嗯嗯", msg_type="text"),
@@ -790,7 +794,8 @@ class MemoryAPITest(unittest.TestCase):
         context = (
             f"- 事件时间：2052-03-01；状态：ongoing；类型：咖啡偏好；内容：偏好变化；"
             f"已确认事实：previous_preference@{self.user1_id}=半糖拿铁；"
-            f"current_preference@{self.user1_id}=无糖燕麦拿铁"
+            f"current_preference@{self.user1_id}=无糖燕麦拿铁；"
+            "current_preference=以后不要再按半糖拿铁准备"
         )
         answer = ai_service.memory_answer("我现在喜欢什么咖啡？", context, viewer_user_id=self.user1_id)
         self.assertIn("你当前的偏好", answer)
@@ -846,6 +851,54 @@ class MemoryAPITest(unittest.TestCase):
             self.client.get(f"/api/ai/memory/{memory_id}/evidence", headers=self.headers1).status_code,
             404,
         )
+
+    def test_04bbr_persistent_worker_queue_is_idempotent_and_records_metrics(self):
+        db = self.Session()
+        settings = db.query(CoupleAISettings).first()
+        couple_id = settings.couple_id
+        db.add(Message(
+            couple_id=couple_id, sender_id=self.user1_id,
+            content="请记住我们计划下个月去看新的摄影展。", msg_type="text",
+        ))
+        db.commit()
+        enqueue_memory_sync(db, couple_id)
+        enqueue_memory_sync(db, couple_id)
+        db.commit()
+        self.assertEqual(db.query(MemorySyncJob).filter(MemorySyncJob.couple_id == couple_id).count(), 1)
+        self.assertEqual(claim_next_job(db, "test-worker-1"), couple_id)
+        self.assertIsNone(claim_next_job(db, "test-worker-2"))
+        db.close()
+
+        result = execute_claimed_job(couple_id, "test-worker-1", session_factory=self.Session)
+        self.assertGreaterEqual(result["processed_messages"], 1)
+        db = self.Session()
+        run = db.query(MemorySyncRun).filter(MemorySyncRun.couple_id == couple_id).order_by(
+            MemorySyncRun.id.desc()
+        ).first()
+        self.assertEqual(run.status, "success")
+        self.assertGreaterEqual(run.processed_messages, 1)
+        self.assertGreaterEqual(run.duration_ms, 0)
+        db.close()
+
+    def test_04bbs_admin_memory_health_is_aggregate_only(self):
+        db = self.Session()
+        user = db.query(User).filter(User.id == self.user1_id).one()
+        user.is_admin = True
+        db.commit()
+        db.close()
+        try:
+            response = self.client.get("/api/admin/memory-health", headers=self.headers1)
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            self.assertIn("message_lag_total", payload)
+            self.assertIn("failure_rate", payload["last_24h"])
+            self.assertIn("estimated_cost_usd", payload["last_24h"])
+            self.assertNotIn("content", json.dumps(payload, ensure_ascii=False).lower())
+        finally:
+            db = self.Session()
+            db.query(User).filter(User.id == self.user1_id).update({"is_admin": False})
+            db.commit()
+            db.close()
 
     def test_04c_failed_extraction_keeps_cursor_for_retry(self):
         db = self.Session()

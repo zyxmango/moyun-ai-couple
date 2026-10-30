@@ -22,7 +22,7 @@
 
 | 功能 | 用户价值 | 实现方式 |
 |---|---|---|
-| 双人长期记忆 | 自动同步聊天、日记、相册、纪念日，也可主动记录偏好 | 统一记忆模型 + LLM/规则提取 + 人工确认 |
+| 双人长期记忆 | 自动同步聊天、日记、相册、纪念日，也可主动记录偏好 | 统一记忆模型 + 事件级自动提取 + 来源追溯 |
 | 共享/私密权限 | 共享记忆双方可见，私密记忆仅所有者可检索 | `couple_id + owner_id + visibility` 检索前过滤 |
 | 智能约会规划 | 结合预算、日期、双方偏好与历史经历生成可执行方案 | 受控规划 Agent + RAG 来源引用 + 调用日志 |
 | 每日互动与周报 | 双方回答后才解锁答案，并生成有依据的共同回顾 | 双人状态机 + Grounded Generation |
@@ -36,22 +36,24 @@ flowchart LR
     A["用户 A"] --> FE["Vue 3 / Capacitor"]
     B["用户 B"] --> FE
     FE --> API["FastAPI / JWT / 配对鉴权"]
-    API --> MEM["记忆服务\n同步 · 抽取 · 版本管理"]
+    API --> Q[("数据库任务队列")]
+    Q --> WORKER["独立 Memory Worker\n游标同步 · 重试 · 指标"]
+    WORKER --> MEM["事件抽取 · 合并 · 版本管理"]
     API --> PLAN["约会规划 Agent"]
     MEM --> ACL["权限过滤\ncouple / owner / visibility"]
-    ACL --> RAG["混合检索\nTF-IDF + 关键词 + 时间 + 重要度"]
+    ACL --> RAG["持久化语义检索\npgvector HNSW / SQLite LSH"]
     RAG --> PLAN
     RAG --> QA["记忆问答 / 周报"]
     PLAN --> LLM["OpenAI 兼容 LLM\n或本地降级策略"]
     QA --> LLM
-    API --> DB[("SQLite / SQLAlchemy")]
+    API --> DB[("PostgreSQL + pgvector\n或本地 SQLite")]
 ```
 
 一次约会规划请求的链路：
 
 1. JWT 鉴权并确认当前 `couple_id`；
 2. 根据 `shared` 或当前用户拥有的 `private` 记忆先做权限过滤；
-3. 使用字符级 TF-IDF、关键词、时间衰减与重要度进行混合排序；
+3. 使用持久化 Embedding、关键词、状态、时间与重要度进行混合排序；
 4. 将 Top-K 记忆、预算、日期和限制注入规划 Prompt；
 5. 返回约会方案以及实际参与生成的记忆来源；
 6. 保存方案与 AI 调用日志，便于追踪和复盘。
@@ -66,7 +68,11 @@ flowchart LR
 
 ### 原始聊天噪声与可解释检索
 
-聊天、日记等先统一为事件粒度记忆；AI 提取结果默认进入 `pending`，用户确认后才能参与问答。检索同时考虑语义字符特征、精确关键词、时间与重要度，回答和规划均返回来源，而不是只给出无法验证的生成文本。
+聊天原文完整保留，长期记忆只保存事件、偏好、计划和事实。事实绑定主体、陈述者、时间与原始消息 ID；用户可查看依据、纠正或让 AI 忘记。检索使用持久化语义向量与关键词混合排序，私密权限在进入候选池前过滤。
+
+### 独立任务队列与可观测性
+
+每条新聊天只执行幂等入队，独立 Worker 使用数据库租约领取任务。进程崩溃后租约到期可自动重领，模型失败时游标保持不动并指数退避。管理端展示消息积压、失败率、P50/P95 耗时、模型调用、Token 与按配置单价估算的费用。
 
 ### 外部模型不可用时仍可演示
 
@@ -89,12 +95,13 @@ AI 服务采用 OpenAI 兼容接口，但未配置 Key 或接口失败时，会�
 |---|---|---|
 | Web 前端 | Vue 3 + Vite + Element Plus | 组件化开发快，同时可通过 Capacitor 打包 Android |
 | API | FastAPI | 类型校验、依赖注入和 Swagger 文档适合 AI 接口快速迭代 |
-| 数据 | SQLite + SQLAlchemy | 个人项目零运维、事务明确，并保留迁移到 PostgreSQL 的空间 |
-| 检索 | scikit-learn TF-IDF + 自研混合排序 | 无额外服务即可复现，适合先验证产品闭环 |
+| 数据 | PostgreSQL + pgvector / SQLite | Compose 使用 PostgreSQL；本地仍可零配置运行 SQLite |
+| 检索 | Embedding + HNSW/LSH + 混合排序 | 大数据用 pgvector HNSW，小规模与离线测试使用持久化 LSH |
+| 后台任务 | 数据库持久化队列 + 独立 Worker | 不依赖请求触发，支持租约、重试、积压与成本监控 |
 | AI | OpenAI 兼容 API + 本地降级 | 可切换模型提供商，也能离线完成演示和自动化测试 |
 | 实时能力 | WebSocket | 支持情侣聊天实时收发 |
 
-当前没有使用 LangGraph、MySQL 或独立向量数据库，因此不会在简历中虚构这些技术。它们属于数据规模扩大后的演进方向。
+当前没有使用 LangGraph、Celery 或 Redis。任务队列直接复用业务数据库，通过租约保证多 Worker 不重复处理，减少个人项目的额外运维服务。
 
 ## 7. 项目结构
 
@@ -141,7 +148,7 @@ Copy-Item backend/.env.example backend/.env
 docker compose up --build
 ```
 
-Compose 会启动 FastAPI 和 Nginx 静态前端，并使用命名卷保存 SQLite 数据。
+Compose 会启动 PostgreSQL/pgvector、FastAPI、独立记忆 Worker 和 Nginx 前端，并使用命名卷持久化数据库与上传文件。
 
 ### 虚构演示账号
 
@@ -169,12 +176,17 @@ conda run -n couple-app python seed_demo.py
 cd backend
 conda run -n couple-app python -m unittest discover -s tests -v
 conda run -n couple-app python eval_memory_rag.py
+conda run -n couple-app python eval_memory_e2e.py --smoke
+
+# 匿名真实聊天：先生成本地标注模板，再评测 reviewed=true 的样本
+conda run -n couple-app python eval_memory_anonymized.py --prepare-couple 1
+conda run -n couple-app python eval_memory_anonymized.py --input data/private_evals/review_cases.jsonl
 
 cd ..\frontend
 npm run build
 ```
 
-当前自动化测试覆盖隐私授权、多源同步、来源引用问答、双人答案解锁、AI 提取确认、共同周报、私密记忆隔离、偏好版本和约会规划。
+当前自动化测试覆盖隐私授权、多源同步、来源引用问答、双人答案解锁、AI 自动事件提取、共同周报、私密记忆隔离、偏好版本、后台任务队列和约会规划。
 
 前端生产依赖执行 `npm audit --omit=dev` 的当前结果为 0 个已知漏洞；Capacitor CLI 属于开发依赖，其上游工具链仍可能报告 moderate 级审计项，不进入生产 Nginx 镜像。
 
@@ -185,19 +197,21 @@ npm run build
 | `PUT` | `/api/ai/memory/settings` | 开启共同记忆并配置数据来源 |
 | `POST` | `/api/ai/memory/manual` | 写入共享或私密事件/偏好 |
 | `POST` | `/api/ai/memory/chat` | 基于当前用户可见记忆问答 |
-| `POST` | `/api/ai/memory/extract` | 从近期记录提取待确认事件 |
+| `POST` | `/api/ai/memory/extract` | 兼容入口：触发自动增量事件整理 |
 | `POST` | `/api/ai/date-plan` | 生成有记忆依据的约会方案 |
 | `GET` | `/api/ai/date-plan` | 查看当前用户创建的历史方案 |
 
 ## 11. Roadmap
 
 - [x] 情侣配对与现有生活记录功能
-- [x] 多来源共同记忆与人工确认
+- [x] 多来源共同记忆与自动事件提取
 - [x] 共享/私密权限隔离和偏好版本
 - [x] 有来源引用的记忆问答、周报和约会规划
 - [x] 离线评测与端到端测试
 - [ ] 扩充 100+ 困难问题并做检索消融实验
-- [ ] 接入 Embedding + Reranker，对比当前轻量方案
+- [x] 接入持久化 Embedding 与 pgvector HNSW/SQLite LSH
+- [x] 独立同步 Worker、失败退避与运行监控
+- [x] 匿名真实聊天人工标注评测工具
 - [ ] 地点检索、天气和日历工具（写入前需用户确认）
 - [x] Docker Compose 本地容器化
 - [ ] 线上演示环境

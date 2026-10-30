@@ -191,6 +191,45 @@ class CoupleAISettings(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class MemorySyncJob(Base):
+    """数据库持久化任务队列；独立 Worker 可安全领取，进程重启不会丢任务。"""
+    __tablename__ = "memory_sync_jobs"
+    couple_id = Column(Integer, ForeignKey("couples.id"), primary_key=True)
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    requested_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    available_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    lease_until = Column(DateTime, nullable=True, index=True)
+    leased_by = Column(String(100), default="")
+    attempts = Column(Integer, default=0, nullable=False)
+    last_error = Column(Text, default="")
+    last_started_at = Column(DateTime, nullable=True)
+    last_finished_at = Column(DateTime, nullable=True)
+
+
+class MemorySyncRun(Base):
+    """每次同步的运行指标，用于积压、失败、耗时、Token 与成本监控。"""
+    __tablename__ = "memory_sync_runs"
+    id = Column(Integer, primary_key=True)
+    couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
+    worker_id = Column(String(100), default="", index=True)
+    status = Column(String(20), nullable=False, index=True)
+    processed_messages = Column(Integer, default=0)
+    created_events = Column(Integer, default=0)
+    merged_events = Column(Integer, default=0)
+    embedded_memories = Column(Integer, default=0)
+    remaining_messages = Column(Integer, default=0)
+    model_calls = Column(Integer, default=0)
+    embedding_calls = Column(Integer, default=0)
+    input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    embedding_tokens = Column(Integer, default=0)
+    estimated_cost_usd = Column(Float, default=0.0)
+    duration_ms = Column(Float, default=0.0)
+    error = Column(Text, default="")
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    finished_at = Column(DateTime, nullable=True)
+
+
 class SharedMemory(Base):
     """由情侣业务数据同步或 AI 提取出的统一共同记忆。"""
     __tablename__ = "shared_memories"

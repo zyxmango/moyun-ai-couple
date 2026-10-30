@@ -3,6 +3,8 @@ import json
 import hashlib
 import logging
 import re
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime
 from typing import List, Dict, Optional
 
@@ -12,9 +14,40 @@ from ..config import settings
 
 
 logger = logging.getLogger(__name__)
+_usage_context = ContextVar("ai_usage_context", default=None)
 
 
 class AIService:
+    @contextmanager
+    def track_usage(self):
+        """按当前线程/异步上下文统计模型调用与 Token，不记录聊天正文。"""
+        stats = {
+            "model_calls": 0, "embedding_calls": 0,
+            "input_tokens": 0, "output_tokens": 0, "embedding_tokens": 0,
+        }
+        token = _usage_context.set(stats)
+        try:
+            yield stats
+        finally:
+            _usage_context.reset(token)
+
+    @staticmethod
+    def _record_usage(response, embedding: bool = False):
+        stats = _usage_context.get()
+        if stats is None:
+            return
+        usage = getattr(response, "usage", None)
+        prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+        total_tokens = int(getattr(usage, "total_tokens", 0) or 0)
+        completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+        if embedding:
+            stats["embedding_calls"] += 1
+            stats["embedding_tokens"] += total_tokens or prompt_tokens
+        else:
+            stats["model_calls"] += 1
+            stats["input_tokens"] += prompt_tokens
+            stats["output_tokens"] += completion_tokens
+
     @staticmethod
     def _unit_float(value, default: float = 0.5) -> float:
         """Normalize model confidence fields without letting loose labels stop syncing."""
@@ -72,6 +105,7 @@ class AIService:
                     max_tokens=max_tokens,
                     **self._thinking_options(),
                 )
+                self._record_usage(resp)
                 return resp.choices[0].message.content.strip()
             except Exception:
                 logger.exception("AI service call failed; using the local fallback")
@@ -100,6 +134,7 @@ class AIService:
             max_tokens=max_tokens,
             **self._thinking_options(),
         )
+        self._record_usage(resp)
         return resp.choices[0].message.content.strip()
 
     @property
@@ -118,6 +153,7 @@ class AIService:
                     model=self.embedding_model,
                     input=texts[start:start + batch_size],
                 )
+                self._record_usage(response, embedding=True)
                 vectors.extend(np.asarray(item.embedding, dtype=np.float32) for item in response.data)
         else:
             vectors = [self._local_hash_embedding(text) for text in texts]
@@ -1075,7 +1111,12 @@ class AIService:
         _, _, facts = max(candidates, key=lambda row: row[0])
 
         if "current_preference" in facts:
-            subject, value = facts["current_preference"][-1]
+            # “以后不要再按半糖准备”描述的是被废止的旧偏好，不能当成当前值。
+            positive = [
+                row for row in facts["current_preference"]
+                if not re.search(r"(?:不要|不再|别再|停止).{0,8}(?:按|选|准备)", row[1])
+            ]
+            subject, value = (positive or facts["current_preference"])[-1]
             owner = "你" if viewer_user_id is not None and subject == viewer_user_id else (
                 "对方" if viewer_user_id is not None and subject is not None else "记录中的偏好"
             )

@@ -8,8 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .database import SessionLocal, init_db
-from .models import CoupleAISettings
-from .services.memory_service import memory_service
+from .services.memory_jobs import enqueue_lagging_couples, claim_next_job, execute_claimed_job, worker_identity
 from .routers import (
     auth, chat, anniversary, album, diary,
     ai_companion, ai_generate, ai_summary, rag_agent,
@@ -48,30 +47,24 @@ app.include_router(memory.router)
 app.include_router(date_planner.router)
 
 
-def _sync_enabled_memories_once():
+def _sync_enabled_memories_once(worker_id: str):
     db = SessionLocal()
+    couple_id = None
     try:
-        couple_ids = [row[0] for row in db.query(CoupleAISettings.couple_id).filter(
-            CoupleAISettings.enabled.is_(True),
-            CoupleAISettings.include_chat.is_(True),
-        ).all()]
-        for couple_id in couple_ids:
-            memory_service.sync_chat_events(db, couple_id, max_batches=1)
-            try:
-                memory_service.ensure_embeddings(db, couple_id, limit=128)
-            except Exception:
-                db.rollback()
-                continue
+        enqueue_lagging_couples(db)
+        couple_id = claim_next_job(db, worker_id)
     finally:
         db.close()
+    if couple_id is not None:
+        execute_claimed_job(couple_id, worker_id)
 
 
 async def _memory_sync_loop():
-    # 延迟首轮，避免启动路径被历史数据整理阻塞；之后持续追赶游标。
+    worker_id = worker_identity()
     while True:
-        await asyncio.sleep(30)
+        await asyncio.sleep(settings.MEMORY_WORKER_POLL_SECONDS)
         try:
-            await asyncio.to_thread(_sync_enabled_memories_once)
+            await asyncio.to_thread(_sync_enabled_memories_once, worker_id)
         except Exception:
             # 单轮失败会保留游标，下轮从同一位置重试。
             continue
@@ -80,7 +73,9 @@ async def _memory_sync_loop():
 @app.on_event("startup")
 async def startup():
     init_db()
-    app.state.memory_sync_task = asyncio.create_task(_memory_sync_loop())
+    app.state.memory_sync_task = (
+        asyncio.create_task(_memory_sync_loop()) if settings.MEMORY_WORKER_IN_PROCESS else None
+    )
 
 
 @app.on_event("shutdown")

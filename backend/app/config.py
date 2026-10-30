@@ -22,6 +22,12 @@ class Settings:
         "AI_EMBEDDING_MODEL",
         "text-embedding-v3" if "dashscope" in AI_API_BASE else "text-embedding-3-small",
     )
+    AI_INPUT_COST_PER_MILLION: float = float(os.getenv("AI_INPUT_COST_PER_MILLION", "0"))
+    AI_OUTPUT_COST_PER_MILLION: float = float(os.getenv("AI_OUTPUT_COST_PER_MILLION", "0"))
+    AI_EMBEDDING_COST_PER_MILLION: float = float(os.getenv("AI_EMBEDDING_COST_PER_MILLION", "0"))
+    MEMORY_WORKER_IN_PROCESS: bool = os.getenv("MEMORY_WORKER_IN_PROCESS", "false").lower() in ("true", "1", "yes")
+    MEMORY_WORKER_POLL_SECONDS: float = float(os.getenv("MEMORY_WORKER_POLL_SECONDS", "2"))
+    MEMORY_JOB_LEASE_SECONDS: int = int(os.getenv("MEMORY_JOB_LEASE_SECONDS", "600"))
     ADMIN_PHONE: str = os.getenv("ADMIN_PHONE", "13800000000")
 
     # 邮件 SMTP（QQ邮箱）
@@ -44,10 +50,18 @@ class Settings:
     JWT_EXPIRE_DAYS: int = 7
 
     @property
+    def database_url(self) -> str:
+        """保留 SQLite 零配置体验，同时真正支持 DATABASE_URL 指向 PostgreSQL。"""
+        value = self.DATABASE_URL.strip()
+        if value.startswith("sqlite:///./"):
+            relative = value.removeprefix("sqlite:///./")
+            return f"sqlite:///{(BASE_DIR / relative).resolve().as_posix()}"
+        return value
+
+    @property
     def sqlite_url(self) -> str:
-        # 确保使用绝对路径，便于跨目录运行
-        db_path = self.DATA_DIR / "couple_app.db"
-        return f"sqlite:///{db_path.as_posix()}"
+        # 旧调用兼容；实际可能返回 PostgreSQL URL。
+        return self.database_url
 
     def ensure_dirs(self):
         for d in (self.DATA_DIR, self.UPLOAD_DIR, self.PHOTOS_DIR, self.AVATARS_DIR):

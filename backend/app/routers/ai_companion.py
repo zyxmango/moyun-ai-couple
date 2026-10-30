@@ -9,6 +9,7 @@ from ..schemas import CompanionChatRequest
 from ..deps import get_current_user, get_active_couple
 from ..services.ai_service import ai_service
 from ..services.memory_service import memory_service
+from ..services.memory_jobs import enqueue_memory_sync
 
 router = APIRouter(prefix="/api/ai/companion", tags=["AI情感陪伴"])
 
@@ -52,10 +53,13 @@ def companion_chat(
     # 移除刚加的最后一条（已在 messages 中，避免重复）
     history = history[:-1]
     # 共同记忆仅作为模型内部上下文，绝不把原始检索片段返回到聊天界面。
-    sync_result = memory_service.sync_sources(db, couple.id)
+    memory_settings = memory_service.get_settings(db, couple.id)
+    if memory_settings.enabled:
+        enqueue_memory_sync(db, couple.id)
+        db.commit()
     memories = (
         memory_service.search(db, couple.id, req.message, top_k=5, user_id=user.id)
-        if sync_result["enabled"] else []
+        if memory_settings.enabled else []
     )
     memory_context_lines = []
     for item in memories:
