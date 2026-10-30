@@ -104,7 +104,7 @@ def init_db():
             "ON shared_memories (event_key)"
         ))
         # 旧版把每条聊天直接当作记忆；保留数据便于追溯，但停止参与检索。
-        connection.execute(text("UPDATE shared_memories SET is_active = 0 WHERE source_type = 'chat'"))
+        connection.execute(text("UPDATE shared_memories SET is_active = FALSE WHERE source_type = 'chat'"))
 
     table_additions = {
         "memory_candidates": {
