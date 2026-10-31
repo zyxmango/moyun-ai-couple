@@ -92,21 +92,59 @@ NO_ANSWER = [
     "共同领养的兔子是哪一天到家的？", "我现在喜欢极限跳伞吗？",
 ]
 
-CHATTER = [
-    "今天地铁人不算多，我刚好有座位。", "中午的青菜面有点淡。",
-    "快递已经放进柜子了。", "我把窗台擦干净了。",
-    "晚上如果不累就下楼走一会儿。", "刚才开会比预计早结束。",
-    "冰箱里还有两颗鸡蛋。", "今天的云看起来像一只猫。",
-    "洗衣机已经停了，回去记得晾衣服。", "楼下便利店换了新的招牌。",
-    "手机电量只剩三成了。", "我刚把周报发出去。",
-    "今天风有一点大。", "门口的花开了两朵。",
-    "晚饭先不用等我。", "我到家以后再给你发消息。",
-    "水杯忘在桌上了。", "上午的事情都处理完了。",
-    "外面开始下小雨。", "电梯今天稍微有点慢。",
-    "我把灯关好了。", "午休只睡了十分钟。",
-    "公交车刚刚到站。", "那首歌我晚点发给你。",
-    "今天办公室有点冷。", "纸巾快用完了。",
+CHATTER_TEMPLATES = [
+    "今天{weather}，出门记得带{item}。",
+    "中午吃了{meal}，感觉比上周那家{taste}。",
+    "刚把{task}处理完，准备起来走一走。",
+    "地铁现在{traffic}，我大概{clock}到家。",
+    "楼下那只小狗今天穿了{color}的小衣服。",
+    "冰箱里的{food}还剩一点，晚上可以顺手解决掉。",
+    "今天工作节奏{pace}，不过事情都做完了。",
+    "刚听到一首{music}，回头发给你。",
+    "快递放在{place}了，回家别忘了拿。",
+    "晚上如果不累，我们下楼走{minutes}分钟。",
+    "今天的云像{shape}，可惜没来得及拍清楚。",
+    "手机还剩{battery}的电，我先找地方充一下。",
 ]
+
+CHATTER_FOLLOWUPS = [
+    "我忙完再跟你说。", "不用特意等我。", "你有空的时候再回。", "我先去接杯水。",
+    "一会儿应该就好了。", "路上看到再告诉你。", "回家以后再处理。", "暂时没别的事。",
+    "我顺手记在备忘录里了。", "等电梯的时候突然想起来了。", "刚才差点忘了说。", "你先忙你的。",
+    "我晚一点再确认。", "现在这边还挺安静的。", "今天时间过得真快。", "先这样安排就好。",
+    "我刚刚才注意到。", "等会儿见面再聊。", "我先把手头的事情收尾。", "到时候再看情况。",
+]
+
+CHATTER_DETAILS = [
+    "刚才在楼下等了{number}分钟。", "今天已经喝了{number}口水。", "刚刚连续打了{number}个哈欠。",
+    "我看窗外停着{number}辆车。", "桌上还剩{number}张便签。", "电梯刚才停了{number}次。",
+    "路口的灯还要等{number}秒。", "包里好像还有{number}颗糖。",
+]
+
+
+def chatter(batch_index: int, line_index: int) -> str:
+    """生成可复现但不机械重复的自然闲聊，避免用重复话术虚增测试量。"""
+    rng = random.Random(SEED + batch_index * 1009 + line_index * 17)
+    values = {
+        "weather": rng.choice(["有点凉", "太阳很好", "下着小雨", "风有点大", "有些闷热", "空气很清爽"]),
+        "item": rng.choice(["伞", "薄外套", "水杯", "充电宝", "门禁卡", "耳机"]),
+        "meal": rng.choice(["鸡肉饭", "馄饨", "青菜面", "番茄炒蛋", "牛肉粉", "饭团"]),
+        "taste": rng.choice(["清淡", "更香", "更合口味", "稍微咸一点", "分量更足", "更新鲜"]),
+        "task": rng.choice(["周报", "报表", "会议记录", "房间收纳", "洗衣服", "账单核对"]),
+        "traffic": rng.choice(["不太挤", "有点慢", "刚好有座位", "临时限速", "人比平时少"]),
+        "clock": rng.choice(["六点四十", "七点一刻", "七点半", "八点左右", "八点二十"]),
+        "color": rng.choice(["黄色", "蓝色", "格子", "红色", "米白色"]),
+        "food": rng.choice(["牛奶", "生菜", "蘑菇", "鸡蛋", "草莓", "面包"]),
+        "pace": rng.choice(["有点赶", "很平稳", "前紧后松", "比昨天轻松", "忙得很充实"]),
+        "music": rng.choice(["钢琴曲", "老歌", "轻爵士", "民谣", "电影配乐"]),
+        "place": rng.choice(["门卫室", "快递柜", "前台", "门口架子", "便利店代收点"]),
+        "minutes": rng.choice(["十五", "二十", "二十五", "三十"]),
+        "shape": rng.choice(["一条鲸鱼", "棉花糖", "伸懒腰的猫", "一座小岛", "羽毛"]),
+        "battery": rng.choice(["两成", "三成", "一半", "六成"]),
+    }
+    main = CHATTER_TEMPLATES[(batch_index + line_index) % len(CHATTER_TEMPLATES)].format(**values)
+    detail = rng.choice(CHATTER_DETAILS).format(number=rng.randint(2, 29))
+    return f"{main}{rng.choice(CHATTER_FOLLOWUPS)}{detail}"
 
 
 def make_case(kind: str, index: int, date: datetime) -> dict:
@@ -183,7 +221,7 @@ def build_messages(cases_per_kind: int = DEFAULT_CASES_PER_KIND, noise_batch_cou
                     line = case["evidence"][evidence_positions.index(pos)]
                     evidence_ids.append(next_id)
                 else:
-                    line = CHATTER[(pos + index * 3 + kind_index * 5) % len(CHATTER)]
+                    line = chatter(kind_index * cases_per_kind + index, pos)
                 messages.append({
                     "id": next_id, "couple_id": 1, "sender_id": 1 + (pos % 2),
                     "content": line, "msg_type": "text", "read_status": True,
@@ -199,7 +237,7 @@ def build_messages(cases_per_kind: int = DEFAULT_CASES_PER_KIND, noise_batch_cou
         for pos in range(BATCH_SIZE):
             messages.append({
                 "id": next_id, "couple_id": 1, "sender_id": 1 + (pos % 2),
-                "content": CHATTER[(pos * 5 + batch * 7) % len(CHATTER)],
+                "content": chatter(len(cases) + batch, pos),
                 "msg_type": "text", "read_status": True,
                 "created_at": date + timedelta(minutes=pos * 2),
             })
@@ -235,6 +273,57 @@ def make_context(sources: list[dict]) -> str:
             + (f"；原始证据：{evidence}" if evidence else "")
         )
     return "\n".join(parts) or "没有找到相关共同记忆。"
+
+
+def rescore_existing_memories(db) -> dict:
+    """按当前门控清理历史误抽取，并移除同一证据的重复子事件。"""
+    removed_noise = 0
+    removed_duplicates = 0
+    for memory in db.query(SharedMemory).filter(SharedMemory.couple_id == 1).all():
+        source_ids = ids(memory.source_message_ids)
+        source_messages = db.query(Message).filter(Message.id.in_(source_ids)).all() if source_ids else []
+        event = {
+            "title": memory.title, "summary": memory.content, "category": memory.category,
+            "event_kind": memory.event_kind, "state": memory.memory_state,
+            "source_message_ids": list(source_ids),
+        }
+        payload = [{"id": item.id, "content": item.content} for item in source_messages]
+        if not ai_service._has_long_term_value(event, payload):
+            db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete()
+            db.delete(memory)
+            removed_noise += 1
+    db.flush()
+
+    memories = db.query(SharedMemory).filter(SharedMemory.couple_id == 1).all()
+    ordered = sorted(memories, key=lambda item: len(ids(item.source_message_ids)), reverse=True)
+    removed_ids = set()
+    for child in reversed(ordered):
+        if child.id in removed_ids:
+            continue
+        child_ids = ids(child.source_message_ids)
+        for parent in ordered:
+            if parent.id == child.id or parent.id in removed_ids:
+                continue
+            parent_ids = ids(parent.source_message_ids)
+            if len(parent_ids) < 2 or not child_ids or not child_ids.issubset(parent_ids):
+                continue
+            same_stateful_kind = (
+                child.event_kind == parent.event_kind
+                and child.event_kind in {"preference", "plan"}
+            )
+            agreement_fragment = (
+                child.event_kind == "fact"
+                and parent.event_kind in {"conflict", "reconciliation"}
+            )
+            if not (same_stateful_kind or agreement_fragment):
+                continue
+            db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == child.id).delete()
+            db.delete(child)
+            removed_ids.add(child.id)
+            removed_duplicates += 1
+            break
+    db.commit()
+    return {"removed_noise": removed_noise, "removed_duplicates": removed_duplicates}
 
 
 def judge_answer(question: str, context: str, answer: str, expected: str = "") -> dict:
@@ -353,7 +442,7 @@ def write_report(payload: dict):
 def run(
     resume: bool = False, rescore: bool = False, full: bool = False,
     cases_per_kind: int | None = None, noise_batch_count: int | None = None,
-    negative_count: int | None = None,
+    negative_count: int | None = None, target_messages: int | None = None,
 ):
     if not ai_service.available:
         raise RuntimeError("端到端真实性评测需要可用的 AI_API_KEY，当前只能使用离线规则模板")
@@ -362,6 +451,16 @@ def run(
     cases_per_kind = cases_per_kind or (FULL_CASES_PER_KIND if full else DEFAULT_CASES_PER_KIND)
     noise_batch_count = noise_batch_count or (FULL_NOISE_BATCHES if full else DEFAULT_NOISE_BATCHES)
     negative_count = negative_count or (FULL_NEGATIVE_QUESTIONS if full else DEFAULT_NEGATIVE_QUESTIONS)
+    if target_messages is not None:
+        if target_messages <= 0 or target_messages % BATCH_SIZE:
+            raise ValueError(f"--messages 必须是 {BATCH_SIZE} 的正整数倍")
+        event_batches = cases_per_kind * 4
+        target_batches = target_messages // BATCH_SIZE
+        if target_batches < event_batches:
+            raise ValueError(
+                f"{cases_per_kind} 组标准事件至少需要 {event_batches * BATCH_SIZE} 条聊天"
+            )
+        noise_batch_count = target_batches - event_batches
     messages, cases, noise_batches = build_messages(cases_per_kind, noise_batch_count)
     negative_questions = NO_ANSWER[:negative_count]
     if DB_PATH.exists() and not resume:
@@ -425,18 +524,8 @@ def run(
         sync_seconds = previous_sync_seconds or (time.perf_counter() - sync_started)
 
         if rescore:
-            for memory in db.query(SharedMemory).filter(SharedMemory.couple_id == 1).all():
-                source_ids = ids(memory.source_message_ids)
-                source_messages = db.query(Message).filter(Message.id.in_(source_ids)).all() if source_ids else []
-                event = {
-                    "title": memory.title, "summary": memory.content, "category": memory.category,
-                    "state": memory.memory_state, "source_message_ids": list(source_ids),
-                }
-                payload = [{"id": item.id, "content": item.content} for item in source_messages]
-                if not ai_service._has_long_term_value(event, payload):
-                    db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete()
-                    db.delete(memory)
-            db.commit()
+            cleanup = rescore_existing_memories(db)
+            print(f"重新门控：移除噪声 {cleanup['removed_noise']} 条，合并重复 {cleanup['removed_duplicates']} 条", flush=True)
 
         extracted = db.query(SharedMemory).filter(SharedMemory.couple_id == 1).all()
         all_evidence_ids = {item for case in cases for item in case["evidence_ids"]}
@@ -585,6 +674,13 @@ if __name__ == "__main__":
     parser.add_argument("--rescore", action="store_true", help="按当前门控清理现有候选并重新执行问答")
     parser.add_argument("--full", action="store_true", help="运行原始全量数据；默认使用一半数据以节省模型额度")
     parser.add_argument("--smoke", action="store_true", help="运行约600条聊天的低额度最终复测")
+    parser.add_argument("--messages", type=int, help="指定聊天总数，必须是每批聊天数的整数倍")
     options = parser.parse_args()
     smoke = {"cases_per_kind": 4, "noise_batch_count": 4, "negative_count": 6} if options.smoke else {}
-    run(resume=options.resume or options.rescore, rescore=options.rescore, full=options.full, **smoke)
+    run(
+        resume=options.resume or options.rescore,
+        rescore=options.rescore,
+        full=options.full,
+        target_messages=options.messages,
+        **smoke,
+    )

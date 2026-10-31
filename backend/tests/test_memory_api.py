@@ -286,6 +286,8 @@ class MemoryAPITest(unittest.TestCase):
         messages = [
             {"id": 1, "content": "快递已经放进柜子了。"},
             {"id": 2, "content": "2028年5月2日我们去了泉州旅行。"},
+            {"id": 3, "content": "中午吃了鸡肉饭，感觉比上周那家更合口味。"},
+            {"id": 4, "content": "请记住我现在明确选择无糖燕麦拿铁。"},
         ]
         routine = {
             "title": "快递投柜", "summary": "快递已经放进柜子。", "category": "fact",
@@ -295,8 +297,58 @@ class MemoryAPITest(unittest.TestCase):
             "title": "泉州旅行", "summary": "两人去了泉州旅行。", "category": "event",
             "source_message_ids": [2],
         }
+        transient_meal = {
+            "title": "鸡肉饭午餐偏好", "summary": "觉得今天的鸡肉饭更合口味。",
+            "category": "preference", "source_message_ids": [3],
+        }
+        explicit_preference = {
+            "title": "咖啡偏好", "summary": "现在明确选择无糖燕麦拿铁。",
+            "category": "preference", "source_message_ids": [4],
+        }
         self.assertFalse(ai_service._has_long_term_value(routine, messages))
         self.assertTrue(ai_service._has_long_term_value(trip, messages))
+        self.assertFalse(ai_service._has_long_term_value(transient_meal, messages))
+        self.assertTrue(ai_service._has_long_term_value(explicit_preference, messages))
+
+    def test_04bbda_overlapping_preference_and_resolution_fragments_consolidate(self):
+        preference = {
+            "category": "preference", "event_kind": "preference",
+            "event_key": "preference:电影类型", "source_message_ids": [1, 2, 3],
+            "entities": [], "facts": [
+                {"type": "preference_topic", "value": "电影类型", "source_message_ids": [1]},
+                {"type": "current_preference", "value": "纪录片", "source_message_ids": [3]},
+            ],
+        }
+        duplicate_preference = {
+            "category": "preference", "event_kind": "preference",
+            "event_key": "preference:观影类型", "source_message_ids": [3],
+            "entities": ["纪录片"], "facts": [
+                {"type": "current_preference", "value": "纪录片", "source_message_ids": [3]},
+            ],
+        }
+        conflict = {
+            "category": "event", "event_kind": "conflict",
+            "event_key": "conflict:买东西没商量", "source_message_ids": [10, 11, 12],
+            "entities": [], "facts": [
+                {"type": "conflict_reason", "value": "买东西没商量", "source_message_ids": [10]},
+            ],
+        }
+        duplicate_agreement = {
+            "category": "fact", "event_kind": "fact",
+            "event_key": "fact:共同用品先商量", "source_message_ids": [12],
+            "entities": [], "facts": [
+                {"type": "agreement", "value": "共同用品先商量", "source_message_ids": [12]},
+            ],
+        }
+        consolidated = ai_service._consolidate_overlapping_events([
+            preference, duplicate_preference, conflict, duplicate_agreement,
+        ])
+        self.assertEqual(len(consolidated), 2)
+        self.assertEqual(
+            {fact["type"] for fact in consolidated[0]["facts"]},
+            {"preference_topic", "current_preference"},
+        )
+        self.assertIn("agreement", {fact["type"] for fact in consolidated[1]["facts"]})
 
     def test_04bbe_fragments_aggregate_before_one_memory_is_materialized(self):
         db = self.Session()

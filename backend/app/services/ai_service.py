@@ -537,6 +537,7 @@ class AIService:
             # 那会把不同日期、不同主题的事件静默合并。离线模式仍保留保守规则兜底。
             events = self._attach_uncovered_context_facts(events, messages)
             events = self._verify_fact_completeness(events, messages)
+            events = self._consolidate_overlapping_events(events)
             return self._split_incoherent_events(events, messages)
         except Exception:
             logger.exception("Memory event extraction failed; keeping the sync cursor for retry")
@@ -551,6 +552,63 @@ class AIService:
             "我晚点再回复你", "晚一点再回复你",
         )
         return any(pattern in normalized for pattern in routine_patterns)
+
+    @staticmethod
+    def _consolidate_overlapping_events(events: List[Dict]) -> List[Dict]:
+        """合并模型在同一证据上重复生成的主事件和单句子事件。"""
+        ordered = sorted(
+            enumerate(events),
+            key=lambda row: (-len(set(row[1].get("source_message_ids", []))), row[0]),
+        )
+        kept: List[tuple[int, Dict]] = []
+        for original_index, event in ordered:
+            source_ids = set(event.get("source_message_ids", []))
+            kind = str(event.get("event_kind") or event.get("category") or "event").lower()
+            parent = None
+            for _, existing in kept:
+                existing_ids = set(existing.get("source_message_ids", []))
+                existing_kind = str(
+                    existing.get("event_kind") or existing.get("category") or "event"
+                ).lower()
+                if not source_ids or not source_ids.issubset(existing_ids) or len(existing_ids) < 2:
+                    continue
+                same_stateful_kind = kind == existing_kind and kind in {"preference", "plan"}
+                agreement_fragment = (
+                    kind == "fact"
+                    and existing_kind in {"conflict", "reconciliation"}
+                    and all(
+                        str(fact.get("type") or "")
+                        in {"agreement", "resolution", "conflict_reason"}
+                        for fact in event.get("facts", [])
+                    )
+                )
+                if same_stateful_kind or agreement_fragment:
+                    parent = existing
+                    break
+            if parent is None:
+                kept.append((original_index, dict(event)))
+                continue
+            parent["entities"] = list(dict.fromkeys(
+                list(parent.get("entities", [])) + list(event.get("entities", []))
+            ))[:12]
+            existing_facts = {
+                (
+                    str(fact.get("type") or "fact").lower(),
+                    fact.get("subject_user_id"),
+                    re.sub(r"\s+", "", str(fact.get("value") or "")).lower(),
+                )
+                for fact in parent.get("facts", [])
+            }
+            for fact in event.get("facts", []):
+                key = (
+                    str(fact.get("type") or "fact").lower(),
+                    fact.get("subject_user_id"),
+                    re.sub(r"\s+", "", str(fact.get("value") or "")).lower(),
+                )
+                if key[2] and key not in existing_facts:
+                    parent.setdefault("facts", []).append(fact)
+                    existing_facts.add(key)
+        return [event for _, event in sorted(kept, key=lambda row: row[0])]
 
     @staticmethod
     def _canonical_fact_type(event_kind: str, value: str, suggested: str = "fact") -> str:
@@ -879,8 +937,9 @@ class AIService:
         category = event.get("category")
         signals = {
             "preference": (
-                "喜欢", "不喜欢", "偏好", "口味", "最爱", "讨厌", "不能吃", "过敏",
-                "以后不要", "现在选择", "明确选择", "不再选",
+                "我喜欢", "我不喜欢", "偏好", "最爱", "讨厌", "不能吃", "过敏",
+                "以后不要", "现在选择", "明确选择", "不再选", "请记住", "口味变了",
+                "想法变了", "以后就", "作废",
             ),
             "plan": (
                 "计划", "约好", "约定", "下个月", "下周", "明年", "订票", "预订",
