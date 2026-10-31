@@ -100,7 +100,7 @@
             :before-upload="handleCover"
             accept="image/*"
           >
-            <img v-if="form.cover" :src="assetUrl(form.cover)" class="cover-preview" />
+            <img v-if="coverPreview || form.cover" :src="coverPreview || assetUrl(form.cover)" class="cover-preview" />
             <el-button v-else size="small">点击上传封面</el-button>
           </el-upload>
         </el-form-item>
@@ -152,6 +152,7 @@ const showDialog = ref(false)
 const editId = ref(null)
 const saving = ref(false)
 const partner = ref(null)
+const coverPreview = ref('')
 
 const categories = [
   { value: '', label: '全部' },
@@ -216,18 +217,20 @@ const openCreate = () => {
     title: '', cover: '', category: 'dinner', difficulty: 'easy',
     cook_time: 30, chef_id: store.user?.id, ingredients: [], steps: [], want_eat: false,
   }
+  coverPreview.value = ''
   showDialog.value = true
 }
 
 const openEdit = (r) => {
   editId.value = r.id
   form.value = {
-    title: r.title, cover: r.cover, category: r.category, difficulty: r.difficulty,
+    title: r.title, cover: r.cover_ref || r.cover, category: r.category, difficulty: r.difficulty,
     cook_time: r.cook_time, chef_id: r.chef_id || store.user?.id,
     ingredients: r.ingredients?.length ? r.ingredients : [],
     steps: r.steps?.length ? r.steps : [],
     want_eat: r.want_eat,
   }
+  coverPreview.value = r.cover
   showDialog.value = true
 }
 
@@ -239,7 +242,8 @@ const handleCover = async (file) => {
   try {
     const processed = await preprocessImage(file)
     const res = await recipeApi.uploadCover(processed)
-    form.value.cover = res.url
+    form.value.cover = res.storage_ref || res.url
+    coverPreview.value = res.url
   } catch (e) {
     ElMessage.error(e?.response?.data?.detail || '上传失败')
   }

@@ -32,6 +32,7 @@ env/
 backend/data/*.db
 backend/data/uploads/
 backend/data/private_evals/
+aistor/minio.license
 
 # ============ 工具 / 密钥 / 敏感文件 ============
 .tools/

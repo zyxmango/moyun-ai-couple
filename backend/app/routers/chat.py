@@ -12,8 +12,8 @@ from ..models import User, Couple, Message
 from ..schemas import MessageOut, ApiResponse
 from ..deps import get_current_user, get_active_couple, get_partner
 from ..utils import decode_access_token
-from ..config import settings
 from ..services.memory_jobs import enqueue_memory_sync
+from ..services.object_storage import object_storage
 
 router = APIRouter(prefix="/api/chat", tags=["聊天"])
 
@@ -62,7 +62,7 @@ def _msg_out(msg: Message, sender: User) -> dict:
     return {
         "id": msg.id, "couple_id": msg.couple_id, "sender_id": msg.sender_id,
         "sender_nickname": sender.nickname or f"用户{sender.phone[-4:]}",
-        "content": msg.content, "msg_type": msg.msg_type,
+        "content": object_storage.url(msg.content) if msg.msg_type == "image" else msg.content,
         "read_status": msg.read_status, "created_at": _message_timestamp(msg.created_at),
     }
 
@@ -249,16 +249,19 @@ async def upload_chat_image(
     db: Session = Depends(get_db),
 ):
     """上传图片，返回 URL，前端再通过 WebSocket 发送 image 类型消息"""
-    import uuid
     ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "png"
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = settings.PHOTOS_DIR / filename
+    if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
+        raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
     content = await file.read()
-    filepath.write_bytes(content)
+    if len(content) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="图片不能超过 50MB")
+    stored_path = object_storage.put(
+        f"couples/{couple.id}/chat", content, file.filename, file.content_type
+    )
 
     msg = Message(
         couple_id=couple.id, sender_id=user.id,
-        content=f"/uploads/photos/{filename}", msg_type="image", read_status=False,
+        content=stored_path, msg_type="image", read_status=False,
     )
     db.add(msg)
     db.commit()
@@ -270,12 +273,12 @@ async def upload_chat_image(
         "type": "message",
         "id": msg.id, "couple_id": msg.couple_id, "sender_id": msg.sender_id,
         "sender_nickname": user.nickname,
-        "content": msg.content, "msg_type": "image",
+        "content": object_storage.url(msg.content), "msg_type": "image",
         "read_status": msg.read_status, "created_at": _message_timestamp(msg.created_at),
     }
     await manager.send_to_couple(couple.id, msg_data)
 
-    return {"url": f"/uploads/photos/{filename}", "message": msg_data}
+    return {"url": object_storage.url(stored_path), "message": msg_data}
 
 
 @router.get("/unread-count")

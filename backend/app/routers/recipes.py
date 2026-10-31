@@ -13,7 +13,7 @@ from ..schemas import (
     RecipeCommentCreate, RecipeCommentOut, ApiResponse,
 )
 from ..deps import get_current_user, get_active_couple
-from ..config import settings
+from ..services.object_storage import object_storage
 
 router = APIRouter(prefix="/api/recipes", tags=["情侣菜谱"])
 
@@ -39,7 +39,8 @@ def _recipe_out(r: Recipe, user_id: int, db: Session) -> dict:
         "chef_id": r.chef_id,
         "chef_nickname": chef.nickname if chef else "",
         "title": r.title,
-        "cover": r.cover or "",
+        "cover": object_storage.url(r.cover),
+        "cover_ref": r.cover or "",
         "category": r.category,
         "difficulty": r.difficulty,
         "cook_time": r.cook_time,
@@ -154,7 +155,10 @@ def update_recipe(
     if req.title is not None:
         r.title = req.title
     if req.cover is not None:
+        old_cover = r.cover
         r.cover = req.cover
+    else:
+        old_cover = None
     if req.category is not None:
         r.category = req.category
     if req.difficulty is not None:
@@ -172,6 +176,11 @@ def update_recipe(
 
     db.commit()
     db.refresh(r)
+    if old_cover and old_cover != r.cover:
+        try:
+            object_storage.delete(old_cover)
+        except Exception:
+            pass
     return _recipe_out(r, user.id, db)
 
 
@@ -186,8 +195,13 @@ def delete_recipe(
     r = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.couple_id == couple.id).first()
     if not r:
         raise HTTPException(status_code=404, detail="菜谱不存在")
+    cover = r.cover
     db.delete(r)
     db.commit()
+    try:
+        object_storage.delete(cover)
+    except Exception:
+        pass
     return ApiResponse(message="已删除")
 
 
@@ -331,14 +345,13 @@ async def upload_cover(
     couple: Couple = Depends(get_active_couple),
 ):
     """上传菜谱封面图"""
-    import uuid
     ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = settings.PHOTOS_DIR / filename
     content = await file.read()
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="图片不能超过 50MB")
-    filepath.write_bytes(content)
-    return {"url": f"/uploads/photos/{filename}"}
+    stored_path = object_storage.put(
+        f"couples/{couple.id}/recipes", content, file.filename, file.content_type
+    )
+    return {"url": object_storage.url(stored_path), "storage_ref": stored_path}

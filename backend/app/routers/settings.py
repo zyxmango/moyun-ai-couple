@@ -8,7 +8,7 @@ from ..database import get_db
 from ..models import User, Couple, Anniversary, Reminder
 from ..schemas import ApiResponse
 from ..deps import get_current_user, get_active_couple
-from ..config import settings
+from ..services.object_storage import object_storage
 
 router = APIRouter(prefix="/api", tags=["设置与提醒"])
 
@@ -85,10 +85,10 @@ def couple_info(
         "status": couple.status,
         "created_at": couple.created_at.isoformat(),
         "relationship_start_date": couple.relationship_start_date.isoformat() if couple.relationship_start_date else None,
-        "hero_bg": couple.hero_bg or "",
-        "chat_bg": couple.chat_bg or "",
-        "user1": {"id": u1.id, "nickname": u1.nickname, "avatar": u1.avatar} if u1 else None,
-        "user2": {"id": u2.id, "nickname": u2.nickname, "avatar": u2.avatar} if u2 else None,
+        "hero_bg": object_storage.url(couple.hero_bg),
+        "chat_bg": couple.chat_bg if (couple.chat_bg or "").startswith("preset:") else object_storage.url(couple.chat_bg),
+        "user1": {"id": u1.id, "nickname": u1.nickname, "avatar": object_storage.url(u1.avatar)} if u1 else None,
+        "user2": {"id": u2.id, "nickname": u2.nickname, "avatar": object_storage.url(u2.avatar)} if u2 else None,
         "is_user1": couple.user1_id == user.id,
     }
 
@@ -118,20 +118,22 @@ async def upload_hero_bg(
     db: Session = Depends(get_db),
 ):
     """上传首页 Hero 自定义背景图"""
-    import uuid
     ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = settings.PHOTOS_DIR / filename
     content = await file.read()
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="图片不能超过 50MB")
-    filepath.write_bytes(content)
-
-    couple.hero_bg = f"/uploads/photos/{filename}"
+    old_background = couple.hero_bg
+    couple.hero_bg = object_storage.put(
+        f"couples/{couple.id}/backgrounds", content, file.filename, file.content_type
+    )
     db.commit()
-    return {"url": couple.hero_bg, "message": "背景已更新"}
+    try:
+        object_storage.delete(old_background)
+    except Exception:
+        pass
+    return {"url": object_storage.url(couple.hero_bg), "message": "背景已更新"}
 
 
 @router.delete("/couple/hero-bg", response_model=ApiResponse)
@@ -141,8 +143,13 @@ def reset_hero_bg(
     db: Session = Depends(get_db),
 ):
     """重置首页 Hero 背景（恢复默认渐变）"""
+    old_background = couple.hero_bg
     couple.hero_bg = ""
     db.commit()
+    try:
+        object_storage.delete(old_background)
+    except Exception:
+        pass
     return ApiResponse(message="已恢复默认背景")
 
 
@@ -168,8 +175,14 @@ def set_chat_bg_preset(
     """设置聊天背景为内置预设"""
     if key not in CHAT_BG_PRESETS:
         raise HTTPException(status_code=400, detail="无效的预设")
+    old_background = couple.chat_bg
     couple.chat_bg = f"preset:{key}"
     db.commit()
+    if old_background and not old_background.startswith("preset:"):
+        try:
+            object_storage.delete(old_background)
+        except Exception:
+            pass
     return ApiResponse(message="聊天背景已更新")
 
 
@@ -181,19 +194,23 @@ async def upload_chat_bg(
     db: Session = Depends(get_db),
 ):
     """上传自定义聊天背景图"""
-    import uuid
     ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = settings.PHOTOS_DIR / filename
     content = await file.read()
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="图片不能超过 50MB")
-    filepath.write_bytes(content)
-    couple.chat_bg = f"/uploads/photos/{filename}"
+    old_background = couple.chat_bg
+    couple.chat_bg = object_storage.put(
+        f"couples/{couple.id}/backgrounds", content, file.filename, file.content_type
+    )
     db.commit()
-    return {"url": couple.chat_bg, "message": "聊天背景已更新"}
+    if old_background and not old_background.startswith("preset:"):
+        try:
+            object_storage.delete(old_background)
+        except Exception:
+            pass
+    return {"url": object_storage.url(couple.chat_bg), "message": "聊天背景已更新"}
 
 
 @router.delete("/couple/chat-bg", response_model=ApiResponse)
@@ -203,6 +220,12 @@ def reset_chat_bg(
     db: Session = Depends(get_db),
 ):
     """恢复默认聊天背景"""
+    old_background = couple.chat_bg
     couple.chat_bg = ""
     db.commit()
+    if old_background and not old_background.startswith("preset:"):
+        try:
+            object_storage.delete(old_background)
+        except Exception:
+            pass
     return ApiResponse(message="已恢复默认背景")

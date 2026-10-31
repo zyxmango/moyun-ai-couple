@@ -16,6 +16,7 @@ from ..utils import hash_password, verify_password, create_access_token
 from ..deps import get_current_user
 from ..config import settings
 from ..services.email_service import send_verification_email
+from ..services.object_storage import object_storage
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
 
@@ -27,7 +28,7 @@ def _email_matches(column, email):
 def _user_out(user: User) -> dict:
     return {
         "id": user.id, "email": user.email.strip().lower(), "nickname": user.nickname or "",
-        "avatar": user.avatar or "", "couple_id": user.couple_id,
+        "avatar": object_storage.url(user.avatar), "couple_id": user.couple_id,
         "is_admin": user.is_admin, "notify_enabled": user.notify_enabled,
         "created_at": user.created_at,
     }
@@ -173,19 +174,22 @@ async def upload_avatar(
     db: Session = Depends(get_db),
 ):
     """上传头像"""
-    import uuid
     ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = settings.AVATARS_DIR / filename
     content = await file.read()
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="图片不能超过 50MB")
-    filepath.write_bytes(content)
-    user.avatar = f"/uploads/avatars/{filename}"
+    old_avatar = user.avatar
+    user.avatar = object_storage.put(
+        f"avatars/{user.id}", content, file.filename, file.content_type
+    )
     db.commit()
-    return {"url": user.avatar, "message": "头像已更新"}
+    try:
+        object_storage.delete(old_avatar)
+    except Exception:
+        pass
+    return {"url": object_storage.url(user.avatar), "message": "头像已更新"}
 
 
 @router.post("/couple/generate")

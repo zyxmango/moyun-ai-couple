@@ -30,6 +30,16 @@ class Settings:
     MEMORY_JOB_LEASE_SECONDS: int = int(os.getenv("MEMORY_JOB_LEASE_SECONDS", "600"))
     ADMIN_PHONE: str = os.getenv("ADMIN_PHONE", "13800000000")
 
+    # 对象存储：默认继续兼容本地 uploads；配置为 s3 后可连接 AIStor、S3、OSS、COS 等。
+    STORAGE_BACKEND: str = os.getenv("STORAGE_BACKEND", "local").strip().lower()
+    S3_ENDPOINT_URL: str = os.getenv("S3_ENDPOINT_URL", "").strip()
+    S3_PUBLIC_ENDPOINT_URL: str = os.getenv("S3_PUBLIC_ENDPOINT_URL", "").strip()
+    S3_ACCESS_KEY: str = os.getenv("S3_ACCESS_KEY", "").strip()
+    S3_SECRET_KEY: str = os.getenv("S3_SECRET_KEY", "").strip()
+    S3_BUCKET: str = os.getenv("S3_BUCKET", "couple-private").strip()
+    S3_REGION: str = os.getenv("S3_REGION", "us-east-1").strip()
+    S3_PRESIGN_TTL_SECONDS: int = int(os.getenv("S3_PRESIGN_TTL_SECONDS", "3600"))
+
     # 邮件 SMTP（QQ邮箱）
     SMTP_EMAIL: str = os.getenv("SMTP_EMAIL", "")
     SMTP_AUTH_CODE: str = os.getenv("SMTP_AUTH_CODE", "")
