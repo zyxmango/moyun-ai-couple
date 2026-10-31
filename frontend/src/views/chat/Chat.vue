@@ -20,7 +20,13 @@
           @change="jumpToDate"
           @panel-change="handleCalendarPanelChange"
           @visible-change="handleCalendarVisibleChange"
-        />
+        >
+          <template #default="cell">
+            <span :class="{ 'calendar-day-hidden': isOutsideChatRange(cell.dayjs || cell.date) }">
+              {{ cell.text }}
+            </span>
+          </template>
+        </el-date-picker>
         <button class="calendar-button" title="按日期查找聊天" @click="openDatePicker">
           <el-icon><Calendar /></el-icon>
         </button>
@@ -256,12 +262,17 @@ const disableUnavailableDate = date => {
   if (lastChatDate.value && key > lastChatDate.value) return true
   return calendarLoaded.value && !chatDates.value.has(key)
 }
-const calendarCellClass = date => {
+const isOutsideChatRange = rawDate => {
+  const date = rawDate instanceof Date ? rawDate : rawDate?.toDate?.()
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false
   const key = calendarKey(date)
-  return (firstChatDate.value && key < firstChatDate.value)
+  return Boolean(
+    (firstChatDate.value && key < firstChatDate.value)
     || (lastChatDate.value && key > lastChatDate.value)
-    ? 'outside-chat-range'
-  : ''
+  )
+}
+const calendarCellClass = date => {
+  return isOutsideChatRange(date) ? 'outside-chat-range' : ''
 }
 const handleCalendarPanelChange = date => {
   const panelDate = Array.isArray(date) ? date[0] : date
@@ -403,5 +414,6 @@ onUnmounted(() => {
 .chat-input{position:relative;min-height:58px;padding:8px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(60,50,45,.09);background:#fffdf9}.input-tool{width:35px;height:35px;display:grid;place-items:center;border:0;border-radius:10px;color:#6f6761;background:#f1ede8;font-size:18px;cursor:pointer}.input-tool:hover,.input-tool.active{color:#ad5e5c;background:#f7e5e2}.emoji-wrap{position:relative;flex:0 0 auto}.emoji-trigger{font-family:Arial,sans-serif;font-size:21px;line-height:1}.emoji-panel{position:absolute;left:-44px;bottom:47px;z-index:10;width:300px;padding:10px;border:1px solid rgba(80,65,55,.1);border-radius:15px;background:#fffdf9;box-shadow:0 12px 35px rgba(60,45,40,.18)}.emoji-panel::after{content:'';position:absolute;left:56px;bottom:-6px;width:12px;height:12px;transform:rotate(45deg);border-right:1px solid rgba(80,65,55,.08);border-bottom:1px solid rgba(80,65,55,.08);background:#fffdf9}.emoji-panel-head{height:28px;padding:0 3px 6px;display:flex;align-items:center;justify-content:space-between;color:#5e5650;font-size:13px}.emoji-panel-head button{border:0;color:#9b9189;background:none;font-size:18px;cursor:pointer}.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;min-height:117px}.emoji-grid button{width:32px;height:36px;border:0;border-radius:8px;background:transparent;font-size:22px;cursor:pointer;transition:transform .12s,background .12s}.emoji-grid button:hover{transform:scale(1.14);background:#f6ebe8}.emoji-tabs{margin-top:8px;padding-top:8px;display:flex;gap:5px;border-top:1px solid #eee7e1}.emoji-tabs button{padding:5px 10px;border:0;border-radius:8px;color:#8a817a;background:transparent;font-size:11px;cursor:pointer}.emoji-tabs button.active{color:#ad5e5c;background:#f7e5e2}.input{flex:1}.input :deep(.el-input__wrapper){border-radius:12px;background:#f5f2ee;box-shadow:none}.chat-input :deep(.el-button--primary){border-color:#bd6c68;border-radius:11px;background:#bd6c68}
 @media(max-width:480px){.chat-header{height:58px}.chat-messages{padding-left:11px;padding-right:11px}.message-content{max-width:75%}.msg-img{max-width:min(190px, 100%)}.chat-input{gap:5px;padding-left:8px;padding-right:8px}.emoji-panel{left:-41px;width:min(300px,calc(100vw - 24px))}.emoji-grid{grid-template-columns:repeat(8,1fr)}.emoji-grid button{width:auto}}
 :global(.chat-date-picker .el-date-table td.disabled .el-date-table-cell__text){color:#c8c2bd!important;background:transparent!important}
+:global(.chat-date-picker .calendar-day-hidden){visibility:hidden!important}
 :global(.chat-date-picker .el-date-table td.outside-chat-range .el-date-table-cell__text){visibility:hidden!important}
 </style>

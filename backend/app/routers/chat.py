@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, Query
-from sqlalchemy import func
+from sqlalchemy import Date, cast, func, text
 from sqlalchemy.orm import Session
 
 from ..database import get_db, SessionLocal
@@ -169,7 +169,17 @@ def chat_calendar(
     db: Session = Depends(get_db),
 ):
     """返回有聊天记录的本地日期；结果大小只与聊天天数有关。"""
-    local_date = func.date(Message.created_at, f"{timezone_offset:+d} minutes")
+    if db.get_bind().dialect.name == "postgresql":
+        # PostgreSQL does not support SQLite's date(timestamp, modifier) form.
+        # The offset is range-validated by FastAPI and converted to int before
+        # being embedded in the interval expression.
+        offset_minutes = int(timezone_offset)
+        local_date = cast(
+            Message.created_at + text(f"INTERVAL '{offset_minutes} minutes'"),
+            Date,
+        )
+    else:
+        local_date = func.date(Message.created_at, f"{timezone_offset:+d} minutes")
     rows = db.query(local_date.label("chat_date"), func.count(Message.id)).filter(
         Message.couple_id == couple.id,
     ).group_by(local_date).order_by(local_date.asc()).all()
