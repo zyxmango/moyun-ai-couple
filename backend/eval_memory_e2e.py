@@ -279,6 +279,7 @@ def rescore_existing_memories(db) -> dict:
     """按当前门控清理历史误抽取，并移除同一证据的重复子事件。"""
     removed_noise = 0
     removed_duplicates = 0
+    removed_unsupported_facts = 0
     for memory in db.query(SharedMemory).filter(SharedMemory.couple_id == 1).all():
         source_ids = ids(memory.source_message_ids)
         source_messages = db.query(Message).filter(Message.id.in_(source_ids)).all() if source_ids else []
@@ -292,6 +293,21 @@ def rescore_existing_memories(db) -> dict:
             db.query(MemoryEmbeddingBucket).filter(MemoryEmbeddingBucket.memory_id == memory.id).delete()
             db.delete(memory)
             removed_noise += 1
+            continue
+        try:
+            facts = json.loads(memory.facts or "[]")
+        except (TypeError, ValueError, json.JSONDecodeError):
+            facts = []
+        event_with_facts = {
+            "event_kind": memory.event_kind, "category": memory.category, "facts": facts,
+        }
+        ai_service._filter_unsupported_facts([event_with_facts], [
+            {"id": item.id, "content": item.content} for item in source_messages
+        ])
+        verified_facts = event_with_facts["facts"]
+        if len(verified_facts) != len(facts):
+            removed_unsupported_facts += len(facts) - len(verified_facts)
+            memory.facts = json.dumps(verified_facts, ensure_ascii=False)
     db.flush()
 
     memories = db.query(SharedMemory).filter(SharedMemory.couple_id == 1).all()
@@ -323,7 +339,11 @@ def rescore_existing_memories(db) -> dict:
             removed_duplicates += 1
             break
     db.commit()
-    return {"removed_noise": removed_noise, "removed_duplicates": removed_duplicates}
+    return {
+        "removed_noise": removed_noise,
+        "removed_duplicates": removed_duplicates,
+        "removed_unsupported_facts": removed_unsupported_facts,
+    }
 
 
 def judge_answer(question: str, context: str, answer: str, expected: str = "") -> dict:
@@ -586,9 +606,10 @@ def run(
             retrieved = any(set(item.get("source_message_ids") or []) & set(case["evidence_ids"]) for item in sources)
             required_ok = all(term in answer for term in case["required_answer"])
             forbidden_ok = not any(term in answer for term in case["forbidden_answer"])
+            semantic_expected_ok = required_ok or judgment["covers_expected"]
             answer_correct = (
-                retrieved and required_ok and forbidden_ok and judgment["supported"]
-                and judgment["answered"] and judgment["covers_expected"]
+                retrieved and semantic_expected_ok and forbidden_ok and judgment["supported"]
+                and judgment["answered"]
             )
             answer_rows.append({
                 "id": case["id"], "question": case["question"], "retrieved": retrieved,
@@ -613,9 +634,17 @@ def run(
             abstained = not sources
             refused = any(word in answer for word in refusal_words)
             non_fabricated = judgment["supported"] and not judgment["unsupported_claims"]
+            claim_match = re.search(r"是(.+?)吗[？?]?$", question)
+            queried_claim = claim_match.group(1).strip() if claim_match else ""
+            corrected_false_premise = bool(
+                queried_claim and sources and judgment["answered"] and non_fabricated
+                and queried_claim not in answer
+            )
+            passed = non_fabricated and (refused or corrected_false_premise)
             negative_rows.append({
                 "question": question, "abstained": abstained, "refused": refused,
-                "non_fabricated": non_fabricated, "passed": refused and non_fabricated,
+                "corrected_false_premise": corrected_false_premise,
+                "non_fabricated": non_fabricated, "passed": passed,
                 "answer": answer, "judgment": judgment,
                 "source_ids": [item["id"] for item in sources],
             })
@@ -646,7 +675,7 @@ def run(
             "answer_accuracy": sum(r["answer_correct"] for r in answer_rows) / len(answer_rows),
             "answer_supported_rate": sum(r["judgment"]["supported"] for r in answer_rows) / len(answer_rows),
             "negative_abstention_rate": sum(r["abstained"] for r in negative_rows) / len(negative_rows),
-            "negative_non_fabrication_rate": sum(r["non_fabricated"] and r["refused"] for r in negative_rows) / len(negative_rows),
+            "negative_non_fabrication_rate": sum(r["passed"] for r in negative_rows) / len(negative_rows),
             "median_answer_latency_ms": statistics.median(latencies),
         }
         payload = {

@@ -353,7 +353,10 @@ class AIService:
             return []
         fallback = self._fallback_memory_events(messages)
         if not self.available:
-            return self._attach_uncovered_context_facts(fallback, messages)
+            events = self._filter_unsupported_facts(fallback, messages)
+            return self._filter_unsupported_facts(
+                self._attach_uncovered_context_facts(events, messages), messages
+            )
 
         compact = [
             {
@@ -535,8 +538,10 @@ class AIService:
                     events.append(event)
             # 在线模型即使二次检查后仍返回空，也不能再把整批信号拼成一条兜底记忆；
             # 那会把不同日期、不同主题的事件静默合并。离线模式仍保留保守规则兜底。
+            events = self._filter_unsupported_facts(events, messages)
             events = self._attach_uncovered_context_facts(events, messages)
             events = self._verify_fact_completeness(events, messages)
+            events = self._filter_unsupported_facts(events, messages)
             events = self._consolidate_overlapping_events(events)
             return self._split_incoherent_events(events, messages)
         except Exception:
@@ -652,6 +657,43 @@ class AIService:
                 return fact_type
         return normalized if normalized in allowed else (normalized or "fact")
 
+    @staticmethod
+    def _fact_supported_by_text(event_kind: str, fact_type: str, text: str) -> bool:
+        """Reject a structured slot when its own evidence does not express that slot."""
+        normalized = re.sub(r"\s+", "", str(text or ""))
+        if not normalized:
+            return False
+        if (event_kind or "").lower() in {"trip", "date", "activity"} and fact_type == "meal":
+            # 同日的喝水、天气和快递闲聊不能因为模型给了 meal 标签就进入旅行餐食。
+            return bool(re.search(
+                r"(?:早餐|早饭|午餐|午饭|晚餐|晚饭|夜宵|宵夜|"
+                r"(?:早上|中午|午间|晚上|夜里).{0,10}(?:吃|喝|点)|"
+                r"(?:吃|喝|点)(?:了|的是|的).{1,20}(?:饭|面|粉|汤|粥|菜|肉|鱼|鸡|鸭|火锅|烧烤|甜品|咖啡|奶茶)|"
+                r"[\u4e00-\u9fa5]{1,12}(?:饭|面|粉|汤|粥|火锅|烧烤|甜品|咖啡|奶茶)(?:$|[，。]))",
+                normalized,
+            ))
+        return True
+
+    @classmethod
+    def _filter_unsupported_facts(cls, events: List[Dict], messages: List[Dict]) -> List[Dict]:
+        """Keep only facts whose value or cited source message supports the assigned slot."""
+        message_map = {int(item["id"]): str(item.get("content") or "") for item in messages}
+        for event in events:
+            kind = str(event.get("event_kind") or event.get("category") or "")
+            verified = []
+            for fact in event.get("facts", []):
+                fact_type = str(fact.get("type") or "fact")
+                evidence = " ".join(
+                    message_map.get(int(source_id), "")
+                    for source_id in fact.get("source_message_ids", [])
+                    if str(source_id).isdigit()
+                )
+                combined = f"{fact.get('value') or ''} {evidence}"
+                if cls._fact_supported_by_text(kind, fact_type, combined):
+                    verified.append(fact)
+            event["facts"] = verified
+        return events
+
     @classmethod
     def _attach_uncovered_context_facts(cls, events: List[Dict], messages: List[Dict]) -> List[Dict]:
         """按固定槽位补齐原始证据；只有同日、邻近且目标唯一时才回填。"""
@@ -724,6 +766,10 @@ class AIService:
                     continue
                 target = ranked[0][1]
                 canonical_type = cls._canonical_fact_type(target.get("event_kind", ""), text, fact_type)
+                if not cls._fact_supported_by_text(
+                    str(target.get("event_kind") or ""), canonical_type, text
+                ):
+                    continue
                 if (message_id, canonical_type) in covered_slots:
                     continue
                 target.setdefault("facts", []).append({
@@ -852,6 +898,15 @@ class AIService:
                         if source_id in evidence_ids_by_event.get(index, set()) and source_id not in fact_ids:
                             fact_ids.append(source_id)
                     if not fact_ids:
+                        continue
+                    evidence_text = " ".join(
+                        str(message_map[source_id].get("content") or "")
+                        for source_id in fact_ids if source_id in message_map
+                    )
+                    if not self._fact_supported_by_text(
+                        str(events[index].get("event_kind") or ""), fact_type,
+                        f"{value} {evidence_text}",
+                    ):
                         continue
                     events[index].setdefault("facts", []).append({
                         "type": fact_type, "value": value[:500],
@@ -1194,7 +1249,35 @@ class AIService:
         parts = []
         for key, label in (("destination", "地点"), ("activity", "活动"), ("meal", "餐食"), ("completion", "结果")):
             if facts.get(key):
-                parts.append(f"{label}：{facts[key][-1][1]}")
+                values = facts[key]
+                if key == "meal":
+                    values = [row for row in values if cls._fact_supported_by_text("trip", "meal", row[1])]
+                    if not values:
+                        continue
+                    if any(marker in question for marker in ("晚饭", "晚餐", "晚上吃")):
+                        dinner = [
+                            row for row in values
+                            if re.search(r"(?:晚饭|晚餐|晚上.{0,8}(?:吃|喝|点)|夜宵|宵夜)", row[1])
+                        ]
+                        if dinner:
+                            values = dinner
+                        else:
+                            # 模型可能把“晚上吃的是桂花糖粥”压缩成 meal=桂花糖粥。
+                            # 晚饭问题没有显式晚餐值时，优先无早/午时段的简洁食品值。
+                            neutral = [
+                                row for row in values
+                                if not re.search(r"(?:早餐|早饭|早上|午饭|午餐|中午|午间)", row[1])
+                            ]
+                            if neutral:
+                                values = sorted(neutral, key=lambda row: len(row[1]), reverse=True)
+                    elif any(marker in question for marker in ("午饭", "午餐", "中午吃")):
+                        lunch = [
+                            row for row in values
+                            if re.search(r"(?:午饭|午餐|中午.{0,8}(?:吃|喝|点))", row[1])
+                        ]
+                        if lunch:
+                            values = lunch
+                parts.append(f"{label}：{values[-1][1]}")
         return ("记录显示，" + "；".join(parts) + "。") if parts else ""
 
     @staticmethod

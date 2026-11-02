@@ -854,6 +854,33 @@ class MemoryAPITest(unittest.TestCase):
         self.assertIn("无糖燕麦拿铁", answer)
         self.assertIn("半糖拿铁", answer)
 
+    def test_04bbpa_trip_meal_slot_rejects_unrelated_daily_chatter(self):
+        self.assertFalse(ai_service._fact_supported_by_text(
+            "trip", "meal", "快递放在便利店代收点了，回家别忘了拿。"
+        ))
+        self.assertFalse(ai_service._fact_supported_by_text(
+            "trip", "meal", "今天天气很好，今天已经喝了8口水。"
+        ))
+        self.assertTrue(ai_service._fact_supported_by_text(
+            "trip", "meal", "晚上吃的是藕汤，我觉得很香。"
+        ))
+        self.assertTrue(ai_service._fact_supported_by_text("trip", "meal", "桂花糖粥"))
+
+    def test_04bbpb_structured_trip_answer_prefers_requested_dinner(self):
+        context = (
+            "- 事件时间：2052-03-01；状态：completed；类型：武汉旅行；内容：武汉旅行；"
+            "已确认事实：destination=武汉；activity=去了东湖绿道；"
+            "meal=中午吃了青菜面；meal=晚上吃的是藕汤；"
+            "meal=快递放在便利店代收点了"
+        )
+        answer = ai_service._deterministic_structured_answer(
+            "去武汉时逛了哪里，晚饭吃了什么？", context
+        )
+        self.assertIn("东湖绿道", answer)
+        self.assertIn("藕汤", answer)
+        self.assertNotIn("青菜面", answer)
+        self.assertNotIn("快递", answer)
+
     def test_04bbq_evidence_is_visible_and_forgotten_memory_stays_inactive(self):
         db = self.Session()
         couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
