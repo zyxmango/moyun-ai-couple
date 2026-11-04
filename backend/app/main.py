@@ -2,7 +2,7 @@
 import asyncio
 from contextlib import suppress
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -20,7 +20,7 @@ app = FastAPI(title="情侣互动 APP API", version="1.0.0", description="情感
 # CORS 允许前端跨域
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,6 +72,7 @@ async def _memory_sync_loop():
 
 @app.on_event("startup")
 async def startup():
+    settings.validate_runtime()
     init_db()
     app.state.memory_sync_task = (
         asyncio.create_task(_memory_sync_loop()) if settings.MEMORY_WORKER_IN_PROCESS else None
@@ -95,3 +96,16 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/health/ready")
+def readiness():
+    """Readiness checks the dependency required for serving authenticated traffic."""
+    from sqlalchemy import text
+
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="database unavailable") from exc
+    return {"status": "ready", "database": "ok"}

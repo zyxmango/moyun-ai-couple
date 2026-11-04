@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: couple_app
       POSTGRES_USER: couple_app
-      POSTGRES_PASSWORD: couple_app_local
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-couple_app_local}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8000
       SERVER_RELOAD: "false"
-      DATABASE_URL: postgresql+psycopg://couple_app:couple_app_local@db:5432/couple_app
+      DATABASE_URL: postgresql+psycopg://couple_app:${POSTGRES_PASSWORD:-couple_app_local}@db:5432/couple_app
       MEMORY_WORKER_IN_PROCESS: "false"
     ports:
       - "8000:8000"
@@ -44,19 +44,24 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg://couple_app:couple_app_local@db:5432/couple_app
+      DATABASE_URL: postgresql+psycopg://couple_app:${POSTGRES_PASSWORD:-couple_app_local}@db:5432/couple_app
       MEMORY_WORKER_IN_PROCESS: "false"
     volumes:
       - couple_uploads:/app/data/uploads
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pathlib,time,sys; p=pathlib.Path('/app/data/memory-worker.heartbeat'); sys.exit(0 if p.exists() and time.time()-p.stat().st_mtime < 60 else 1)"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE: http://localhost:8000
+        VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}
     depends_on:
       backend:
         condition: service_healthy

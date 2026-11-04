@@ -122,6 +122,7 @@ const unreadCount = ref(0)
 const partner = ref(null)
 const coupleInfo = ref(null)
 const ws = ref(null)
+const wsAuthenticated = ref(false)
 const chatBg = ref('')
 const totalCount = ref(0)
 const loadingOlder = ref(false)
@@ -345,11 +346,14 @@ const connectWs = () => {
   if (!store.token) return
   const wsHost = API_BASE ? API_BASE.replace(/^https?:\/\//, '') : location.host
   const wsProto = API_BASE.startsWith('https') ? 'wss' : (location.protocol === 'https:' ? 'wss' : 'ws')
-  ws.value = new WebSocket(`${wsProto}://${wsHost}/ws/chat/${store.token}`)
+  wsAuthenticated.value = false
+  ws.value = new WebSocket(`${wsProto}://${wsHost}/ws/chat`)
+  ws.value.onopen = () => ws.value?.send(JSON.stringify({ type: 'auth', token: store.token }))
   ws.value.onerror = error => console.error('[chat] ws error', error)
   ws.value.onmessage = event => {
     const data = JSON.parse(event.data)
-    if (data.type === 'unread_count') unreadCount.value = data.count
+    if (data.type === 'auth_ok') wsAuthenticated.value = true
+    else if (data.type === 'unread_count') unreadCount.value = data.count
     else if (data.type === 'message') {
       const messageDate = calendarKey(new Date(data.created_at))
       if (!chatDates.value.has(messageDate)) chatDates.value = new Set([...chatDates.value, messageDate])
@@ -361,14 +365,17 @@ const connectWs = () => {
       if (data.sender_id !== store.user.id) unreadCount.value = 0
     }
   }
-  ws.value.onclose = () => setTimeout(() => { if (store.isLoggedIn) connectWs() }, 3000)
+  ws.value.onclose = () => {
+    wsAuthenticated.value = false
+    setTimeout(() => { if (store.isLoggedIn) connectWs() }, 3000)
+  }
 }
 
 const send = () => {
   const text = inputText.value.trim()
   if (!text) return
   if (historicalDate.value) { ElMessage.info('请先回到最新消息再发送'); return }
-  if (!ws.value || ws.value.readyState !== WebSocket.OPEN) { ElMessage.warning('聊天连接尚未就绪，请稍候'); return }
+  if (!ws.value || ws.value.readyState !== WebSocket.OPEN || !wsAuthenticated.value) { ElMessage.warning('聊天连接尚未就绪，请稍候'); return }
   ws.value.send(JSON.stringify({ content: text, msg_type: 'text' }))
   inputText.value = ''
   emojiPickerOpen.value = false

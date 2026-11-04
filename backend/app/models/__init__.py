@@ -35,6 +35,7 @@ class Couple(Base):
     hero_bg = Column(String(500), default="")  # 首页 Hero 自定义背景图 URL
     chat_bg = Column(String(500), default="")  # 聊天背景（预设 key 或自定义图 URL）
     relationship_start_date = Column(Date, nullable=True)
+    pairing_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     members = relationship("User", foreign_keys="User.couple_id", back_populates="couple")
@@ -50,6 +51,7 @@ class VerificationCode(Base):
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
     purpose = Column(String(30), default='general', nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
 
 class Message(Base):

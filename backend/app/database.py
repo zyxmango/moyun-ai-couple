@@ -36,11 +36,23 @@ def init_db():
         if "purpose" not in code_columns:
             with engine.begin() as connection:
                 connection.execute(text("ALTER TABLE verification_codes ADD COLUMN purpose VARCHAR(30) DEFAULT 'general'"))
+        if "created_at" not in code_columns:
+            with engine.begin() as connection:
+                timestamp_type = "DATETIME" if IS_SQLITE else "TIMESTAMP"
+                connection.execute(text(
+                    f"ALTER TABLE verification_codes ADD COLUMN created_at {timestamp_type} DEFAULT CURRENT_TIMESTAMP"
+                ))
     if "couples" in inspector.get_table_names():
         couple_columns = {column["name"] for column in inspector.get_columns("couples")}
         if "relationship_start_date" not in couple_columns:
             with engine.begin() as connection:
                 connection.execute(text("ALTER TABLE couples ADD COLUMN relationship_start_date DATE"))
+        if "pairing_expires_at" not in couple_columns:
+            with engine.begin() as connection:
+                timestamp_type = "DATETIME" if IS_SQLITE else "TIMESTAMP"
+                connection.execute(text(
+                    f"ALTER TABLE couples ADD COLUMN pairing_expires_at {timestamp_type}"
+                ))
     if "couple_ai_settings" in inspector.get_table_names():
         setting_columns = {column["name"] for column in inspector.get_columns("couple_ai_settings")}
         setting_additions = {

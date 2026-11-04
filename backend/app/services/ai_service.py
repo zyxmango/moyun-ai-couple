@@ -708,7 +708,7 @@ class AIService:
         }
         fact_signals = (
             ("meal", ("早餐", "午饭", "晚饭", "晚餐", "夜宵", "晚上吃", "吃的是", "吃了", "喝了", "点了", "餐厅"), {"trip", "date", "activity"}),
-            ("destination", ("抵达", "到达", "到了", "我们到", "出发去"), {"trip"}),
+            ("destination", ("抵达", "到达", "到了", "我们到", "出发去"), {"trip", "date", "activity"}),
             ("activity", ("去了", "逛了", "散步", "拍照", "参观", "看了", "体验了"), {"trip", "date", "activity"}),
             ("completion", ("旅行结束", "返程", "回到家", "回家了", "回来了"), {"trip", "date", "activity"}),
             ("agreement", ("约定", "共识", "以后", "办法", "轮值"), {"conflict", "reconciliation"}),

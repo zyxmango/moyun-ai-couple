@@ -136,7 +136,8 @@ class MemoryService:
         ), {"memory_id": memory.id, "couple_id": memory.couple_id, "model": model, "embedding": vector_text})
 
     def _pgvector_candidate_ids(
-        self, db: Session, couple_id: int, model: str, vector: np.ndarray, limit: int = 1500
+        self, db: Session, couple_id: int, model: str, vector: np.ndarray,
+        user_id: int | None = None, limit: int = 1500,
     ) -> List[int]:
         if db.bind.dialect.name != "postgresql":
             return []
@@ -144,9 +145,16 @@ class MemoryService:
         vector_text = "[" + ",".join(f"{float(value):.8g}" for value in vector) + "]"
         try:
             rows = db.execute(text(
-                f"SELECT memory_id FROM {table} WHERE couple_id=:couple_id AND model=:model "
-                "ORDER BY embedding <=> CAST(:embedding AS vector) LIMIT :limit"
-            ), {"couple_id": couple_id, "model": model, "embedding": vector_text, "limit": limit}).all()
+                f"SELECT v.memory_id FROM {table} v "
+                "JOIN shared_memories m ON m.id = v.memory_id "
+                "WHERE v.couple_id=:couple_id AND v.model=:model "
+                "AND m.status='confirmed' AND m.is_active IS TRUE "
+                "AND (:user_id IS NULL OR m.visibility='shared' OR m.visibility IS NULL OR m.owner_id=:user_id) "
+                "ORDER BY v.embedding <=> CAST(:embedding AS vector) LIMIT :limit"
+            ), {
+                "couple_id": couple_id, "model": model, "embedding": vector_text,
+                "user_id": user_id, "limit": limit,
+            }).all()
             return [int(row[0]) for row in rows]
         except Exception:
             db.rollback()
@@ -909,11 +917,14 @@ class MemoryService:
             candidate.memory_id = memory.id
         previous = (memory.content, memory.memory_state, memory.lifecycle, memory.source_message_ids)
         facts = self._json_list(candidate.facts)
-        content = summary["summary"]
+        # 正式记忆正文只由通过证据校验的结构化事实组成。模型摘要仍用于标题、
+        # 标签和情绪，但不再把同日天气、快递等闲聊带进可检索正文。
+        content_values = []
         for fact in facts:
             value = str(fact.get("value") or "").strip()
-            if value and value not in content:
-                content = f"{content}；{value}" if content else value
+            if value and value not in content_values:
+                content_values.append(value)
+        content = "；".join(content_values) or summary["summary"]
         memory.title = summary["title"]
         memory.content = content[:8000]
         memory.event_key = candidate.event_key
@@ -925,7 +936,11 @@ class MemoryService:
         memory.resolved_at = candidate.resolved_at
         memory.valid_from = candidate.event_date if candidate.event_kind == "preference" else None
         memory.valid_to = None
-        memory.location = summary.get("location", "")
+        destination = next((
+            str(fact.get("value") or "").strip() for fact in facts
+            if fact.get("type") == "destination" and fact.get("value")
+        ), "")
+        memory.location = destination or summary.get("location", "")
         memory.emotion = summary.get("emotion", "")
         memory.tags = json.dumps(summary.get("tags", []), ensure_ascii=False)
         memory.importance = summary.get("importance", 0.6)
@@ -1099,7 +1114,9 @@ class MemoryService:
         distinctive_terms = [term for term in query_terms if term not in generic_query_text]
         total = base.count()
         if query_vector is not None and db.bind.dialect.name == "postgresql":
-            candidate_ids = self._pgvector_candidate_ids(db, couple_id, model, query_vector)
+            candidate_ids = self._pgvector_candidate_ids(
+                db, couple_id, model, query_vector, user_id=user_id
+            )
             memories = base.filter(SharedMemory.id.in_(candidate_ids)).all() if candidate_ids else []
         elif query_vector is not None and total <= self.EXACT_VECTOR_LIMIT:
             memories = base.all()

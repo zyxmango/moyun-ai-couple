@@ -11,8 +11,24 @@ from ..models import (
     CoupleAISettings, MemorySyncJob, MemorySyncRun, SharedMemory,
 )
 from ..deps import require_admin
+from ..services.memory_jobs import enqueue_memory_sync
 
 router = APIRouter(prefix="/api/admin", tags=["后台管理"])
+
+
+@router.post("/memory-jobs/{couple_id}/retry")
+def retry_memory_job(
+    couple_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """管理员确认上游服务恢复后，手动恢复已熔断的记忆任务。"""
+    job = db.query(MemorySyncJob).filter(MemorySyncJob.couple_id == couple_id).first()
+    if job is None:
+        return {"queued": False, "reason": "job_not_found"}
+    enqueue_memory_sync(db, couple_id, revive_dead_letter=True)
+    db.commit()
+    return {"queued": True, "couple_id": couple_id}
 
 
 @router.get("/memory-health")
@@ -46,7 +62,8 @@ def memory_health(
         "message_lag_max": max(lags, default=0),
         "couples_with_sync_error": sum(1 for row in settings_rows if row.sync_error),
         "jobs": {"pending": jobs.get("pending", 0), "running": jobs.get("running", 0),
-                 "failed": jobs.get("failed", 0), "complete": jobs.get("complete", 0)},
+                 "failed": jobs.get("failed", 0), "dead_letter": jobs.get("dead_letter", 0),
+                 "complete": jobs.get("complete", 0)},
         "unembedded_memories": unembedded,
         "last_24h": {
             "runs": len(runs),

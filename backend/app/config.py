@@ -9,7 +9,16 @@ load_dotenv(BASE_DIR / ".env")
 
 
 class Settings:
+    APP_ENV: str = os.getenv("APP_ENV", "development").strip().lower()
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me")
+    CORS_ORIGINS: list[str] = [
+        value.strip() for value in os.getenv(
+            "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+        ).split(",") if value.strip()
+    ]
+    ALLOW_LOCAL_VERIFICATION_CODE: bool = os.getenv(
+        "ALLOW_LOCAL_VERIFICATION_CODE", "true"
+    ).lower() in ("true", "1", "yes")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./data/couple_app.db")
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
     AI_API_BASE: str = os.getenv("AI_API_BASE", "https://api.openai.com/v1")
@@ -28,6 +37,7 @@ class Settings:
     MEMORY_WORKER_IN_PROCESS: bool = os.getenv("MEMORY_WORKER_IN_PROCESS", "false").lower() in ("true", "1", "yes")
     MEMORY_WORKER_POLL_SECONDS: float = float(os.getenv("MEMORY_WORKER_POLL_SECONDS", "2"))
     MEMORY_JOB_LEASE_SECONDS: int = int(os.getenv("MEMORY_JOB_LEASE_SECONDS", "600"))
+    MEMORY_JOB_MAX_ATTEMPTS: int = int(os.getenv("MEMORY_JOB_MAX_ATTEMPTS", "8"))
     ADMIN_PHONE: str = os.getenv("ADMIN_PHONE", "13800000000")
 
     # 对象存储：默认继续兼容本地 uploads；配置为 s3 后可连接 AIStor、S3、OSS、COS 等。
@@ -57,7 +67,24 @@ class Settings:
 
     # JWT
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRE_DAYS: int = 7
+    JWT_EXPIRE_DAYS: int = int(os.getenv("JWT_EXPIRE_DAYS", "1"))
+    PAIRING_CODE_TTL_MINUTES: int = int(os.getenv("PAIRING_CODE_TTL_MINUTES", "15"))
+
+    def validate_runtime(self) -> None:
+        """Fail closed when a production deployment still uses development-only settings."""
+        if self.APP_ENV != "production":
+            return
+        errors = []
+        if self.SECRET_KEY in {"", "change-me", "replace-with-a-long-random-secret"} or len(self.SECRET_KEY) < 32:
+            errors.append("SECRET_KEY 必须是至少 32 位的随机字符串")
+        if self.ALLOW_LOCAL_VERIFICATION_CODE:
+            errors.append("生产环境必须关闭 ALLOW_LOCAL_VERIFICATION_CODE")
+        if not self.SMTP_EMAIL or not self.SMTP_AUTH_CODE:
+            errors.append("生产环境必须配置 SMTP_EMAIL 和 SMTP_AUTH_CODE")
+        if not self.CORS_ORIGINS or "*" in self.CORS_ORIGINS:
+            errors.append("生产环境必须配置明确的 CORS_ORIGINS")
+        if errors:
+            raise RuntimeError("生产配置不安全：" + "；".join(errors))
 
     @property
     def database_url(self) -> str:

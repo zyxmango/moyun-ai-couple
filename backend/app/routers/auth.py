@@ -2,7 +2,7 @@
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -17,6 +17,8 @@ from ..deps import get_current_user
 from ..config import settings
 from ..services.email_service import send_verification_email
 from ..services.object_storage import object_storage
+from ..services.rate_limit import client_key, enforce_rate_limit
+from ..services.uploads import validate_image_bytes
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
 
@@ -35,8 +37,11 @@ def _user_out(user: User) -> dict:
 
 
 @router.post("/send-code", response_model=SendCodeResponse)
-def send_code(req: SendCodeRequest, db: Session = Depends(get_db)):
+def send_code(req: SendCodeRequest, request: Request, db: Session = Depends(get_db)):
     """发送验证码到邮箱"""
+    enforce_rate_limit("send-code-ip", client_key(request), 10, 3600)
+    enforce_rate_limit("send-code-email-minute", req.email, 1, 60)
+    enforce_rate_limit("send-code-email-hour", req.email, 5, 3600)
     code = str(secrets.randbelow(900000) + 100000)
     expires = datetime.utcnow() + timedelta(minutes=5)
     vc = VerificationCode(email=req.email, code=code, expires_at=expires, purpose=req.purpose)
@@ -45,6 +50,8 @@ def send_code(req: SendCodeRequest, db: Session = Depends(get_db)):
     # 一旦在 .env 中同时配置邮箱和授权码，就自动切换为真实邮件发送，
     # 且响应不再包含验证码。
     if not settings.SMTP_EMAIL or not settings.SMTP_AUTH_CODE:
+        if not settings.ALLOW_LOCAL_VERIFICATION_CODE:
+            raise HTTPException(status_code=503, detail="邮件验证码服务尚未配置")
         db.add(vc)
         db.commit()
         return SendCodeResponse(
@@ -93,7 +100,9 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(req: LoginRequest, db: Session = Depends(get_db)):
+def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
+    enforce_rate_limit("login-ip", client_key(request), 30, 300)
+    enforce_rate_limit("login-account", req.email, 10, 300)
     user = db.query(User).filter(_email_matches(User.email, req.email)).first()
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="邮箱或密码错误")
@@ -102,8 +111,10 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login-code", response_model=TokenResponse)
-def login_by_code(req: LoginCodeRequest, db: Session = Depends(get_db)):
+def login_by_code(req: LoginCodeRequest, request: Request, db: Session = Depends(get_db)):
     """邮箱 + 验证码登录"""
+    enforce_rate_limit("login-code-ip", client_key(request), 30, 300)
+    enforce_rate_limit("login-code-account", req.email, 10, 300)
     vc = db.query(VerificationCode).filter(
         _email_matches(VerificationCode.email, req.email),
         VerificationCode.purpose == 'general',
@@ -124,7 +135,9 @@ def login_by_code(req: LoginCodeRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/reset-password", response_model=ApiResponse)
-def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+def reset_password(req: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    enforce_rate_limit("reset-ip", client_key(request), 20, 600)
+    enforce_rate_limit("reset-account", req.email, 8, 600)
     vc = db.query(VerificationCode).filter(
         _email_matches(VerificationCode.email, req.email),
         VerificationCode.code == req.code,
@@ -178,8 +191,7 @@ async def upload_avatar(
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
     content = await file.read()
-    if len(content) > 50 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="图片不能超过 50MB")
+    validate_image_bytes(content, 10 * 1024 * 1024)
     old_avatar = user.avatar
     user.avatar = object_storage.put(
         f"avatars/{user.id}", content, file.filename, file.content_type
@@ -194,6 +206,7 @@ async def upload_avatar(
 
 @router.post("/couple/generate")
 def generate_pairing_code(
+    request: Request,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -202,19 +215,25 @@ def generate_pairing_code(
         couple = db.query(Couple).filter(Couple.id == user.couple_id).first()
         if couple and couple.status == "active":
             raise HTTPException(status_code=400, detail="已绑定情侣关系")
+    enforce_rate_limit("pair-generate", f"{user.id}:{client_key(request)}", 5, 600)
     code = str(secrets.randbelow(900000) + 100000)
-    couple = Couple(pairing_code=code, user1_id=user.id, status="pending")
+    expires_at = datetime.utcnow() + timedelta(minutes=settings.PAIRING_CODE_TTL_MINUTES)
+    couple = Couple(
+        pairing_code=code, user1_id=user.id, status="pending",
+        pairing_expires_at=expires_at,
+    )
     db.add(couple)
     db.commit()
     db.refresh(couple)
     user.couple_id = couple.id
     db.commit()
-    return {"pairing_code": code, "couple_id": couple.id}
+    return {"pairing_code": code, "couple_id": couple.id, "expires_at": expires_at.isoformat()}
 
 
 @router.post("/couple/bind")
 def bind_couple(
     req: CoupleBindRequest,
+    request: Request,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -224,12 +243,16 @@ def bind_couple(
         if couple and couple.status == "active":
             raise HTTPException(status_code=400, detail="已绑定情侣关系")
 
+    enforce_rate_limit("pair-bind-ip", client_key(request), 20, 600)
+    enforce_rate_limit("pair-bind-user", str(user.id), 10, 600)
     couple = db.query(Couple).filter(
         Couple.pairing_code == req.pairing_code,
         Couple.status == "pending",
+        Couple.pairing_expires_at.is_not(None),
+        Couple.pairing_expires_at > datetime.utcnow(),
     ).first()
     if not couple:
-        raise HTTPException(status_code=400, detail="配对码无效或已被使用")
+        raise HTTPException(status_code=400, detail="配对码无效、已过期或已被使用")
     if couple.user1_id == user.id:
         raise HTTPException(status_code=400, detail="不能与自己配对")
 

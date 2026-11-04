@@ -21,7 +21,7 @@ from .ai_service import ai_service
 from .memory_service import memory_service
 
 
-def enqueue_memory_sync(db: Session, couple_id: int) -> MemorySyncJob:
+def enqueue_memory_sync(db: Session, couple_id: int, revive_dead_letter: bool = False) -> MemorySyncJob:
     """幂等入队。同一情侣始终只有一个待处理任务，聊天高峰不会制造任务风暴。"""
     now = datetime.utcnow()
     values = {"couple_id": couple_id, "status": "pending", "requested_at": now, "available_at": now}
@@ -41,10 +41,16 @@ def enqueue_memory_sync(db: Session, couple_id: int) -> MemorySyncJob:
             db.flush()
     job = db.query(MemorySyncJob).filter(MemorySyncJob.couple_id == couple_id).with_for_update().one()
     job.requested_at = now
+    if job.status == "dead_letter" and not revive_dead_letter:
+        db.flush()
+        return job
     if job.status != "running":
+        previous_status = job.status
         job.status = "pending"
         job.available_at = now
         job.last_error = ""
+        if previous_status in {"complete", "dead_letter"}:
+            job.attempts = 0
     db.flush()
     return job
 
@@ -126,6 +132,7 @@ def execute_claimed_job(couple_id: int, worker_id: str, session_factory=SessionL
         job.leased_by = ""
         job.last_error = ""
         job.last_finished_at = now
+        job.attempts = 0
 
         run.status = "success"
         run.processed_messages = result.get("processed_messages", 0)
@@ -145,7 +152,8 @@ def execute_claimed_job(couple_id: int, worker_id: str, session_factory=SessionL
         now = datetime.utcnow()
         job = db.query(MemorySyncJob).filter(MemorySyncJob.couple_id == couple_id).first()
         if job:
-            job.status = "failed"
+            exhausted = (job.attempts or 0) >= settings.MEMORY_JOB_MAX_ATTEMPTS
+            job.status = "dead_letter" if exhausted else "failed"
             job.lease_until = None
             job.leased_by = ""
             job.last_error = str(exc)[:1000]
@@ -174,7 +182,9 @@ def run_worker(stop_after_one: bool = False):
     init_db()
     worker_id = worker_identity()
     last_sweep = datetime.min
+    heartbeat = settings.DATA_DIR / "memory-worker.heartbeat"
     while True:
+        heartbeat.write_text(datetime.utcnow().isoformat(), encoding="utf-8")
         now = datetime.utcnow()
         if (now - last_sweep).total_seconds() >= 30:
             with SessionLocal() as db:

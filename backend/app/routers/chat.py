@@ -1,4 +1,5 @@
 """聊天路由：WebSocket 实时聊天 + REST 历史记录"""
+import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Dict, List
@@ -14,6 +15,7 @@ from ..deps import get_current_user, get_active_couple, get_partner
 from ..utils import decode_access_token
 from ..services.memory_jobs import enqueue_memory_sync
 from ..services.object_storage import object_storage
+from ..services.uploads import validate_image_bytes
 
 router = APIRouter(prefix="/api/chat", tags=["聊天"])
 
@@ -71,8 +73,15 @@ def _msg_out(msg: Message, sender: User) -> dict:
 ws_router = APIRouter(tags=["WebSocket聊天"])
 
 
-@ws_router.websocket("/ws/chat/{token}")
-async def chat_websocket(websocket: WebSocket, token: str):
+@ws_router.websocket("/ws/chat")
+async def chat_websocket(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        auth_payload = json.loads(await asyncio.wait_for(websocket.receive_text(), timeout=10))
+    except (asyncio.TimeoutError, json.JSONDecodeError, WebSocketDisconnect):
+        await websocket.close(code=4001)
+        return
+    token = str(auth_payload.get("token") or "") if auth_payload.get("type") == "auth" else ""
     user_id = decode_access_token(token)
     if not user_id:
         await websocket.close(code=4001)
@@ -89,8 +98,8 @@ async def chat_websocket(websocket: WebSocket, token: str):
             await websocket.close(code=4003)
             return
 
-        await websocket.accept()
         manager.connect(couple.id, user.id, websocket)
+        await websocket.send_json({"type": "auth_ok"})
 
         # 上线时推送未读消息数
         unread = db.query(Message).filter(
@@ -253,8 +262,7 @@ async def upload_chat_image(
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
     content = await file.read()
-    if len(content) > 50 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="图片不能超过 50MB")
+    validate_image_bytes(content, 10 * 1024 * 1024)
     stored_path = object_storage.put(
         f"couples/{couple.id}/chat", content, file.filename, file.content_type
     )

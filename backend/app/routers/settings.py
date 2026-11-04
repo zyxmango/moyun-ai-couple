@@ -9,6 +9,7 @@ from ..models import User, Couple, Anniversary, Reminder
 from ..schemas import ApiResponse
 from ..deps import get_current_user, get_active_couple
 from ..services.object_storage import object_storage
+from ..services.uploads import validate_image_bytes
 
 router = APIRouter(prefix="/api", tags=["设置与提醒"])
 
@@ -122,8 +123,7 @@ async def upload_hero_bg(
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
     content = await file.read()
-    if len(content) > 50 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="图片不能超过 50MB")
+    validate_image_bytes(content, 20 * 1024 * 1024)
     old_background = couple.hero_bg
     couple.hero_bg = object_storage.put(
         f"couples/{couple.id}/backgrounds", content, file.filename, file.content_type
@@ -198,8 +198,7 @@ async def upload_chat_bg(
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
     content = await file.read()
-    if len(content) > 50 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="图片不能超过 50MB")
+    validate_image_bytes(content, 20 * 1024 * 1024)
     old_background = couple.chat_bg
     couple.chat_bg = object_storage.put(
         f"couples/{couple.id}/backgrounds", content, file.filename, file.content_type

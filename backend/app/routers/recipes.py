@@ -14,6 +14,7 @@ from ..schemas import (
 )
 from ..deps import get_current_user, get_active_couple
 from ..services.object_storage import object_storage
+from ..services.uploads import validate_image_bytes
 
 router = APIRouter(prefix="/api/recipes", tags=["情侣菜谱"])
 
@@ -349,8 +350,7 @@ async def upload_cover(
     if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
         raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
     content = await file.read()
-    if len(content) > 50 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="图片不能超过 50MB")
+    validate_image_bytes(content, 10 * 1024 * 1024)
     stored_path = object_storage.put(
         f"couples/{couple.id}/recipes", content, file.filename, file.content_type
     )
