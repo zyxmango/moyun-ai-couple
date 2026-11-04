@@ -11,11 +11,15 @@
   --accent-gold: #c9a96e;
   --accent-teal: #5e8b7e;
   --bg-paper: #f7f5f0;
-  --bg-card: #ffffff;
+  --bg-card: #fffaf6;
   --bg-soft: #f0ede8;
   --border-soft: #e8e4de;
   --shadow-soft: 0 2px 12px rgba(44, 44, 44, 0.06);
   --shadow-hover: 0 6px 24px rgba(44, 44, 44, 0.1);
+  --card-surface: radial-gradient(circle at 100% 0%, rgba(221, 151, 151, 0.22), transparent 40%), radial-gradient(circle at 0% 100%, rgba(201, 169, 110, 0.11), transparent 34%), linear-gradient(145deg, #fff9f4 0%, #f3ebe4 100%);
+  --card-surface-soft: linear-gradient(145deg, rgba(255, 249, 244, 0.96), rgba(241, 233, 226, 0.92));
+  --card-border: rgba(177, 142, 124, 0.31);
+  --shadow-card: 0 13px 32px rgba(78, 57, 48, 0.095), 0 1px 0 rgba(255, 255, 255, 0.72) inset;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
@@ -60,15 +64,46 @@ html, body {
 
 /* 通用卡片 */
 .ink-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-soft);
+  background: var(--card-surface);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   padding: 20px;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 .ink-card:hover {
-  box-shadow: var(--shadow-hover);
+  border-color: rgba(201, 107, 107, 0.22);
+  box-shadow: 0 16px 42px rgba(78, 57, 48, 0.105);
 }
+
+/* 表单不再漂在纯白色块上，和暖纸卡片形成轻微层次。 */
+.el-input__wrapper,
+.el-select__wrapper {
+  background: rgba(255, 252, 248, 0.72);
+  box-shadow: 0 0 0 1px rgba(190, 164, 149, 0.25) inset;
+}
+.el-textarea__inner {
+  background: rgba(255, 252, 248, 0.72);
+  box-shadow: 0 0 0 1px rgba(190, 164, 149, 0.25) inset;
+}
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  background: #fffdfb;
+  box-shadow: 0 0 0 1px var(--accent-rose-light) inset;
+}
+
+/* 所有普通弹窗使用同一套暖纸表面，页面内可继续覆盖细节。 */
+.el-dialog,
+.el-message-box {
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  background: var(--card-surface);
+  box-shadow: 0 26px 70px rgba(55, 40, 34, 0.2);
+}
+.el-dialog__header,
+.el-message-box__header { border-bottom: 1px solid rgba(190, 164, 149, 0.14); }
+.el-dialog__footer { border-top: 1px solid rgba(190, 164, 149, 0.12); }
 
 /* 页面容器 */
 .page-container {

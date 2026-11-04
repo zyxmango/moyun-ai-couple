@@ -308,7 +308,7 @@ onMounted(() => {
   flex-shrink: 0;
   padding: 5px 14px;
   border-radius: 16px;
-  background: var(--bg-card);
+  background: var(--bg-soft);
   font-size: 13px;
   color: var(--ink-secondary);
   cursor: pointer;
@@ -359,7 +359,7 @@ onMounted(() => {
   gap: 12px;
 }
 .recipe-card {
-  background: var(--bg-card);
+  background: var(--card-surface-soft);
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-soft);

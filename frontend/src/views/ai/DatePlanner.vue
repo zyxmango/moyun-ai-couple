@@ -93,6 +93,8 @@ onMounted(loadHistory)
 .planner-head p { margin:0; color:var(--ink-secondary); font-size:13px; }
 .planner-layout { display:grid; grid-template-columns:minmax(320px, .8fr) minmax(360px, 1.2fr); gap:16px; align-items:start; }
 .plan-form,.result-card { padding:24px; }
+.plan-form { border-top:3px solid rgba(201,107,107,.58); }
+.result-card { background:radial-gradient(circle at 100% 0%,rgba(94,139,126,.13),transparent 38%),linear-gradient(145deg,#fffdf9,#f3eee8); }
 .plan-form h3 { margin:0 0 18px; }
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
 .form-grid :deep(.el-select) { width:100%; }
@@ -110,7 +112,7 @@ onMounted(loadHistory)
 .empty-mark { font-size:36px; color:var(--accent-rose); }.empty-result h3 { color:var(--ink-darkest); margin:12px 0 4px; }.empty-result p { max-width:280px; font-size:12px; line-height:1.7; }
 .history-section { margin-top:26px; }.history-section h3 { font-size:15px; }
 .history-list { display:flex; gap:10px; overflow:auto; padding-bottom:6px; }
-.history-list button { min-width:170px; text-align:left; border:1px solid var(--border-soft); background:var(--bg-card); border-radius:12px; padding:12px; cursor:pointer; }
+.history-list button { min-width:170px; text-align:left; border:1px solid var(--card-border); background:var(--card-surface-soft); border-radius:14px; padding:12px; box-shadow:var(--shadow-soft); cursor:pointer; }
 .history-list b,.history-list span { display:block; }.history-list b { color:var(--ink-darkest); }.history-list span { margin-top:4px; color:var(--ink-light); font-size:11px; }
 @media (max-width:760px) { .planner-layout { grid-template-columns:1fr; }.result-card { min-height:300px; }.form-grid { grid-template-columns:1fr; } }
 </style>

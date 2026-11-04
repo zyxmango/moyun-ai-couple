@@ -545,7 +545,7 @@ onMounted(() => {
   display: flex;
   gap: 10px;
   padding: 10px 16px;
-  background: var(--bg-card);
+  background: var(--card-surface-soft);
   box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   z-index: 10;
   max-width: 720px;

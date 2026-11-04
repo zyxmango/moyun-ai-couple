@@ -102,7 +102,8 @@ const handleLogin = async () => {
 .auth-card {
   width: 100%;
   max-width: 380px;
-  background: var(--bg-card);
+  background: var(--card-surface);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 40px 32px;
   box-shadow: var(--shadow-hover);

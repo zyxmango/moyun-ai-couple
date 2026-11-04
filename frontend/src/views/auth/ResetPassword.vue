@@ -68,7 +68,7 @@ onBeforeUnmount(() => clearInterval(timer))
 
 <style scoped>
 .reset-page{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 18px;background:linear-gradient(135deg,var(--bg-paper),var(--accent-rose-bg))}
-.reset-card{width:100%;max-width:400px;padding:30px 24px;border-radius:20px;background:var(--bg-card);box-shadow:var(--shadow-soft)}
+.reset-card{width:100%;max-width:400px;padding:30px 24px;border:1px solid var(--card-border);border-radius:20px;background:var(--card-surface);box-shadow:var(--shadow-card)}
 h1{font-size:23px;text-align:center}.intro{margin:12px 0 26px;font-size:13px;line-height:1.8;color:var(--ink-secondary)}
 .code-row{display:flex;gap:8px;width:100%}.code-row .el-input{min-width:0;flex:1}.submit-button{width:100%;height:42px;margin-top:8px}
 .footnote{font-size:12px;line-height:1.8;color:var(--ink-secondary);margin:16px 0}.back{display:block;text-align:center;color:var(--accent-rose);font-size:13px;text-decoration:none}

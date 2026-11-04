@@ -93,10 +93,11 @@ onMounted(load)
   margin-top: 12px;
 }
 .photo-item {
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
+  background: var(--card-surface);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-card);
 }
 .photo-img {
   width: 100%;

@@ -366,7 +366,7 @@ onMounted(loadHistory)
 /* 结果卡片 */
 .result-card {
   margin-bottom: 20px;
-  background: linear-gradient(180deg, #fafbf8 0%, #ffffff 100%);
+  background: radial-gradient(circle at 100% 0%, rgba(94,139,126,.14), transparent 38%), linear-gradient(145deg,#fff9f4,#f1e9e2);
   border: 1px solid var(--border-soft);
   animation: slideIn 0.4s ease;
 }

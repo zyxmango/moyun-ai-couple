@@ -247,7 +247,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 14px 20px;
-  background: var(--bg-card);
+  background: var(--card-surface);
   border-bottom: 1px solid var(--border-soft);
 }
 .header-actions {
@@ -305,7 +305,7 @@ onMounted(() => {
 .bubble {
   padding: 10px 14px;
   border-radius: 14px;
-  background: var(--bg-card);
+  background: var(--card-surface-soft);
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -333,7 +333,7 @@ onMounted(() => {
 }
 .input-area {
   padding: 10px 12px;
-  background: var(--bg-card);
+  background: var(--card-surface-soft);
   border-top: 1px solid var(--border-soft);
   display: flex;
   gap: 8px;

@@ -223,7 +223,7 @@ onMounted(load)
 .add-button { flex:0 0 auto; display:flex; align-items:center; gap:6px; margin-top:7px; padding:9px 13px; border:0; border-radius:999px; color:#fff; background:linear-gradient(135deg,#d68181,var(--accent-rose)); box-shadow:0 7px 18px rgba(201,107,107,.22); font-size:12px; cursor:pointer; }
 .add-button:hover { transform:translateY(-1px); box-shadow:0 9px 22px rgba(201,107,107,.28); }
 .anniversary-list { display:grid; gap:14px; }
-.ann-card { position:relative; display:flex; gap:18px; overflow:hidden; padding:20px; border:1px solid rgba(232,228,222,.84); border-radius:20px; background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(253,249,246,.9)); box-shadow:0 10px 30px rgba(77,54,48,.065); }
+.ann-card { position:relative; display:flex; gap:18px; overflow:hidden; padding:20px; border:1px solid var(--card-border); border-radius:20px; background:var(--card-surface); box-shadow:var(--shadow-card); }
 .card-glow { position:absolute; top:-70px; right:-45px; width:160px; height:160px; border-radius:50%; background:radial-gradient(circle,rgba(232,180,180,.24),rgba(250,240,240,0) 70%); pointer-events:none; }
 .date-stamp { position:relative; flex:0 0 70px; height:88px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid rgba(201,169,110,.24); border-radius:18px; color:var(--accent-rose); background:linear-gradient(160deg,#fff9f6,#f8eee9); box-shadow:inset 0 0 0 4px rgba(255,255,255,.45); }
 .date-stamp span { font-size:10px; font-weight:700; letter-spacing:1.3px; }

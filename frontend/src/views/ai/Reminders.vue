@@ -379,7 +379,7 @@ onMounted(() => loadReminders())
   margin-bottom: 22px;
 }
 .stat-card {
-  background: var(--bg-card);
+  background: var(--card-surface);
   border-radius: var(--radius-sm);
   padding: 14px 8px;
   text-align: center;
@@ -621,23 +621,23 @@ onMounted(() => loadReminders())
 .detail-hero {
   padding: 28px 24px 24px;
   text-align: center;
-  background: linear-gradient(180deg, #f7f5f0 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #f7f2ec 0%, #f2e9e2 100%);
 }
 .detail-hero.lv-today {
-  background: linear-gradient(180deg, #faf0f0 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #faeeee 0%, #f3e8e1 100%);
 }
 .detail-hero.lv-urgent {
-  background: linear-gradient(180deg, #fcf4f4 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #fcf1f1 0%, #f3e8e1 100%);
 }
 .detail-hero.lv-warn {
-  background: linear-gradient(180deg, #faf6ee 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #faf4e9 0%, #f1e8df 100%);
 }
 .detail-icon {
   width: 72px;
   height: 72px;
   margin: 0 auto 14px;
   border-radius: 20px;
-  background: var(--bg-card);
+  background: var(--card-surface-soft);
   color: var(--ink-secondary);
   box-shadow: var(--shadow-soft);
   display: flex;

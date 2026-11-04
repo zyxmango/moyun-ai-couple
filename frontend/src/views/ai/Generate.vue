@@ -323,7 +323,7 @@ loadHistory()
   gap: 10px;
   position: relative;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 1px solid var(--card-border);
   transition: all 0.25s ease;
 }
 .scene-card:hover {
@@ -331,8 +331,8 @@ loadHistory()
   box-shadow: var(--shadow-hover);
 }
 .scene-card.active {
-  border-color: var(--scene-color);
-  background: var(--scene-bg);
+  border: 1px solid var(--scene-color);
+  background: linear-gradient(145deg, var(--scene-bg), #fffaf6);
   box-shadow: var(--shadow-hover);
 }
 .scene-icon {
@@ -378,6 +378,7 @@ loadHistory()
 /* 表单卡片 */
 .form-card {
   margin-bottom: 16px;
+  border-top: 3px solid rgba(201, 107, 107, .58);
 }
 .form-label {
   display: flex;
@@ -440,8 +441,8 @@ loadHistory()
 /* 结果卡片 */
 .result-card {
   margin-bottom: 20px;
-  background: linear-gradient(180deg, #fefbfa 0%, #ffffff 100%);
-  border: 1px solid var(--border-soft);
+  background: radial-gradient(circle at 100% 0%, rgba(94,139,126,.12), transparent 38%), linear-gradient(145deg,#fffdf9,#f4eee8);
+  border: 1px solid var(--card-border);
   animation: slideIn 0.4s ease;
 }
 @keyframes slideIn {
