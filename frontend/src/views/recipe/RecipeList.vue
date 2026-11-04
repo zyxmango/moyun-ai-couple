@@ -90,8 +90,8 @@
         </div>
         <el-form-item label="谁做的">
           <el-radio-group v-model="form.chef_id">
-            <el-radio :label="store.user?.id">{{ store.user?.nickname || '我' }}</el-radio>
-            <el-radio v-if="partner" :label="partner.id">{{ partner.nickname }}</el-radio>
+            <el-radio :value="store.user?.id">{{ store.user?.nickname || '我' }}</el-radio>
+            <el-radio v-if="partner" :value="partner.id">{{ partner.nickname }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="封面图">

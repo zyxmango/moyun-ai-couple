@@ -1,5 +1,5 @@
 """Pydantic 数据校验模型"""
-from datetime import datetime, date
+from datetime import datetime, date as DateType
 from typing import Optional, List, Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
@@ -95,13 +95,13 @@ class MessageOut(BaseModel):
 class AnniversaryCreate(BaseModel):
     title: str
     description: str = ""
-    date: date
+    date: DateType
     reminder_enabled: bool = True
 
 class AnniversaryUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[DateType] = None
     reminder_enabled: Optional[bool] = None
 
 class AnniversaryOut(BaseModel):
@@ -109,7 +109,7 @@ class AnniversaryOut(BaseModel):
     couple_id: int
     title: str
     description: str
-    date: date
+    date: DateType
     reminder_enabled: bool
     created_at: datetime
     days_until: Optional[int] = None
@@ -185,7 +185,7 @@ class GenerateRequest(BaseModel):
 
 class SummaryRequest(BaseModel):
     period: str = "daily"  # daily/weekly
-    date: Optional[date] = None
+    date: Optional[DateType] = None
 
 class SummaryOut(BaseModel):
     id: int
@@ -265,7 +265,7 @@ class ReminderOut(BaseModel):
     id: int
     reminder_type: str
     content: str
-    trigger_date: date
+    trigger_date: DateType
     is_sent: bool
     class Config:
         from_attributes = True

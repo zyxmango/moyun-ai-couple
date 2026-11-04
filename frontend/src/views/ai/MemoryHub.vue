@@ -55,7 +55,7 @@
                 <el-select v-model="manual.category"><el-option label="偏好" value="preference" /><el-option label="共同事件" value="event" /><el-option label="未来计划" value="plan" /></el-select>
               </el-form-item>
               <el-form-item label="可见范围">
-                <el-radio-group v-model="manual.visibility"><el-radio-button label="shared">双方共享</el-radio-button><el-radio-button label="private">仅自己可见</el-radio-button></el-radio-group>
+                <el-radio-group v-model="manual.visibility"><el-radio-button value="shared">双方共享</el-radio-button><el-radio-button value="private">仅自己可见</el-radio-button></el-radio-group>
               </el-form-item>
             </div>
             <p class="privacy-tip">私密记忆只会参与你发起的问答和规划，对方无法查看或检索。</p>
