@@ -1,237 +1,287 @@
-# 墨韵 LoveMemory · 真情侣 AI 助手
+# 墨韵 Moyun
 
-> 不是虚拟恋人，而是帮助真实情侣记住共同经历、管理双方偏好并规划约会的共享记忆 Agent。
+> 面向长期聊天的 AI 共同记忆与智能陪伴系统
 
-![Python](https://img.shields.io/badge/Python-3.10-3776AB) ![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688) ![Vue](https://img.shields.io/badge/Vue-3.4-42b883) ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)
+![Vue](https://img.shields.io/badge/Vue-3.4-42B883?logo=vuedotjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-本地 Demo：`http://localhost:5173` ｜ API 文档：`http://localhost:8000/docs`
+墨韵是一款服务于真实情侣的全栈 AI 应用。它完整保留聊天、日记、相册和纪念日，再把碎片记录整理成可追溯的事件、偏好、计划与事实，让“小忆”能够在长期积累后找回相关经历、回答问题，并为约会规划和内容生成提供依据。
 
-## 1. 为什么做这个
+项目由个人独立完成需求分析、系统设计、前后端开发、模型接入、评测、容器化与部署配置。仓库不包含真实用户数据、生产密钥或邮箱授权码。
 
-传统情侣应用擅长保存照片、日记和纪念日，但这些数据通常只是被展示，无法继续帮助两个人：
+本地应用：`http://localhost:5173` · API 文档：`http://localhost:8000/docs` · MinIO 控制台：`http://localhost:9001`
 
-- **记不住：** 重要经历、饮食禁忌和未来计划分散在聊天、日记和相册中；
-- **不会复用：** 规划约会时仍需从零讨论，过去记录的双方偏好没有真正参与决策；
-- **隐私边界模糊：** “情侣共享”不等于所有内容都应自动向另一方公开。
+## 项目亮点
 
-墨韵将现有聊天、日记、相册、纪念日作为真实数据入口，再通过 **权限过滤 → 事件粒度记忆 → 混合检索 → 有引用生成**，让 AI 基于两个人的真实记录工作。
+- **事件粒度的长期记忆：** 原始聊天全量留存，AI 只把具有长期价值的内容整理为事件、偏好、计划和事实，过滤“嗯”“哈哈”等噪声。
+- **不会漏历史的增量同步：** 独立 Memory Worker 按同步游标持续补齐新消息，使用数据库任务、租约、重试和退避机制，不依赖用户发起提问。
+- **持久化语义检索：** PostgreSQL 使用 pgvector HNSW，本地 SQLite 使用持久化向量与 LSH；结合语义、关键词、时间、状态和重要度进行混合排序。
+- **有依据的回答：** 记忆保留原始消息证据和来源；生日、纪念日、最早聊天等结构化问题优先查询确定性数据，缺少证据时明确表示无法确认。
+- **检索前权限隔离：** 先根据 `couple_id + owner_id + visibility` 过滤候选，再进行召回和生成，避免私密内容进入另一方的 Prompt。
+- **完整工程闭环：** WebSocket 实时聊天、MinIO 私有媒体存储、后台监控、自动化测试、端到端评测和 Docker Compose 均已落地。
 
-> 个人独立开发的求职展示项目。仓库不包含真实用户数据、生产密钥或邮箱授权码。
+## 为什么需要事件级记忆
 
-## 2. 核心能力
+聊天消息是交流载体，不等于长期记忆。一段旅行可能分散在几十条消息里，同一计划也可能经历提出、修改、取消和完成。如果直接把每条消息都放入向量库，噪声会淹没有价值的事实，模型也容易把旧计划当成当前状态。
 
-| 功能 | 用户价值 | 实现方式 |
+墨韵采用分层设计：
+
+| 数据层 | 保存内容 | 作用 |
 |---|---|---|
-| 双人长期记忆 | 自动同步聊天、日记、相册、纪念日，也可主动记录偏好 | 统一记忆模型 + 事件级自动提取 + 来源追溯 |
-| 共享/私密权限 | 共享记忆双方可见，私密记忆仅所有者可检索 | `couple_id + owner_id + visibility` 检索前过滤 |
-| 智能约会规划 | 结合预算、日期、双方偏好与历史经历生成可执行方案 | 受控规划 Agent + RAG 来源引用 + 调用日志 |
-| 每日互动与周报 | 双方回答后才解锁答案，并生成有依据的共同回顾 | 双人状态机 + Grounded Generation |
+| 原始记录 | 聊天、日记、相册、纪念日 | 完整留存与证据追溯 |
+| 长期记忆 | 事件、偏好、计划、事实及其状态 | 跨时间检索与推理 |
+| 向量索引 | 记忆 Embedding 和检索元数据 | 持久化语义召回 |
 
-聊天、情侣相册、共同日记、纪念日、提醒、菜谱、AI 文案和旅游知识库等已有功能继续保留，作为完整情侣空间与 AI 数据来源。
+一条长期记忆不仅包含摘要，还保存主体、时间、类别、状态、可见范围、证据消息 ID 和版本。偏好变化或计划取消时，系统更新当前状态，同时保留历史版本以便追溯。
 
-## 3. 系统架构
+## 系统架构
 
 ```mermaid
 flowchart LR
-    A["用户 A"] --> FE["Vue 3 / Capacitor"]
-    B["用户 B"] --> FE
-    FE --> API["FastAPI / JWT / 配对鉴权"]
-    API --> Q[("数据库任务队列")]
-    Q --> WORKER["独立 Memory Worker\n游标同步 · 重试 · 指标"]
-    WORKER --> MEM["事件抽取 · 合并 · 版本管理"]
-    API --> PLAN["约会规划 Agent"]
-    MEM --> ACL["权限过滤\ncouple / owner / visibility"]
-    ACL --> RAG["持久化语义检索\npgvector HNSW / SQLite LSH"]
-    RAG --> PLAN
-    RAG --> QA["记忆问答 / 周报"]
-    PLAN --> LLM["OpenAI 兼容 LLM\n或本地降级策略"]
-    QA --> LLM
-    API --> DB[("PostgreSQL + pgvector\n或本地 SQLite")]
-    API --> OBJ[("MinIO 私有对象存储\n图片与视频")]
+    U1[用户 A] --> WEB[Vue 3 / Capacitor]
+    U2[用户 B] --> WEB
+    WEB --> API[FastAPI\nJWT · 配对鉴权 · WebSocket]
+
+    API --> RAW[(PostgreSQL\n原始业务数据)]
+    API --> OBJ[(MinIO 私有桶\n图片 · 视频)]
+    API --> JOB[(持久化任务队列)]
+
+    JOB --> WORKER[Memory Worker\n游标 · 租约 · 重试]
+    WORKER --> EXTRACT[事件抽取\n边界判断 · 事实门控 · 合并更新]
+    EXTRACT --> MEMORY[(长期记忆\n证据 · 状态 · 版本)]
+    MEMORY --> VECTOR[(pgvector HNSW\n或 SQLite LSH)]
+
+    API --> ACL[权限前置过滤]
+    ACL --> RETRIEVE[混合召回与排序]
+    VECTOR --> RETRIEVE
+    RETRIEVE --> ANSWER[小忆问答 · AI 陪伴\n约会规划 · 周报]
+    ANSWER --> LLM[OpenAI 兼容模型]
 ```
 
-一次约会规划请求的链路：
+### 长期记忆处理链路
 
-1. JWT 鉴权并确认当前 `couple_id`；
-2. 根据 `shared` 或当前用户拥有的 `private` 记忆先做权限过滤；
-3. 使用持久化 Embedding、关键词、状态、时间与重要度进行混合排序；
-4. 将 Top-K 记忆、预算、日期和限制注入规划 Prompt；
-5. 返回约会方案以及实际参与生成的记忆来源；
-6. 保存方案与 AI 调用日志，便于追踪和复盘。
+1. 新消息写入业务数据库，并幂等创建同步任务。
+2. Worker 从当前游标之后分批读取消息；任务失败时不推进游标。
+3. 模型结合相邻消息识别事件边界，输出结构化候选记忆。
+4. 事实完整性和长期价值门控过滤闲聊、即时状态和缺少证据的推断。
+5. 新事件写入记忆库；同一事件的补充、取消或完成会合并并更新状态。
+6. 记忆生成 Embedding 并持久化，原始消息 ID 始终保留用于追溯。
+7. 问答时先过滤权限，再全量召回有资格的记忆，混合排序后取 Top-K 交给模型。
 
-## 4. 核心难点与解决方案
+## 功能概览
 
-### 双人记忆权限与偏好变化
+### 情侣共同空间
 
-每条记忆记录 `couple_id`、`owner_id`、`visibility`、`category`、`version` 和 `is_active`。检索前先做数据库级权限过滤，避免私密内容进入 Prompt。相同用户以相同标题更新偏好时，旧事实保留但停止参与检索，新事实版本号递增。
+- 情侣配对、双方资料与登录状态管理
+- WebSocket 实时聊天、历史分页、未读数和聊天日期日历
+- 共同日记、共享相册、图片与视频上传
+- 纪念日、生日提醒和共同菜谱
+- 通知设置与情侣主页
 
-对应测试覆盖：用户 A 私密偏好对 A 可见、对 B 不可见；A 的规划可以使用该偏好，B 的规划来源中不能出现该偏好。
+### AI 与长期记忆
 
-### 原始聊天噪声与可解释检索
+- 聊天事件自动抽取、合并、状态更新和证据查看
+- 日记、相册、纪念日和手动记录等多来源知识
+- 共享/私密记忆、偏好版本和删除/纠正
+- 小忆记忆问答、会话历史和主动提醒
+- AI 情感陪伴、共同周报和日记总结
+- 基于双方偏好、预算和历史经历的约会规划
+- 个性文案、纪念日文案与旅游 RAG 知识库
 
-聊天原文完整保留，长期记忆只保存事件、偏好、计划和事实。事实绑定主体、陈述者、时间与原始消息 ID；用户可查看依据、纠正或让 AI 忘记。检索使用持久化语义向量与关键词混合排序，私密权限在进入候选池前过滤。
+### 工程与运维
 
-### 独立任务队列与可观测性
+- PostgreSQL/SQLite 双数据库模式
+- pgvector HNSW/SQLite LSH 持久化语义索引
+- 数据库任务队列与独立 Memory Worker
+- MinIO/S3 兼容私有对象存储和短期签名 URL
+- 任务积压、失败率、延迟、Token 和估算成本监控
+- Docker Compose 一键启动
 
-每条新聊天只执行幂等入队，独立 Worker 使用数据库租约领取任务。进程崩溃后租约到期可自动重领，模型失败时游标保持不动并指数退避。管理端展示消息积压、失败率、P50/P95 耗时、模型调用、Token 与按配置单价估算的费用。
+## 端到端评测
 
-### 外部模型不可用时仍可演示
+最新评测覆盖“原始碎片聊天 → AI 事件抽取 → 持久化 → 语义检索 → AI 最终回答 → 事实一致性复核”的完整链路。
 
-AI 服务采用 OpenAI 兼容接口，但未配置 Key 或接口失败时，会进入本地规则降级路径。降级回答仍严格使用已检索来源，保证项目可运行、可测试，也避免把网络可用性当作核心业务正确性的前提。
+**数据集：** 3000 条自然化碎片聊天、64 个带标准答案的事件、36 批纯闲聊、64 个正向问题和 24 个无答案问题。抽取模型为 `qwen3.8-max`，向量模型为 `text-embedding-v3`。
 
-## 5. RAG 离线评测
+| 指标 | 结果 |
+|---|---:|
+| 事件抽取召回率 | 100.00% |
+| 抽取记忆内容正确率 | 98.44% |
+| 抽取精确率 / 纯闲聊拒绝率 | 100.00% / 100.00% |
+| 日期 / 状态 / 类别正确率 | 100.00% / 100.00% / 100.00% |
+| 单事件单记忆粒度正确率 | 100.00% |
+| 端到端 Recall@5 | 100.00% |
+| 最终答案正确率 | 100.00% |
+| 无答案拒答率 / 最终未编造率 | 95.83% / 100.00% |
+| 端到端中位耗时 | 1467.72 ms |
 
-评测集包含 20 条虚构情侣记忆和 20 个手工标注问题，指标由 [`backend/eval_memory_rag.py`](backend/eval_memory_rag.py) 实际运行得到：
+长期价值门控把首轮宽松抽取产生的 370 条记忆收敛为 64 条标准事件，并将 312 条缺少事件证据的多余记忆降至 0。
 
-| 检索方案 | Recall@3 | MRR | 本机平均延迟 |
-|---|---:|---:|---:|
-| 纯字符 TF-IDF（对照组） | 100%（20/20） | 1.0000 | 约 7 ms |
-| TF-IDF + 关键词 + 时间/重要度混合排序 | 100%（20/20） | 1.0000 | 约 9 ms |
+以上结果来自保持真实碎片结构的合成盲测数据，不包含用户隐私，也不等同于真实生产数据表现；模型或提示词变化后需要重新运行。完整方法、失败样例和适用边界见 [长期记忆端到端真实性测试报告](backend/reports/memory_e2e_report.md)。
 
-这是用于回归验证的小规模合成集，不代表生产效果。当前简单数据已经饱和，混合排序尚未体现准确率收益且存在少量额外耗时；下一步需要扩充困难负样本和冲突偏好，再加入 Embedding 与 Reranker 对照。
+完整功能验收还覆盖 16 个核心页面和 16 万级聊天记录下的分页、计数、日历与实时发送，详见 [完整功能验收报告](docs/完整功能验收报告-2026-11-04.md)。
 
-## 6. 技术选型
+## 技术栈
 
-| 层 | 选型 | 原因 |
-|---|---|---|
-| Web 前端 | Vue 3 + Vite + Element Plus | 组件化开发快，同时可通过 Capacitor 打包 Android |
-| API | FastAPI | 类型校验、依赖注入和 Swagger 文档适合 AI 接口快速迭代 |
-| 数据 | PostgreSQL + pgvector / SQLite | Compose 使用 PostgreSQL；本地仍可零配置运行 SQLite |
-| 检索 | Embedding + HNSW/LSH + 混合排序 | 大数据用 pgvector HNSW，小规模与离线测试使用持久化 LSH |
-| 后台任务 | 数据库持久化队列 + 独立 Worker | 不依赖请求触发，支持租约、重试、积压与成本监控 |
-| AI | OpenAI 兼容 API + 本地降级 | 可切换模型提供商，也能离线完成演示和自动化测试 |
-| 实时能力 | WebSocket | 支持情侣聊天实时收发 |
-| 媒体存储 | MinIO（S3 兼容） | 私有桶、短期签名 URL、图片与视频统一存储 |
+| 层级 | 技术 |
+|---|---|
+| Web / 移动端 | Vue 3、Vite、Pinia、Vue Router、Element Plus、Capacitor |
+| API / 实时通信 | FastAPI、Pydantic、SQLAlchemy、JWT、WebSocket |
+| 数据与检索 | PostgreSQL、pgvector、SQLite、Embedding、HNSW、LSH、混合排序 |
+| AI | OpenAI 兼容 API、Qwen、结构化抽取、Grounded Generation |
+| 媒体 | MinIO / S3 兼容对象存储、私有桶、Presigned URL |
+| 工程 | Docker Compose、Nginx、数据库任务队列、自动化测试与评测 |
 
-当前没有使用 LangGraph、Celery 或 Redis。任务队列直接复用业务数据库，通过租约保证多 Worker 不重复处理，减少个人项目的额外运维服务。
+项目没有额外引入 Redis、Celery 或 LangGraph。后台任务直接复用业务数据库，通过幂等键和租约协调多个 Worker，降低个人项目的部署复杂度。
 
-## 7. 项目结构
+## 快速开始
 
-```text
-.
-├── backend/
-│   ├── app/models/          # 用户、配对、记忆、约会方案等模型
-│   ├── app/routers/         # REST / WebSocket 接口
-│   ├── app/services/        # AI、记忆检索、邮件和 RAG 服务
-│   ├── tests/               # 权限、问答、规划端到端测试
-│   ├── eval_memory_rag.py   # 可复现离线检索对照评测
-│   └── seed_demo.py         # 幂等虚构演示数据
-├── frontend/
-│   └── src/views/ai/        # 共享记忆、约会规划等 AI 页面
-├── docs/                    # 产品与技术设计
-├── docker-compose.yml       # 容器化启动
-├── start-app.bat            # Windows 一键启动
-└── README.md
-```
+### Docker Compose（推荐）
 
-## 8. 快速开始
-
-建议使用 Node.js 22（Capacitor 8 的 CLI 运行要求）和 Python 3.10。
+准备 Docker Desktop，然后在项目根目录执行：
 
 ```powershell
-conda create -n couple-app python=3.10 -y
-conda activate couple-app
-pip install -r backend/requirements.txt
+Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+
+# 编辑 .env：更换数据库和 MinIO 密码
+# 编辑 backend/.env：填写 AI_API_KEY；如需邮箱验证码，再填写 SMTP 配置
+
+docker compose up -d --build
+docker compose ps
+```
+
+Compose 会启动 PostgreSQL/pgvector、MinIO、FastAPI、Memory Worker 和 Nginx 前端。AI Key 留空时仍可启动并体验基础功能，但事件抽取、语义 Embedding 和生成式功能需要可用的模型接口。
+
+| 服务 | 地址 |
+|---|---|
+| Web 应用 | `http://localhost:5173` |
+| Swagger API | `http://localhost:8000/docs` |
+| MinIO API | `http://localhost:9000` |
+| MinIO 控制台 | `http://localhost:9001` |
+
+MinIO 登录账号来自根目录 `.env` 的 `COUPLE_MINIO_ROOT_USER` 和 `COUPLE_MINIO_ROOT_PASSWORD`。数据库只保存稳定的 `s3://bucket/key` 引用，客户端访问图片和视频时由后端签发短期 URL。
+
+### 本地开发
+
+建议使用 Python 3.10 和 Node.js 22：
+
+```powershell
+python -m venv backend/.venv
+backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
 Copy-Item backend/.env.example backend/.env
 
 cd frontend
 npm ci
 cd ..
+
 .\start-app.bat
 ```
 
-AI Key 可暂时留空；QQ 邮箱验证码需要填写 SMTP 邮箱和授权码。完整字段见 [`backend/.env.example`](backend/.env.example)。
+本地模式默认使用 SQLite 和本地文件目录；存储、模型、数据库、SMTP 与 Worker 配置见 [`backend/.env.example`](backend/.env.example)。
 
-### Docker Compose
+## 演示数据与账号
 
-```powershell
-Copy-Item backend/.env.example backend/.env
-# 按需填写 AI / SMTP 配置
-docker compose up --build
-```
-
-Compose 会启动 PostgreSQL/pgvector、MinIO、FastAPI、独立记忆 Worker 和 Nginx 前端。数据库使用 `postgres_data`，图片和视频使用 `minio_data` 命名卷持久化。MinIO API 位于 `http://localhost:9000`，管理控制台位于 `http://localhost:9001`。
-
-对象桶保持私有，数据库只保存稳定的 `s3://bucket/key` 引用，页面获得一小时有效的签名读取地址。相册与聊天支持 JPEG、PNG、GIF、WebP、MP4、WebM 和 MOV；图片上限为 10/20MB，视频上限为 100MB。根目录 `.env` 中的 `MINIO_ROOT_USER` 和 `MINIO_ROOT_PASSWORD` 在公开部署前必须替换。
-
-旧版本地上传文件可在容器启动后迁移到 MinIO：
-
-```powershell
-docker compose exec backend python migrate_uploads_to_object_storage.py --apply
-```
-
-脚本只迁移仍以 `/uploads/` 开头的数据库引用，并保留本地原文件作为回滚备份，可安全重复执行。
-
-### 虚构演示账号
-
-在本地后端环境中执行：
+在隔离的本地环境中执行：
 
 ```powershell
 cd backend
-conda run -n couple-app python seed_demo.py
+.\.venv\Scripts\python.exe seed_demo.py
 ```
 
-脚本可重复运行，不会删除其他账号或业务数据，也不会重复插入同一批记录。它会生成一套
-覆盖 `2026-04-23` 至 `2026-10-23` 的六个月情侣使用时间线，包括约 485 条聊天、48 篇日记、
-61 张相册演示图、10 个纪念日和 36 道带评分与留言的共同菜谱，并同步为可供 AI 检索的共同记忆。
-随后在登录页选择“密码登录”：
+脚本可重复执行，不会删除其他账号或重复插入同一批记录。随后在登录页选择“密码登录”：
 
 - `demo.a@example.com` / `Demo123456!`
 - `demo.b@example.com` / `Demo123456!`
 - 配对码：`LOVE2026`
 
-演示账号只能用于本地或隔离的演示环境，不应部署到公开生产数据库。
+这些账号只用于本地演示，不应放入公开生产数据库。
 
-## 9. 测试
+## 测试与评测
 
 ```powershell
+# 后端自动化测试
 cd backend
-conda run -n couple-app python -m unittest discover -s tests -v
-conda run -n couple-app python eval_memory_rag.py
-conda run -n couple-app python eval_memory_e2e.py --smoke
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 
-# 匿名真实聊天：先生成本地标注模板，再评测 reviewed=true 的样本
-conda run -n couple-app python eval_memory_anonymized.py --prepare-couple 1
-conda run -n couple-app python eval_memory_anonymized.py --input data/private_evals/review_cases.jsonl
+# 小规模端到端记忆冒烟测试
+.\.venv\Scripts\python.exe eval_memory_e2e.py --smoke
 
+# 检索真实性评测
+.\.venv\Scripts\python.exe eval_memory_realism.py
+
+# 前端生产构建
 cd ..\frontend
 npm run build
 ```
 
-当前自动化测试覆盖隐私授权、多源同步、来源引用问答、双人答案解锁、AI 自动事件提取、共同周报、私密记忆隔离、偏好版本、后台任务队列和约会规划。
+当前后端自动化测试为 **59/59 通过**，覆盖认证、权限隔离、多来源同步、事件抽取、证据引用、偏好版本、任务队列、对象存储、约会规划和结构化记忆问答。完整端到端评测会调用模型并产生费用，建议先使用 `--smoke`，确认配置后再运行完整数据集。
 
-前端生产依赖执行 `npm audit --omit=dev` 的当前结果为 0 个已知漏洞；Capacitor CLI 属于开发依赖，其上游工具链仍可能报告 moderate 级审计项，不进入生产 Nginx 镜像。
+## 项目结构
 
-## 10. 核心 API
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── models/          # 用户、配对、消息、记忆、任务等数据模型
+│   │   ├── routers/         # REST API 与 WebSocket
+│   │   ├── services/        # AI、记忆检索、对象存储与业务服务
+│   │   └── memory_worker.py # 独立记忆工作进程
+│   ├── tests/               # 后端自动化测试
+│   ├── reports/             # 可复现评测报告
+│   ├── eval_memory_e2e.py   # 端到端记忆评测
+│   └── seed_demo.py         # 幂等演示数据
+├── frontend/
+│   └── src/                 # Vue 页面、组件、状态与 API 封装
+├── docs/                    # 设计与验收文档
+├── docker-compose.yml       # 完整服务编排
+├── start-app.bat            # Windows 本地启动入口
+└── README.md
+```
+
+## 关键 API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| `PUT` | `/api/ai/memory/settings` | 开启共同记忆并配置数据来源 |
-| `POST` | `/api/ai/memory/manual` | 写入共享或私密事件/偏好 |
-| `POST` | `/api/ai/memory/chat` | 基于当前用户可见记忆问答 |
-| `POST` | `/api/ai/memory/extract` | 兼容入口：触发自动增量事件整理 |
+| `POST` | `/api/auth/login` | 账号登录 |
+| `GET` | `/api/chat/history` | 分页读取聊天记录 |
+| `WS` | `/ws/chat` | 实时聊天 |
+| `POST` | `/api/album` | 上传图片或视频 |
+| `PUT` | `/api/ai/memory/settings` | 配置长期记忆数据来源 |
+| `POST` | `/api/ai/memory/manual` | 新增共享或私密记忆 |
+| `POST` | `/api/ai/memory/chat` | 基于可见记忆问答 |
+| `POST` | `/api/ai/companion/chat` | 小忆陪伴对话 |
 | `POST` | `/api/ai/date-plan` | 生成有记忆依据的约会方案 |
-| `GET` | `/api/ai/date-plan` | 查看当前用户创建的历史方案 |
+| `POST` | `/api/rag/chat` | 查询用户知识库 |
 
-## 11. Roadmap
+具体请求结构以运行后的 Swagger 文档为准。
 
-- [x] 情侣配对与现有生活记录功能
-- [x] 多来源共同记忆与自动事件提取
-- [x] 共享/私密权限隔离和偏好版本
-- [x] 有来源引用的记忆问答、周报和约会规划
-- [x] 离线评测与端到端测试
-- [ ] 扩充 100+ 困难问题并做检索消融实验
-- [x] 接入持久化 Embedding 与 pgvector HNSW/SQLite LSH
-- [x] 独立同步 Worker、失败退避与运行监控
-- [x] 匿名真实聊天人工标注评测工具
-- [ ] 地点检索、天气和日历工具（写入前需用户确认）
-- [x] Docker Compose 本地容器化
-- [ ] 线上演示环境
-- [ ] 30 秒产品演示 GIF 和界面截图
+## 数据与隐私边界
 
-## 12. 开源与隐私
+- `.env`、数据库、上传文件、日志和构建产物均已加入 `.gitignore`。
+- 相册与聊天媒体存入私有对象桶，读取链接短期有效。
+- 共享记忆对双方可见；私密记忆只允许所有者检索。
+- 清空 AI 记忆索引不会删除原始聊天、日记、相册或纪念日。
+- 演示和公开评测数据均为虚构数据，不包含真实用户隐私。
+- 正式上线仍需更换所有默认密码、关闭本地验证码并配置 HTTPS、备份与监控。
 
-- `.env`、数据库、上传文件、日志和构建产物均已加入 `.gitignore`；
-- 演示与评测数据全部为虚构数据；
-- 清空 AI 索引不会删除原始聊天、日记、照片或纪念日；
-- 本项目采用 [MIT License](LICENSE)。
+## Roadmap
+
+- [x] 多来源事件级长期记忆与证据追溯
+- [x] 持久化 Embedding 与混合语义检索
+- [x] 独立 Worker、游标同步、租约重试和运行监控
+- [x] 私密/共享权限隔离和偏好状态版本
+- [x] MinIO 图片与视频存储
+- [x] 端到端抽取、检索、回答与防编造评测
+- [ ] 使用匿名真实聊天样本进行人工复核
+- [ ] 对接天气、地图和日历工具
+- [ ] 前端路由拆包与首屏性能优化
+- [ ] 微信小程序适配与线上演示环境
+
+## License
+
+本项目采用 [MIT License](LICENSE)。
