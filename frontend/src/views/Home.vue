@@ -78,7 +78,18 @@
 
     <el-dialog v-model="dateDialogVisible" title="我们的恋爱开始日" width="min(90vw, 380px)" append-to-body>
       <p class="date-dialog-tip">从真正心动的那一天开始计算，当天计为第 1 天。双方共享这个日期。</p>
-      <el-date-picker v-model="relationshipDate" type="date" value-format="YYYY-MM-DD" placeholder="选择开始恋爱的日期" :disabled-date="disableFutureDate" style="width:100%" />
+      <el-date-picker
+        v-if="dateDialogVisible"
+        :key="relationshipPickerKey"
+        v-model="relationshipDate"
+        type="date"
+        value-format="YYYY-MM-DD"
+        format="YYYY年 MM月 DD日"
+        placeholder="选择开始恋爱的日期"
+        :default-value="relationshipPickerDefault"
+        :disabled-date="disableFutureDate"
+        style="width:100%"
+      />
       <template #footer>
         <el-button @click="dateDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="savingDate" :disabled="!relationshipDate" @click="saveRelationshipDate">保存</el-button>
@@ -110,11 +121,21 @@ const latestMemory = ref(null)
 const memoryTotal = ref(0)
 const dateDialogVisible = ref(false)
 const relationshipDate = ref('')
+const relationshipPickerKey = ref(0)
 const savingDate = ref(false)
 const today = ref(new Date())
-const disableFutureDate = date => date > new Date()
+const relationshipPickerDefault = computed(() => {
+  const saved = couple.value?.relationship_start_date
+  return saved ? new Date(`${saved}T00:00:00`) : new Date()
+})
+const disableFutureDate = date => {
+  const current = new Date()
+  current.setHours(23, 59, 59, 999)
+  return date > current
+}
 const openRelationshipDate = () => {
   relationshipDate.value = couple.value?.relationship_start_date || ''
+  relationshipPickerKey.value += 1
   dateDialogVisible.value = true
 }
 const saveRelationshipDate = async () => {

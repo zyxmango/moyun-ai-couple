@@ -7,20 +7,24 @@
 
     <div v-if="list.length === 0" class="empty">还没有日记，记录你们的故事</div>
 
-    <div v-for="d in list" :key="d.id" class="ink-card diary-card">
-      <div class="diary-top">
-        <div class="diary-title">{{ d.title || '无题' }}</div>
-        <el-tag v-if="d.mood" size="small" effect="plain">{{ d.mood }}</el-tag>
-      </div>
-      <div class="diary-content">{{ d.content }}</div>
-      <div class="diary-meta">
-        <span>{{ d.author_nickname }} · {{ formatTime(d.created_at) }}</span>
-        <div>
-          <el-button text size="small" @click="editItem(d)">编辑</el-button>
-          <el-button text size="small" type="danger" @click="del(d)">删除</el-button>
+    <article v-for="d in list" :key="d.id" class="diary-card">
+      <header class="diary-top">
+        <h3 class="diary-title">{{ d.title || '无题' }}</h3>
+        <span v-if="d.mood" class="mood-chip"><i aria-hidden="true"></i>{{ d.mood }}</span>
+      </header>
+      <p class="diary-content">{{ d.content }}</p>
+      <footer class="diary-meta">
+        <div class="author-line">
+          <span class="author-mark" aria-hidden="true">{{ authorInitial(d.author_nickname) }}</span>
+          <span class="author-name">{{ d.author_nickname }}</span>
+          <time>{{ formatTime(d.created_at) }}</time>
         </div>
-      </div>
-    </div>
+        <div class="diary-actions">
+          <button type="button" @click="editItem(d)">编辑</button>
+          <button type="button" class="delete" @click="del(d)">删除</button>
+        </div>
+      </footer>
+    </article>
 
     <el-dialog v-model="showDialog" :title="editId ? '编辑日记' : '写日记'" width="90%">
       <el-form :model="form" label-position="top">
@@ -62,6 +66,8 @@ const form = ref({ title: '', content: '', mood: '' })
 const formatTime = (iso) => {
   return new Date(iso).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
+
+const authorInitial = (name) => (name || '我').trim().slice(0, 1)
 
 const load = async () => {
   try {
@@ -133,33 +139,151 @@ onMounted(load)
   font-size: 15px;
 }
 .diary-card {
-  margin-bottom: 12px;
+  position: relative;
+  margin-bottom: 14px;
+  padding: 20px 20px 15px;
+  overflow: hidden;
+  border: 1px solid rgba(174, 143, 125, 0.22);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(210, 137, 137, 0.13), transparent 38%),
+    linear-gradient(145deg, rgba(255, 252, 248, 0.98), rgba(247, 240, 233, 0.94));
+  box-shadow: 0 10px 28px rgba(75, 55, 45, 0.07), inset 0 1px rgba(255, 255, 255, 0.82);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.diary-card::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 0;
+  width: 3px;
+  height: 30px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--accent-rose), #d7a48c);
+  opacity: 0.72;
+}
+.diary-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 34px rgba(75, 55, 45, 0.09), inset 0 1px rgba(255, 255, 255, 0.86);
 }
 .diary-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 11px;
 }
 .diary-title {
-  font-size: 16px;
-  font-weight: 600;
+  min-width: 0;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
   color: var(--ink-darkest);
 }
+.mood-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 27px;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: #a45f5f;
+  background: rgba(201, 107, 107, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.mood-chip i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.72;
+}
 .diary-content {
+  margin: 0;
   font-size: 14px;
   color: var(--ink-primary);
-  line-height: 1.7;
+  line-height: 1.85;
   white-space: pre-wrap;
   max-height: 120px;
   overflow: hidden;
 }
 .diary-meta {
-  margin-top: 10px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(143, 113, 96, 0.12);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   font-size: 12px;
   color: var(--ink-light);
+}
+.author-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.author-mark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #a96863;
+  background: rgba(201, 107, 107, 0.11);
+  font-size: 11px;
+  font-weight: 700;
+}
+.author-name {
+  max-width: 80px;
+  overflow: hidden;
+  color: var(--ink-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.author-line time::before {
+  content: '·';
+  margin-right: 6px;
+  color: rgba(120, 99, 88, 0.4);
+}
+.diary-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.diary-actions button {
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 9px;
+  color: var(--ink-secondary);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+.diary-actions button:hover {
+  color: var(--ink-darkest);
+  background: rgba(95, 76, 66, 0.07);
+}
+.diary-actions .delete {
+  color: #ba7772;
+}
+.diary-actions .delete:hover {
+  color: #ad5555;
+  background: rgba(201, 107, 107, 0.09);
+}
+@media (max-width: 390px) {
+  .diary-card { padding: 18px 17px 14px; }
+  .diary-meta { align-items: flex-end; }
+  .author-line { flex-wrap: wrap; row-gap: 2px; }
+  .author-line time { width: calc(100% - 30px); margin-left: 30px; }
+  .author-line time::before { display: none; }
 }
 </style>

@@ -1065,6 +1065,78 @@ class MemoryAPITest(unittest.TestCase):
         self.assertEqual([item["id"] for item in history1], [data["id"]])
         self.assertEqual([item["id"] for item in history2], [partner.json()["id"]])
 
+    def test_07b_upcoming_birthday_question_uses_anniversary_memory(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        now = datetime.utcnow()
+        upcoming = SharedMemory(
+            couple_id=couple_id,
+            source_type="anniversary",
+            source_id="birthday-upcoming",
+            title="小韵生日",
+            content="想吃草莓蛋糕，也想收到一封手写信。",
+            event_date=now + timedelta(days=3),
+            status="confirmed",
+            visibility="shared",
+            importance=0.95,
+            category="event",
+            is_active=True,
+        )
+        later = SharedMemory(
+            couple_id=couple_id,
+            source_type="anniversary",
+            source_id="birthday-later",
+            title="小墨生日",
+            content="准备一份不张扬但用心的礼物。",
+            event_date=now + timedelta(days=180),
+            status="confirmed",
+            visibility="shared",
+            importance=0.95,
+            category="event",
+            is_active=True,
+        )
+        db.add_all([upcoming, later])
+        db.commit()
+
+        results = memory_service.search(db, couple_id, "生日是要到了吗", top_k=5, user_id=self.user1_id)
+        db.close()
+
+        self.assertGreaterEqual(len(results), 2)
+        self.assertEqual(results[0]["source_id"], "birthday-upcoming")
+        self.assertTrue(all(item["source_type"] == "anniversary" for item in results[:2]))
+
+    def test_07c_companion_reads_first_chat_from_raw_messages(self):
+        db = self.Session()
+        couple_id = db.query(User.couple_id).filter(User.id == self.user1_id).scalar()
+        db.add_all([
+            Message(
+                couple_id=couple_id, sender_id=self.user1_id, msg_type="text",
+                content="第一句测试问候", created_at=datetime(2010, 1, 2, 0, 0),
+            ),
+            Message(
+                couple_id=couple_id, sender_id=self.user2_id, msg_type="text",
+                content="第一次测试回复", created_at=datetime(2010, 1, 2, 0, 5),
+            ),
+        ])
+        db.commit()
+        db.close()
+
+        date_response = self.client.post(
+            "/api/ai/companion/chat", headers=self.headers1,
+            json={"message": "我们什么时候开始聊天的"},
+        )
+        self.assertEqual(date_response.status_code, 200)
+        self.assertIn("2010年1月2日 08:00", date_response.json()["message"]["content"])
+
+        content_response = self.client.post(
+            "/api/ai/companion/chat", headers=self.headers1,
+            json={"message": "我们第一次聊天聊了些什么"},
+        )
+        self.assertEqual(content_response.status_code, 200)
+        answer = content_response.json()["message"]["content"]
+        self.assertIn("第一句测试问候", answer)
+        self.assertIn("第一次测试回复", answer)
+
     def test_08_old_relevant_memory_is_not_removed_by_a_recent_window(self):
         db = self.Session()
         couple_id = db.query(CoupleAISettings.couple_id).first()[0]

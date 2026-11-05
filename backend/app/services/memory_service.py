@@ -1105,7 +1105,22 @@ class MemoryService:
             query_vector = None
 
         query_terms = self._query_terms(query)
-        existence_question = any(marker in query for marker in ("有没有", "是否", "是不是", "曾经", "曾在", "吗"))
+        # 只有明确询问“是否发生过”才启用严格的存在性证据门槛。
+        # 普通疑问句也常以“吗”结尾（如“生日是要到了吗”），不能因此丢掉结构化记录。
+        existence_question = any(marker in query for marker in ("有没有", "是否", "是不是", "曾经", "曾在"))
+        structured_source = ""
+        structured_marker = ""
+        if "生日" in query:
+            structured_source, structured_marker = "anniversary", "生日"
+        elif "纪念日" in query:
+            structured_source, structured_marker = "anniversary", "纪念日"
+        elif any(marker in query for marker in ("相册", "照片", "图片")):
+            structured_source = "photo"
+        elif "日记" in query:
+            structured_source = "diary"
+        wants_upcoming = any(marker in query for marker in (
+            "快到", "要到", "到了", "还有多久", "最近", "下一个", "临近",
+        ))
         generic_query_text = (
             "我们你们两个人对方有没有是否是不是曾经曾在一起去过参加体验安排回忆细节"
             "哪一年什么时候现在以前后来最后最喜欢一直明确说过约定决定共同计划取消完成"
@@ -1158,6 +1173,11 @@ class MemoryService:
             text = corpus[index].lower()
             keyword = sum(1 for term in query_terms if term in text) / max(1, len(query_terms))
             distinctive_matches = [term for term in distinctive_terms if term in text]
+            structured_match = bool(
+                structured_source
+                and memory.source_type == structured_source
+                and (not structured_marker or structured_marker in text)
+            )
             stored_vector = self._decode_vector(memory.embedding_b64 or "", memory.embedding_dim or 0)
             semantic = (
                 float(np.dot(query_vector, stored_vector))
@@ -1185,13 +1205,17 @@ class MemoryService:
             relevance = max(0.0, semantic) * 0.75 + keyword * 0.25
             if date_exact:
                 relevance += 0.12
+            # “生日/纪念日/相册/日记”是明确的数据源意图，不能只依赖语义相似度碰运气。
+            if structured_match:
+                relevance += 0.35
             # 低相关语义分在大库中普遍存在；必须有词面证据或很强的语义证据才可进入答案上下文。
             supported = (
-                keyword >= self.MIN_KEYWORD_SUPPORT
+                structured_match
+                or keyword >= self.MIN_KEYWORD_SUPPORT
                 or semantic >= self.STRONG_SEMANTIC_SUPPORT
                 or (date_exact and semantic >= 0.1)
             )
-            if existence_question and not (
+            if existence_question and not structured_match and not (
                 any(len(term) >= 3 for term in distinctive_matches) or len(distinctive_matches) >= 2
             ):
                 continue
@@ -1201,6 +1225,19 @@ class MemoryService:
                     metadata_boost += 0.12
                 if wants_cancelled and memory.memory_state == "cancelled":
                     metadata_boost += 0.12
+                if wants_upcoming and memory.source_type == "anniversary" and memory_date:
+                    month, day = memory_date.month, memory_date.day
+                    try:
+                        next_date = date(now.year, month, day)
+                    except ValueError:  # 2 月 29 日在非闰年按 2 月 28 日提醒
+                        next_date = date(now.year, 2, 28)
+                    if next_date < now.date():
+                        try:
+                            next_date = date(now.year + 1, month, day)
+                        except ValueError:
+                            next_date = date(now.year + 1, 2, 28)
+                    days_until = (next_date - now.date()).days
+                    metadata_boost += max(0.0, 1.0 - days_until / 366) * 0.22
                 score = relevance + recency + memory.importance * 0.03 + metadata_boost
                 scores.append((score, memory))
         ranked = sorted(scores, key=lambda item: item[0], reverse=True)[:top_k]

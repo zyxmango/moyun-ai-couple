@@ -1,10 +1,11 @@
 """AI 情感陪伴路由"""
 import json
+from datetime import timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import User, Couple, AIConversation, AIMessage, AICallLog
+from ..models import User, Couple, Message, AIConversation, AIMessage, AICallLog
 from ..schemas import CompanionChatRequest
 from ..deps import get_current_user, get_active_couple
 from ..services.ai_service import ai_service
@@ -12,6 +13,76 @@ from ..services.memory_service import memory_service
 from ..services.memory_jobs import enqueue_memory_sync
 
 router = APIRouter(prefix="/api/ai/companion", tags=["AI情感陪伴"])
+CHINA_TIMEZONE = timezone(timedelta(hours=8))
+
+
+def _chat_origin_intent(message: str) -> str:
+    """识别需要直接查询原始消息的首次聊天问题。"""
+    text = "".join((message or "").split())
+    content_markers = (
+        "第一次聊天聊了什么", "第一次聊天聊些什么", "第一次聊天聊了些什么",
+        "最开始聊了什么", "最开始聊些什么", "最开始聊了些什么",
+        "最早聊了什么", "最早聊些什么", "第一条消息是什么", "开头聊了什么",
+    )
+    date_markers = (
+        "什么时候开始聊天", "什么时候开始聊", "哪天开始聊天", "哪一天开始聊天",
+        "第一次聊天是什么时候", "最早的聊天是什么时候", "最早聊天时间",
+        "第一条消息是什么时候", "从什么时候开始聊天",
+    )
+    if any(marker in text for marker in content_markers):
+        return "content"
+    if any(marker in text for marker in date_markers):
+        return "date"
+    return ""
+
+
+def _local_message_time(value) -> str:
+    aware = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
+    local = aware.astimezone(CHINA_TIMEZONE)
+    return f"{local.year}年{local.month}月{local.day}日 {local:%H:%M}"
+
+
+def _chat_origin_reply(db: Session, couple_id: int, intent: str) -> str:
+    first = db.query(Message).filter(
+        Message.couple_id == couple_id,
+    ).order_by(Message.created_at.asc(), Message.id.asc()).first()
+    if not first:
+        return "我还没有找到你们的聊天记录，所以暂时无法确认开始聊天的时间。"
+
+    first_time = _local_message_time(first.created_at)
+    if intent == "date":
+        return f"按现有聊天记录，最早一条消息是在{first_time}（北京时间）发送的，可以把它当作目前记录中的开始聊天时间。"
+
+    window_end = first.created_at + timedelta(hours=3)
+    messages = db.query(Message).filter(
+        Message.couple_id == couple_id,
+        Message.created_at <= window_end,
+    ).order_by(Message.created_at.asc(), Message.id.asc()).limit(30).all()
+    user_ids = {item.sender_id for item in messages}
+    names = {
+        item.id: (item.nickname or "对方")
+        for item in db.query(User).filter(User.id.in_(user_ids)).all()
+    }
+    fragments = []
+    seen = set()
+    for item in messages:
+        if item.msg_type == "image":
+            content = "发了一张图片"
+        elif item.msg_type == "video":
+            content = "发了一个视频"
+        else:
+            content = (item.content or "").strip()
+        if not content or content in seen:
+            continue
+        seen.add(content)
+        if len(content) > 70:
+            content = content[:70] + "……"
+        fragments.append(f"{names.get(item.sender_id, '对方')}说“{content}”")
+        if len(fragments) >= 6:
+            break
+    if not fragments:
+        return f"你们现有记录从{first_time}（北京时间）开始，但最早的片段里没有可概括的文字消息。"
+    return f"你们现有记录从{first_time}（北京时间）开始。开头聊到：{'；'.join(fragments)}。"
 
 
 def _build_history(conv: AIConversation, db: Session) -> list:
@@ -48,28 +119,34 @@ def companion_chat(
     db.add(user_msg)
     db.commit()
 
-    # 调用 AI
-    history = _build_history(conv, db)
-    # 移除刚加的最后一条（已在 messages 中，避免重复）
-    history = history[:-1]
-    # 共同记忆仅作为模型内部上下文，绝不把原始检索片段返回到聊天界面。
-    memory_settings = memory_service.get_settings(db, couple.id)
-    if memory_settings.enabled:
-        enqueue_memory_sync(db, couple.id)
-        db.commit()
-    memories = (
-        memory_service.search(db, couple.id, req.message, top_k=5, user_id=user.id)
-        if memory_settings.enabled else []
-    )
-    memory_context_lines = []
-    for item in memories:
-        date_note = ""
-        # 聊天时间只是消息发送时间，不能冒充事件发生时间；纪念日等结构化记录可以使用日期。
-        if item.get("event_date") and item.get("source_type") != "chat":
-            date_note = f"（日期：{item['event_date'][:10]}）"
-        memory_context_lines.append(f"- {item['title']}{date_note}：{item['content']}")
-    memory_context = "\n".join(memory_context_lines)
-    reply = ai_service.companion_chat(req.message, history, memory_context)
+    origin_intent = _chat_origin_intent(req.message)
+    memories = []
+    if origin_intent:
+        # 首次聊天时间属于数据库事实，直接查询原始消息，避免向量召回遗漏或模型猜测。
+        reply = _chat_origin_reply(db, couple.id, origin_intent)
+    else:
+        # 调用 AI
+        history = _build_history(conv, db)
+        # 移除刚加的最后一条（已在 messages 中，避免重复）
+        history = history[:-1]
+        # 共同记忆仅作为模型内部上下文，绝不把原始检索片段返回到聊天界面。
+        memory_settings = memory_service.get_settings(db, couple.id)
+        if memory_settings.enabled:
+            enqueue_memory_sync(db, couple.id)
+            db.commit()
+        memories = (
+            memory_service.search(db, couple.id, req.message, top_k=5, user_id=user.id)
+            if memory_settings.enabled else []
+        )
+        memory_context_lines = []
+        for item in memories:
+            date_note = ""
+            # 聊天时间只是消息发送时间，不能冒充事件发生时间；纪念日等结构化记录可以使用日期。
+            if item.get("event_date") and item.get("source_type") != "chat":
+                date_note = f"（日期：{item['event_date'][:10]}）"
+            memory_context_lines.append(f"- {item['title']}{date_note}：{item['content']}")
+        memory_context = "\n".join(memory_context_lines)
+        reply = ai_service.companion_chat(req.message, history, memory_context)
 
     # 保存 AI 回复
     ai_msg = AIMessage(
