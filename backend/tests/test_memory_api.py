@@ -14,7 +14,7 @@ from app.database import Base, get_db
 from app.main import app
 from app.models import (
     Couple, CoupleAISettings, Diary, MemoryCandidate, MemoryEmbeddingBucket,
-    MemoryEventHistory, MemorySyncJob, MemorySyncRun, Message, SharedMemory, User,
+    MemoryEventHistory, MemoryReprocessBatch, MemorySyncJob, MemorySyncRun, Message, SharedMemory, User,
 )
 from app.services.ai_service import ai_service
 from app.services.memory_service import memory_service
@@ -88,6 +88,10 @@ class MemoryAPITest(unittest.TestCase):
         self.assertEqual(ai_service._unit_float("高"), 0.8)
         self.assertEqual(ai_service._unit_float("invalid", 0.6), 0.6)
         self.assertEqual(ai_service._unit_float(2), 1.0)
+        self.assertEqual(ai_service.classify_error(configured=False), "unconfigured")
+        quota_error = RuntimeError("insufficient quota / balance")
+        quota_error.status_code = 429
+        self.assertEqual(ai_service.classify_error(quota_error), "quota")
 
     def test_01_privacy_opt_in_and_sync(self):
         response = self.client.get("/api/ai/memory/settings", headers=self.headers1)
@@ -109,7 +113,19 @@ class MemoryAPITest(unittest.TestCase):
 
         response = self.client.get("/api/ai/memory", headers=self.headers1)
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(response.json()["total"], 2)
+        self.assertGreaterEqual(response.json()["total"], 1)
+        db = self.Session()
+        self.assertGreaterEqual(db.query(MemoryCandidate).filter(
+            MemoryCandidate.verification_status == "pending",
+            MemoryCandidate.needs_reprocess.is_(True),
+        ).count(), 1)
+        self.assertGreaterEqual(db.query(MemoryReprocessBatch).filter(
+            MemoryReprocessBatch.status == "pending"
+        ).count(), 1)
+        self.assertEqual(db.query(SharedMemory).filter(
+            SharedMemory.source_type == "chat_event"
+        ).count(), 0)
+        db.close()
 
     def test_02_grounded_memory_chat(self):
         response = self.client.post("/api/ai/memory/chat", headers=self.headers1, json={
@@ -142,7 +158,7 @@ class MemoryAPITest(unittest.TestCase):
         self.assertTrue(second.json()["both_answered"])
         self.assertEqual(len(second.json()["answers"]), 2)
 
-    def test_04_chat_is_automatically_organized_as_event(self):
+    def test_04_local_fallback_stays_in_candidate_layer(self):
         response = self.client.post("/api/ai/memory/extract", headers=self.headers1)
         self.assertEqual(response.status_code, 200)
         pending = self.client.get("/api/ai/memory", headers=self.headers1, params={"status": "pending"})
@@ -151,8 +167,15 @@ class MemoryAPITest(unittest.TestCase):
         events = self.client.get(
             "/api/ai/memory", headers=self.headers1, params={"source_type": "chat_event"}
         ).json()
-        self.assertGreaterEqual(events["total"], 1)
-        self.assertTrue(events["items"][0]["source_message_ids"])
+        self.assertEqual(events["total"], 0)
+        db = self.Session()
+        candidate = db.query(MemoryCandidate).filter(
+            MemoryCandidate.verification_status == "pending"
+        ).first()
+        self.assertIsNotNone(candidate)
+        self.assertEqual(candidate.extraction_source, "local_rule")
+        self.assertIsNone(candidate.memory_id)
+        db.close()
 
     def test_04b_cursor_advances_past_noise_without_creating_fragment_memory(self):
         db = self.Session()
@@ -972,6 +995,9 @@ class MemoryAPITest(unittest.TestCase):
             self.assertIn("message_lag_total", payload)
             self.assertIn("failure_rate", payload["last_24h"])
             self.assertIn("estimated_cost_usd", payload["last_24h"])
+            self.assertIn("extraction_service", payload)
+            self.assertIn("pending_reprocess_batches", payload["extraction_service"])
+            self.assertIn("error_classes", payload["extraction_service"])
             self.assertNotIn("content", json.dumps(payload, ensure_ascii=False).lower())
         finally:
             db = self.Session()
@@ -979,7 +1005,7 @@ class MemoryAPITest(unittest.TestCase):
             db.commit()
             db.close()
 
-    def test_04c_failed_extraction_keeps_cursor_for_retry(self):
+    def test_04c_failed_extraction_degrades_then_qwen_revalidates(self):
         db = self.Session()
         settings = db.query(CoupleAISettings).first()
         old_cursor = settings.last_synced_message_id
@@ -997,12 +1023,89 @@ class MemoryAPITest(unittest.TestCase):
         try:
             result = memory_service.sync_chat_events(db, settings.couple_id, max_batches=1)
             db.refresh(settings)
-            self.assertEqual(result["processed_messages"], 0)
-            self.assertEqual(settings.last_synced_message_id, old_cursor)
-            self.assertIn("temporary model error", settings.sync_error)
+            self.assertEqual(result["processed_messages"], 1)
+            self.assertGreater(settings.last_synced_message_id, old_cursor)
+            self.assertEqual(result["degraded_batches"], 1)
+            self.assertEqual(settings.extraction_service_status, "degraded")
+            self.assertEqual(settings.extraction_error_class, "unknown")
+            self.assertEqual(db.query(SharedMemory).filter(
+                SharedMemory.content.contains("冰岛")
+            ).count(), 0)
+            pending = db.query(MemoryReprocessBatch).filter(
+                MemoryReprocessBatch.couple_id == settings.couple_id,
+                MemoryReprocessBatch.status == "pending",
+            ).order_by(MemoryReprocessBatch.id.desc()).first()
+            self.assertIsNotNone(pending)
+            self.assertEqual(pending.error_class, "unknown")
         finally:
             ai_service._client = original_client
             db.close()
+
+        original_search = memory_service.search
+        memory_service.search = Mock(return_value=[])
+        try:
+            unverified = self.client.post("/api/ai/memory/chat", headers=self.headers1, json={
+                "question": "我们有冰岛旅行计划吗？",
+            })
+        finally:
+            memory_service.search = original_search
+        self.assertEqual(unverified.status_code, 200)
+        self.assertEqual(unverified.json()["verification_status"], "unverified")
+        self.assertFalse(unverified.json()["grounded"])
+        self.assertIn("尚未经过 Qwen 验证", unverified.json()["answer"])
+
+        formal = self.client.post("/api/ai/memory/chat", headers=self.headers1, json={
+            "question": "重庆日记写了什么？",
+        })
+        self.assertEqual(formal.status_code, 200)
+        self.assertEqual(formal.json()["verification_status"], "verified")
+        self.assertNotIn("尚未经过 Qwen 验证", formal.json()["answer"])
+
+        db = self.Session()
+        latest_message = db.query(Message).filter(Message.content.contains("冰岛")).order_by(Message.id.desc()).first()
+        db.query(MemoryReprocessBatch).filter(
+            MemoryReprocessBatch.status == "pending"
+        ).update({"available_at": datetime.utcnow() - timedelta(seconds=1)})
+        db.commit()
+        response = Mock()
+        response.usage = None
+        response.choices = [Mock(message=Mock(content=json.dumps([{
+            "title": "冰岛旅行计划", "summary": "两人计划明年去冰岛旅行。",
+            "category": "plan", "state": "planned", "event_kind": "plan",
+            "event_key": "plan:冰岛旅行", "entities": ["冰岛"],
+            "event_date": "", "event_end": "", "started_at": "", "resolved_at": "",
+            "location": "冰岛", "emotion": "期待", "tags": ["旅行", "计划"],
+            "importance": 0.8, "confidence": 0.9,
+            "source_message_ids": [latest_message.id],
+            "facts": [
+                {"type": "plan_intent", "value": "明年一起去冰岛旅行", "source_message_ids": [latest_message.id]},
+                {"type": "plan_status", "value": "计划中", "source_message_ids": [latest_message.id]},
+            ],
+        }], ensure_ascii=False)))]
+        recovering_client = Mock()
+        recovering_client.chat.completions.create.return_value = response
+        original_client = ai_service._client
+        ai_service._client = recovering_client
+        try:
+            recovery = memory_service.reprocess_pending_batches(db, settings.couple_id, limit=50)
+        finally:
+            ai_service._client = original_client
+        self.assertGreaterEqual(recovery["reprocessed_batches"], 1)
+        self.assertEqual(recovery["pending_reprocess"], 0)
+        self.assertEqual(db.query(MemoryCandidate).filter(
+            MemoryCandidate.verification_status == "pending"
+        ).count(), 0)
+        verified_memory = db.query(SharedMemory).filter(
+            SharedMemory.source_type == "chat_event",
+            SharedMemory.content.contains("冰岛"),
+        ).first()
+        self.assertIsNotNone(verified_memory)
+        recovered_settings = db.query(CoupleAISettings).filter(
+            CoupleAISettings.couple_id == settings.couple_id
+        ).one()
+        self.assertEqual(recovered_settings.extraction_service_status, "healthy")
+        self.assertIsNotNone(recovered_settings.extraction_recovered_at)
+        db.close()
 
     def test_05_memory_report_uses_confirmed_records(self):
         response = self.client.post(

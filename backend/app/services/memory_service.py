@@ -21,6 +21,7 @@ from ..models import (
     MemoryCandidate,
     MemoryEmbeddingBucket,
     MemoryEventHistory,
+    MemoryReprocessBatch,
     Photo,
     SharedMemory,
 )
@@ -353,6 +354,8 @@ class MemoryService:
 
         created = 0
         touched = 0
+        reprocess_result = self.reprocess_pending_batches(db, couple_id)
+        settings = self.get_settings(db, couple_id)
         if settings.include_diary:
             for item in db.query(Diary).filter(Diary.couple_id == couple_id).all():
                 created += int(self._upsert(
@@ -362,7 +365,10 @@ class MemoryService:
                 ))
                 touched += 1
 
-        chat_result = {"processed_messages": 0, "created_events": 0, "merged_events": 0, "remaining_messages": 0}
+        chat_result = {
+            "processed_messages": 0, "created_events": 0, "merged_events": 0,
+            "remaining_messages": 0, "degraded_batches": 0,
+        }
         if settings.include_chat:
             chat_result = self.sync_chat_events(db, couple_id, max_batches=4)
             created += chat_result["created_events"]
@@ -395,6 +401,13 @@ class MemoryService:
         except Exception as exc:
             db.rollback()
             embedding_result["embedding_error"] = str(exc)[:500]
+        pending_reprocess = db.query(MemoryReprocessBatch).filter(
+            MemoryReprocessBatch.couple_id == couple_id,
+            MemoryReprocessBatch.status == "pending",
+        ).count()
+        if pending_reprocess and settings.extraction_service_status == "healthy":
+            settings.extraction_service_status = "recovering"
+            db.commit()
         return {
             "enabled": True,
             "created": created,
@@ -402,6 +415,8 @@ class MemoryService:
             "total": total,
             **chat_result,
             "last_synced_message_id": settings.last_synced_message_id or 0,
+            **reprocess_result,
+            "pending_reprocess": pending_reprocess,
             **embedding_result,
         }
 
@@ -708,12 +723,16 @@ class MemoryService:
         date_part = "" if timeless else f":{event_at:%Y-%m-%d}" if event_at else ""
         return f"{kind}:{hint or 'unknown'}{date_part}"[:160]
 
-    def _find_candidate(self, db: Session, couple_id: int, event: Dict, event_at: datetime | None):
+    def _find_candidate(
+        self, db: Session, couple_id: int, event: Dict, event_at: datetime | None,
+        verification_status: str = "verified",
+    ):
         key = self._candidate_key(event, event_at)
         exact = db.query(MemoryCandidate).filter(
             MemoryCandidate.couple_id == couple_id,
             MemoryCandidate.event_key == key,
             MemoryCandidate.category == (event.get("category") or "event"),
+            MemoryCandidate.verification_status == verification_status,
         ).order_by(MemoryCandidate.updated_at.desc()).first()
         if exact:
             return exact, key
@@ -722,6 +741,7 @@ class MemoryService:
             MemoryCandidate.couple_id == couple_id,
             MemoryCandidate.event_kind == kind,
             MemoryCandidate.category == (event.get("category") or "event"),
+            MemoryCandidate.verification_status == verification_status,
         )
         if event_at and kind not in {"plan", "preference"}:
             query = query.filter(MemoryCandidate.event_date.between(
@@ -825,7 +845,9 @@ class MemoryService:
         return suggested_state or "uncertain", "open", ""
 
     def _merge_candidate_fragment(
-        self, db: Session, couple_id: int, event: Dict, batch_messages: List[Message]
+        self, db: Session, couple_id: int, event: Dict, batch_messages: List[Message],
+        *, verification_status: str = "verified", extraction_source: str = "qwen",
+        reprocess_batch_id: int | None = None, error_class: str = "", error_message: str = "",
     ):
         message_map = {item.id: item for item in batch_messages}
         source_ids = sorted({int(item) for item in event.get("source_message_ids", []) if int(item) in message_map})
@@ -833,7 +855,9 @@ class MemoryService:
             return None, False
         started_at, resolved_at = self._resolve_event_times(event, message_map, source_ids)
         event_at = started_at
-        candidate, event_key = self._find_candidate(db, couple_id, event, event_at)
+        candidate, event_key = self._find_candidate(
+            db, couple_id, event, event_at, verification_status=verification_status
+        )
         created = candidate is None
         if candidate is None:
             candidate = MemoryCandidate(
@@ -842,6 +866,12 @@ class MemoryService:
                 category=event.get("category") or "event", event_date=event_at,
                 started_at=started_at, resolved_at=resolved_at,
                 first_seen_at=min(message_map[item].created_at for item in source_ids),
+                extraction_source=extraction_source,
+                verification_status=verification_status,
+                needs_reprocess=verification_status != "verified",
+                reprocess_batch_id=reprocess_batch_id,
+                degradation_error_class=error_class,
+                degradation_error=error_message[:1000],
             )
             db.add(candidate)
         old_ids = set(self._json_ids(candidate.source_message_ids))
@@ -881,11 +911,19 @@ class MemoryService:
             candidate.event_kind, source_text, event.get("state", "uncertain")
         )
         candidate.state, candidate.lifecycle, candidate.closure_reason = state, lifecycle, reason
+        candidate.extraction_source = extraction_source
+        candidate.verification_status = verification_status
+        candidate.needs_reprocess = verification_status != "verified"
+        candidate.reprocess_batch_id = reprocess_batch_id
+        candidate.degradation_error_class = error_class
+        candidate.degradation_error = error_message[:1000]
         candidate.updated_at = datetime.utcnow()
         db.flush()
         return candidate, changed
 
     def _materialize_candidate(self, db: Session, candidate: MemoryCandidate) -> bool:
+        if candidate.verification_status != "verified" or candidate.needs_reprocess:
+            return False
         source_ids = self._json_ids(candidate.source_message_ids)
         messages = db.query(Message).filter(
             Message.couple_id == candidate.couple_id, Message.id.in_(source_ids)
@@ -971,6 +1009,179 @@ class MemoryService:
             memory.version = 1 if created else (memory.version or 1) + 1
         return created
 
+    @staticmethod
+    def _mark_extraction_degraded(settings, error_class: str, error_message: str):
+        now = datetime.utcnow()
+        if settings.extraction_service_status in {"healthy", "recovering"}:
+            settings.extraction_degraded_at = now
+        settings.extraction_service_status = "unconfigured" if error_class == "unconfigured" else "degraded"
+        settings.extraction_error_class = error_class
+        settings.extraction_error_message = error_message[:1000]
+        settings.sync_updated_at = now
+
+    @staticmethod
+    def _mark_extraction_healthy(settings):
+        if settings.extraction_service_status != "healthy":
+            settings.extraction_recovered_at = datetime.utcnow()
+        settings.extraction_service_status = "healthy"
+        settings.extraction_error_class = ""
+        settings.extraction_error_message = ""
+
+    def _create_reprocess_batch(
+        self, db: Session, couple_id: int, batch: List[Message], context_messages: List[Message],
+        error_class: str, error_message: str,
+    ) -> MemoryReprocessBatch:
+        first_id, last_id = batch[0].id, batch[-1].id
+        row = db.query(MemoryReprocessBatch).filter(
+            MemoryReprocessBatch.couple_id == couple_id,
+            MemoryReprocessBatch.start_message_id == first_id,
+            MemoryReprocessBatch.end_message_id == last_id,
+        ).first()
+        message_ids = [item.id for item in context_messages if item.msg_type == "text" and (item.content or "").strip()]
+        if row is None:
+            row = MemoryReprocessBatch(
+                couple_id=couple_id, start_message_id=first_id, end_message_id=last_id,
+                message_ids=json.dumps(message_ids), status="pending",
+            )
+            db.add(row)
+        row.message_ids = json.dumps(message_ids)
+        row.status = "pending"
+        row.error_class = error_class
+        row.error_message = error_message[:1000]
+        row.available_at = datetime.utcnow() + timedelta(seconds=30)
+        row.updated_at = datetime.utcnow()
+        db.flush()
+        return row
+
+    def reprocess_pending_batches(self, db: Session, couple_id: int, limit: int = 2) -> Dict:
+        """Qwen 恢复后重新读取原始消息；本地候选本身从不被提升为正式记忆。"""
+        pending_query = db.query(MemoryReprocessBatch).filter(
+            MemoryReprocessBatch.couple_id == couple_id,
+            MemoryReprocessBatch.status == "pending",
+        )
+        pending_before = pending_query.count()
+        if pending_before == 0:
+            return {"reprocessed_batches": 0, "pending_reprocess": 0, "reprocess_failed": False}
+        if not ai_service.available:
+            return {"reprocessed_batches": 0, "pending_reprocess": pending_before, "reprocess_failed": False}
+
+        rows = pending_query.filter(
+            MemoryReprocessBatch.available_at <= datetime.utcnow()
+        ).order_by(MemoryReprocessBatch.id.asc()).limit(limit).all()
+        verified = 0
+        failed = False
+        for row in rows:
+            row.status = "processing"
+            row.attempts = (row.attempts or 0) + 1
+            row.last_attempted_at = datetime.utcnow()
+            db.flush()
+            message_ids = self._json_ids(row.message_ids)
+            messages = db.query(Message).filter(
+                Message.couple_id == couple_id, Message.id.in_(message_ids)
+            ).order_by(Message.id.asc()).all() if message_ids else []
+            payload = [{
+                "id": item.id, "sender_id": item.sender_id, "content": item.content,
+                "created_at": item.created_at.isoformat(),
+            } for item in messages if item.msg_type == "text" and (item.content or "").strip()]
+            try:
+                events = ai_service.extract_memory_events(payload)
+                db.query(MemoryCandidate).filter(
+                    MemoryCandidate.reprocess_batch_id == row.id,
+                    MemoryCandidate.verification_status == "pending",
+                    MemoryCandidate.memory_id.is_(None),
+                ).delete(synchronize_session=False)
+                touched = {}
+                for event in events:
+                    candidate, changed = self._merge_candidate_fragment(db, couple_id, event, messages)
+                    if candidate is not None and changed:
+                        touched[candidate.id] = candidate
+                for candidate in touched.values():
+                    self._materialize_candidate(db, candidate)
+                row.status = "verified"
+                row.error_class = ""
+                row.error_message = ""
+                row.verified_at = datetime.utcnow()
+                row.updated_at = datetime.utcnow()
+                verified += 1
+                db.commit()
+            except Exception as exc:
+                db.rollback()
+                row = db.query(MemoryReprocessBatch).filter(MemoryReprocessBatch.id == row.id).one()
+                row.status = "pending"
+                row.error_class = ai_service.classify_error(exc)
+                row.error_message = str(exc)[:1000]
+                row.available_at = datetime.utcnow() + timedelta(seconds=min(300, 2 ** min(row.attempts or 1, 8)))
+                row.updated_at = datetime.utcnow()
+                settings = self.get_settings(db, couple_id)
+                self._mark_extraction_degraded(settings, row.error_class, row.error_message)
+                db.commit()
+                failed = True
+                break
+
+        pending_after = db.query(MemoryReprocessBatch).filter(
+            MemoryReprocessBatch.couple_id == couple_id,
+            MemoryReprocessBatch.status == "pending",
+        ).count()
+        settings = self.get_settings(db, couple_id)
+        if pending_after == 0 and not failed:
+            self._mark_extraction_healthy(settings)
+        elif verified > 0 and not failed:
+            settings.extraction_service_status = "recovering"
+        db.commit()
+        return {
+            "reprocessed_batches": verified,
+            "pending_reprocess": pending_after,
+            "reprocess_failed": failed,
+        }
+
+    def search_degraded_candidates(
+        self, db: Session, couple_id: int, query: str, top_k: int = 2,
+    ) -> List[Dict]:
+        """只在正式记忆未命中时提供相关降级线索，并显式标记未验证。"""
+        terms = [term for term in self._query_terms(query) if term not in (
+            "我们", "你们", "什么", "怎么", "有没有", "是否", "事情", "记录",
+        )]
+        if not terms:
+            return []
+        rows = db.query(MemoryCandidate).filter(
+            MemoryCandidate.couple_id == couple_id,
+            MemoryCandidate.verification_status == "pending",
+            MemoryCandidate.needs_reprocess.is_(True),
+            MemoryCandidate.extraction_source == "local_rule",
+        ).order_by(MemoryCandidate.updated_at.desc()).limit(200).all()
+        ranked = []
+        for row in rows:
+            facts = self._json_list(row.facts)
+            fragments = self._json_list(row.fragments)
+            content = "；".join(
+                str(item.get("value") or "").strip() for item in facts if str(item.get("value") or "").strip()
+            ) or "；".join(
+                str(item.get("summary") or "").strip() for item in fragments if str(item.get("summary") or "").strip()
+            )
+            text_value = f"{row.title_hint} {content} {' '.join(map(str, self._json_list(row.entities)))}".lower()
+            matched = [term for term in terms if term.lower() in text_value]
+            if not matched:
+                continue
+            ranked.append((len(matched) / len(terms), row, content, facts))
+        results = []
+        for score, row, content, facts in sorted(ranked, key=lambda item: item[0], reverse=True)[:top_k]:
+            fragments = self._json_list(row.fragments)
+            display_title = next((
+                str(item.get("title") or "").strip() for item in reversed(fragments)
+                if str(item.get("title") or "").strip()
+            ), "待验证记忆线索")
+            results.append({
+                "id": f"candidate-{row.id}", "candidate_id": row.id,
+                "source_type": "degraded_candidate", "title": display_title,
+                "content": content[:2000], "event_date": row.event_date.isoformat() if row.event_date else None,
+                "started_at": row.started_at.isoformat() if row.started_at else None,
+                "resolved_at": row.resolved_at.isoformat() if row.resolved_at else None,
+                "memory_state": row.state, "facts": facts, "score": score,
+                "unverified": True, "verification_status": "pending",
+                "source_message_ids": self._json_ids(row.source_message_ids),
+            })
+        return results
+
     def sync_chat_events(self, db: Session, couple_id: int, max_batches: int = 4) -> Dict:
         """从持久化游标向后整理聊天；原文不复制到记忆表。"""
         lock = self._sync_lock(couple_id)
@@ -978,7 +1189,7 @@ class MemoryService:
             return {"processed_messages": 0, "created_events": 0, "merged_events": 0, "remaining_messages": 0}
         try:
             settings = self.get_settings(db, couple_id)
-            processed = created = merged = 0
+            processed = created = merged = degraded_batches = 0
             for _ in range(max_batches):
                 cursor = settings.last_synced_message_id or 0
                 batch = db.query(Message).filter(
@@ -1005,17 +1216,51 @@ class MemoryService:
                     "created_at": item.created_at.isoformat(),
                 } for item in text_messages]
                 try:
-                    events = ai_service.extract_memory_events(payload)
+                    extraction = ai_service.extract_memory_events_with_status(payload)
+                    events = extraction.events
                     touched_candidates = {}
-                    for event in events:
-                        candidate, changed = self._merge_candidate_fragment(db, couple_id, event, text_messages)
+                    reprocess_batch = None
+                    if not extraction.verified:
+                        reprocess_batch = self._create_reprocess_batch(
+                            db, couple_id, batch, text_messages,
+                            extraction.error_class, extraction.error_message,
+                        )
+                        self._mark_extraction_degraded(
+                            settings, extraction.error_class, extraction.error_message
+                        )
+                        degraded_batches += 1
+                    for index, event in enumerate(events):
+                        candidate_event = dict(event)
+                        if reprocess_batch is not None:
+                            # 降级候选按批次隔离；恢复后删除并依据原始消息重新抽取。
+                            candidate_event["event_key"] = (
+                                f"{event.get('event_key') or event.get('title') or 'fallback'}"
+                                f":fallback-{reprocess_batch.id}-{index}"
+                            )[:160]
+                        candidate, changed = self._merge_candidate_fragment(
+                            db, couple_id, candidate_event, text_messages,
+                            verification_status="verified" if extraction.verified else "pending",
+                            extraction_source="qwen" if extraction.verified else "local_rule",
+                            reprocess_batch_id=reprocess_batch.id if reprocess_batch else None,
+                            error_class=extraction.error_class,
+                            error_message=extraction.error_message,
+                        )
                         if candidate is not None and changed:
                             touched_candidates[candidate.id] = candidate
-                    for candidate in touched_candidates.values():
-                        if self._materialize_candidate(db, candidate):
-                            created += 1
+                    if extraction.verified:
+                        pending_reprocess = db.query(MemoryReprocessBatch).filter(
+                            MemoryReprocessBatch.couple_id == couple_id,
+                            MemoryReprocessBatch.status == "pending",
+                        ).count()
+                        if pending_reprocess:
+                            settings.extraction_service_status = "recovering"
                         else:
-                            merged += 1
+                            self._mark_extraction_healthy(settings)
+                        for candidate in touched_candidates.values():
+                            if self._materialize_candidate(db, candidate):
+                                created += 1
+                            else:
+                                merged += 1
                     settings.last_synced_message_id = batch[-1].id
                     settings.sync_error = ""
                     settings.sync_updated_at = datetime.utcnow()
@@ -1037,6 +1282,7 @@ class MemoryService:
                 "created_events": created,
                 "merged_events": merged,
                 "remaining_messages": remaining,
+                "degraded_batches": degraded_batches,
             }
         finally:
             lock.release()

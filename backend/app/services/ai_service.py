@@ -5,6 +5,7 @@ import logging
 import re
 from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Dict, Optional
 
@@ -17,7 +18,44 @@ logger = logging.getLogger(__name__)
 _usage_context = ContextVar("ai_usage_context", default=None)
 
 
+@dataclass
+class MemoryExtractionResult:
+    events: List[Dict]
+    verified: bool
+    error_class: str = ""
+    error_message: str = ""
+
+
 class AIService:
+    @staticmethod
+    def classify_error(exc: Exception | None = None, *, configured: bool = True) -> str:
+        """把不同模型 SDK 的异常归一化，供重试策略和服务状态展示使用。"""
+        if not configured:
+            return "unconfigured"
+        if exc is None:
+            return "unknown"
+        status = getattr(exc, "status_code", None)
+        name = type(exc).__name__.lower()
+        message = str(exc).lower()
+        if status in {401, 403} or "authentication" in name or "invalid api key" in message:
+            return "authentication"
+        if status == 429 and any(marker in message for marker in (
+            "quota", "balance", "insufficient", "billing", "余额", "欠费",
+        )):
+            return "quota"
+        if status == 429 or "ratelimit" in name or "rate limit" in message:
+            return "rate_limit"
+        if status in {408, 504} or "timeout" in name or "timed out" in message:
+            return "timeout"
+        if status is not None and int(status) >= 500:
+            return "upstream_server"
+        if any(marker in name for marker in ("connection", "network")) or any(
+            marker in message for marker in ("connection", "network", "dns", "name resolution")
+        ):
+            return "network"
+        if isinstance(exc, (json.JSONDecodeError, ValueError)):
+            return "invalid_response"
+        return "unknown"
     @contextmanager
     def track_usage(self):
         """按当前线程/异步上下文统计模型调用与 Token，不记录聊天正文。"""
@@ -234,6 +272,12 @@ class AIService:
                 return "我还没在你们的共同记忆里找到这件事。等你们记录下更多细节后，再来问我吧。"
             first = evidence[0].split("；内容：", 1)[-1].strip()
             return f"我记得你们提到过：{first[:180]}。如果你愿意，也可以再告诉我更多细节，我会帮你们把这段回忆记得更完整。"
+
+        if "专属情侣助手" in system_prompt and "可参考的共同记忆" in system_prompt:
+            memory_block = system_prompt.split("可参考的共同记忆：", 1)[-1].strip()
+            records = [line.lstrip("- ").strip() for line in memory_block.splitlines() if line.strip().startswith("-")]
+            if records:
+                return f"根据你们已经确认的记录：{records[0][:220]}。"
 
         if "陪伴" in system_prompt or "情感" in system_prompt:
             return (
@@ -547,6 +591,38 @@ class AIService:
         except Exception:
             logger.exception("Memory event extraction failed; keeping the sync cursor for retry")
             raise
+
+    def extract_memory_events_with_status(self, messages: List[Dict]) -> MemoryExtractionResult:
+        """失败时保留本地候选，但绝不把候选伪装成已验证的正式记忆。"""
+        if not messages:
+            return MemoryExtractionResult(events=[], verified=True)
+        if not self.available:
+            fallback = self._fallback_memory_events(messages)
+            events = self._filter_unsupported_facts(fallback, messages)
+            events = self._filter_unsupported_facts(
+                self._attach_uncovered_context_facts(events, messages), messages
+            )
+            return MemoryExtractionResult(
+                events=events,
+                verified=False,
+                error_class="unconfigured",
+                error_message="AI extraction service is not configured",
+            )
+        try:
+            return MemoryExtractionResult(events=self.extract_memory_events(messages), verified=True)
+        except Exception as exc:
+            logger.exception("Qwen extraction failed; local candidates await revalidation")
+            fallback = self._fallback_memory_events(messages)
+            events = self._filter_unsupported_facts(fallback, messages)
+            events = self._filter_unsupported_facts(
+                self._attach_uncovered_context_facts(events, messages), messages
+            )
+            return MemoryExtractionResult(
+                events=events,
+                verified=False,
+                error_class=self.classify_error(exc),
+                error_message=str(exc)[:500],
+            )
 
     @staticmethod
     def _is_routine_context(text: str) -> bool:

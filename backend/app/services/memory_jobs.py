@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..database import SessionLocal
 from ..models import (
-    CoupleAISettings, MemorySyncJob, MemorySyncRun, Message, SharedMemory,
+    CoupleAISettings, MemoryReprocessBatch, MemorySyncJob, MemorySyncRun, Message, SharedMemory,
 )
 from .ai_service import ai_service
 from .memory_service import memory_service
@@ -61,11 +61,22 @@ def enqueue_lagging_couples(db: Session) -> int:
         CoupleAISettings.enabled.is_(True), CoupleAISettings.include_chat.is_(True)
     ).all()
     queued = 0
+    queued_ids = set()
     for row in rows:
         newest = db.query(func.max(Message.id)).filter(Message.couple_id == row.couple_id).scalar() or 0
         if newest > (row.last_synced_message_id or 0):
             enqueue_memory_sync(db, row.couple_id)
             queued += 1
+            queued_ids.add(row.couple_id)
+    # 游标已经前进的降级批次仍需在 Qwen 恢复后重验证。
+    if ai_service.available:
+        pending_ids = [row[0] for row in db.query(MemoryReprocessBatch.couple_id).filter(
+            MemoryReprocessBatch.status == "pending",
+        ).distinct().all()]
+        for couple_id in pending_ids:
+            if couple_id not in queued_ids:
+                enqueue_memory_sync(db, couple_id)
+                queued += 1
     db.commit()
     return queued
 
@@ -123,9 +134,10 @@ def execute_claimed_job(couple_id: int, worker_id: str, session_factory=SessionL
         now = datetime.utcnow()
         job = db.query(MemorySyncJob).filter(MemorySyncJob.couple_id == couple_id).with_for_update().one()
         has_new_request = bool(job.requested_at and job.last_started_at and job.requested_at > job.last_started_at)
-        if result.get("remaining_messages", 0) > 0 or has_new_request:
+        has_pending_reprocess = result.get("pending_reprocess", 0) > 0 and ai_service.available
+        if result.get("remaining_messages", 0) > 0 or has_new_request or has_pending_reprocess:
             job.status = "pending"
-            job.available_at = now
+            job.available_at = now + timedelta(seconds=30 if has_pending_reprocess else 0)
         else:
             job.status = "complete"
         job.lease_until = None

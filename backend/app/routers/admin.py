@@ -8,7 +8,7 @@ from sqlalchemy import func
 from ..database import get_db
 from ..models import (
     User, Couple, Message, Diary, Photo, AICallLog, Document, Anniversary,
-    CoupleAISettings, MemorySyncJob, MemorySyncRun, SharedMemory,
+    CoupleAISettings, MemoryCandidate, MemoryReprocessBatch, MemorySyncJob, MemorySyncRun, SharedMemory,
 )
 from ..deps import require_admin
 from ..services.memory_jobs import enqueue_memory_sync
@@ -55,6 +55,25 @@ def memory_health(
         SharedMemory.status == "confirmed", SharedMemory.is_active.is_(True),
         (SharedMemory.embedding_b64 == "") | SharedMemory.embedding_b64.is_(None),
     ).scalar() or 0
+    service_statuses = dict(db.query(
+        CoupleAISettings.extraction_service_status,
+        func.count(CoupleAISettings.couple_id),
+    ).filter(CoupleAISettings.enabled.is_(True)).group_by(
+        CoupleAISettings.extraction_service_status
+    ).all())
+    pending_reprocess = db.query(func.count(MemoryReprocessBatch.id)).filter(
+        MemoryReprocessBatch.status == "pending"
+    ).scalar() or 0
+    pending_candidates = db.query(func.count(MemoryCandidate.id)).filter(
+        MemoryCandidate.verification_status == "pending",
+        MemoryCandidate.needs_reprocess.is_(True),
+    ).scalar() or 0
+    error_classes = dict(db.query(
+        MemoryReprocessBatch.error_class, func.count(MemoryReprocessBatch.id)
+    ).filter(
+        MemoryReprocessBatch.status == "pending",
+        MemoryReprocessBatch.error_class != "",
+    ).group_by(MemoryReprocessBatch.error_class).all())
     return {
         "generated_at": now.isoformat(),
         "enabled_couples": len(settings_rows),
@@ -65,6 +84,17 @@ def memory_health(
                  "failed": jobs.get("failed", 0), "dead_letter": jobs.get("dead_letter", 0),
                  "complete": jobs.get("complete", 0)},
         "unembedded_memories": unembedded,
+        "extraction_service": {
+            "status": (
+                "degraded" if service_statuses.get("degraded", 0) else
+                "unconfigured" if service_statuses.get("unconfigured", 0) else
+                "recovering" if service_statuses.get("recovering", 0) else "healthy"
+            ),
+            "couples": service_statuses,
+            "pending_reprocess_batches": pending_reprocess,
+            "pending_unverified_candidates": pending_candidates,
+            "error_classes": error_classes,
+        },
         "last_24h": {
             "runs": len(runs),
             "failures": failures,

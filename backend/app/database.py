@@ -55,10 +55,16 @@ def init_db():
                 ))
     if "couple_ai_settings" in inspector.get_table_names():
         setting_columns = {column["name"] for column in inspector.get_columns("couple_ai_settings")}
+        timestamp_type = "DATETIME" if IS_SQLITE else "TIMESTAMP"
         setting_additions = {
             "last_synced_message_id": "INTEGER DEFAULT 0 NOT NULL",
             "sync_error": "TEXT DEFAULT ''",
             "sync_updated_at": "DATETIME",
+            "extraction_service_status": "VARCHAR(20) DEFAULT 'healthy' NOT NULL",
+            "extraction_error_class": "VARCHAR(40) DEFAULT ''",
+            "extraction_error_message": "TEXT DEFAULT ''",
+            "extraction_degraded_at": timestamp_type,
+            "extraction_recovered_at": timestamp_type,
         }
         with engine.begin() as connection:
             for name, definition in setting_additions.items():
@@ -134,6 +140,12 @@ def init_db():
             "facts": "TEXT DEFAULT '[]'",
             "started_at": "DATETIME",
             "resolved_at": "DATETIME",
+            "extraction_source": "VARCHAR(30) DEFAULT 'qwen' NOT NULL",
+            "verification_status": "VARCHAR(20) DEFAULT 'verified' NOT NULL",
+            "needs_reprocess": f"BOOLEAN DEFAULT {'0' if IS_SQLITE else 'FALSE'} NOT NULL",
+            "degradation_error_class": "VARCHAR(40) DEFAULT ''",
+            "degradation_error": "TEXT DEFAULT ''",
+            "reprocess_batch_id": "INTEGER",
         },
         "memory_event_history": {"facts": "TEXT DEFAULT '[]'"},
     }
@@ -146,3 +158,12 @@ def init_db():
             for name, definition in columns.items():
                 if name not in existing_columns:
                     connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {name} {definition}"))
+        if "memory_candidates" in inspector.get_table_names():
+            connection.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_memory_candidate_verification "
+                "ON memory_candidates (verification_status, needs_reprocess)"
+            ))
+            connection.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_memory_candidate_reprocess_batch "
+                "ON memory_candidates (reprocess_batch_id)"
+            ))

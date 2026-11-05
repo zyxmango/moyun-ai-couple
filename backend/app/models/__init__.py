@@ -193,6 +193,11 @@ class CoupleAISettings(Base):
     last_synced_message_id = Column(Integer, default=0, nullable=False)
     sync_error = Column(Text, default="")
     sync_updated_at = Column(DateTime, nullable=True)
+    extraction_service_status = Column(String(20), default="healthy", nullable=False, index=True)
+    extraction_error_class = Column(String(40), default="")
+    extraction_error_message = Column(Text, default="")
+    extraction_degraded_at = Column(DateTime, nullable=True)
+    extraction_recovered_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
@@ -233,6 +238,29 @@ class MemorySyncRun(Base):
     error = Column(Text, default="")
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     finished_at = Column(DateTime, nullable=True)
+
+
+class MemoryReprocessBatch(Base):
+    """Qwen 不可用时保留原始消息范围，恢复后重新做正式结构化验证。"""
+    __tablename__ = "memory_reprocess_batches"
+    __table_args__ = (
+        UniqueConstraint("couple_id", "start_message_id", "end_message_id", name="uq_memory_reprocess_range"),
+        Index("ix_memory_reprocess_pending", "status", "available_at"),
+    )
+    id = Column(Integer, primary_key=True)
+    couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
+    start_message_id = Column(Integer, nullable=False)
+    end_message_id = Column(Integer, nullable=False)
+    message_ids = Column(Text, default="[]", nullable=False)
+    status = Column(String(20), default="pending", nullable=False, index=True)  # pending/processing/verified
+    error_class = Column(String(40), default="")
+    error_message = Column(Text, default="")
+    attempts = Column(Integer, default=0, nullable=False)
+    available_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    last_attempted_at = Column(DateTime, nullable=True)
+    verified_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class SharedMemory(Base):
@@ -309,6 +337,14 @@ class MemoryCandidate(Base):
     lifecycle = Column(String(20), default="open", index=True)
     closure_reason = Column(String(40), default="")
     confidence = Column(Float, default=0.5)
+    extraction_source = Column(String(30), default="qwen", nullable=False, index=True)
+    verification_status = Column(String(20), default="verified", nullable=False, index=True)
+    needs_reprocess = Column(Boolean, default=False, nullable=False, index=True)
+    degradation_error_class = Column(String(40), default="")
+    degradation_error = Column(Text, default="")
+    reprocess_batch_id = Column(
+        Integer, ForeignKey("memory_reprocess_batches.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     memory_id = Column(Integer, ForeignKey("shared_memories.id", ondelete="SET NULL"), nullable=True, index=True)
     first_seen_at = Column(DateTime, default=datetime.utcnow)
     last_seen_at = Column(DateTime, default=datetime.utcnow, index=True)

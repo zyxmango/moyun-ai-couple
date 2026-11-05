@@ -22,7 +22,7 @@ import { ref, computed, onMounted } from 'vue'
 import { adminApi } from '../../api'
 
 const stats = ref({})
-const memory = ref({ jobs: {}, last_24h: {} })
+const memory = ref({ jobs: {}, last_24h: {}, extraction_service: {} })
 const statList = computed(() => [
   { label: '用户总数', value: stats.value.users || 0 },
   { label: '活跃情侣', value: stats.value.couples_active || 0 },
@@ -38,6 +38,9 @@ const memoryList = computed(() => [
   { label: '待处理消息', value: memory.value.message_lag_total || 0, danger: memory.value.message_lag_total > 0 },
   { label: '失败任务', value: memory.value.jobs?.failed || 0, danger: memory.value.jobs?.failed > 0 },
   { label: '待生成向量', value: memory.value.unembedded_memories || 0, danger: memory.value.unembedded_memories > 0 },
+  { label: '抽取服务状态', value: memory.value.extraction_service?.status || 'healthy', danger: memory.value.extraction_service?.status !== 'healthy' },
+  { label: '待重验证批次', value: memory.value.extraction_service?.pending_reprocess_batches || 0, danger: memory.value.extraction_service?.pending_reprocess_batches > 0 },
+  { label: '未验证候选', value: memory.value.extraction_service?.pending_unverified_candidates || 0, danger: memory.value.extraction_service?.pending_unverified_candidates > 0 },
   { label: '24h 失败率', value: `${((memory.value.last_24h?.failure_rate || 0) * 100).toFixed(1)}%`, danger: memory.value.last_24h?.failure_rate > 0 },
   { label: '同步中位耗时', value: `${Math.round(memory.value.last_24h?.duration_median_ms || 0)} ms` },
   { label: '24h 模型调用', value: memory.value.last_24h?.model_calls || 0 },

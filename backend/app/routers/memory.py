@@ -44,6 +44,14 @@ def _settings_out(settings):
         "last_synced_message_id": settings.last_synced_message_id or 0,
         "sync_error": settings.sync_error or "",
         "sync_updated_at": settings.sync_updated_at.isoformat() if settings.sync_updated_at else None,
+        "extraction_service_status": settings.extraction_service_status or "healthy",
+        "extraction_error_class": settings.extraction_error_class or "",
+        "extraction_degraded_at": (
+            settings.extraction_degraded_at.isoformat() if settings.extraction_degraded_at else None
+        ),
+        "extraction_recovered_at": (
+            settings.extraction_recovered_at.isoformat() if settings.extraction_recovered_at else None
+        ),
         "updated_at": settings.updated_at.isoformat() if settings.updated_at else None,
     }
 
@@ -300,6 +308,12 @@ def memory_chat(
     enqueue_memory_sync(db, couple.id)
     db.commit()
     sources = memory_service.search(db, couple.id, data.question.strip(), top_k=5, user_id=user.id)
+    unverified_used = False
+    if not sources:
+        sources = memory_service.search_degraded_candidates(
+            db, couple.id, data.question.strip(), top_k=2
+        )
+        unverified_used = bool(sources)
     context_parts = []
     for item in sources:
         facts = "；".join(
@@ -336,7 +350,14 @@ def memory_chat(
 
     prior = db.query(AIMessage).filter(AIMessage.conversation_id == conversation.id).order_by(AIMessage.id.desc()).limit(8).all()
     history = [{"role": item.role, "content": item.content} for item in reversed(prior)]
-    answer = ai_service.memory_answer(data.question, context, history, viewer_user_id=user.id)
+    if unverified_used:
+        candidate_text = "；".join(item["content"] for item in sources if item.get("content"))[:600]
+        answer = (
+            "这条信息来自服务降级期间的本地规则候选，尚未经过 Qwen 验证："
+            f"{candidate_text}。请暂时把它当作待确认线索。"
+        )
+    else:
+        answer = ai_service.memory_answer(data.question, context, history, viewer_user_id=user.id)
     db.add(AIMessage(conversation_id=conversation.id, role="user", content=data.question))
     db.add(AIMessage(
         conversation_id=conversation.id,
@@ -355,7 +376,8 @@ def memory_chat(
     return {
         "answer": answer,
         "conversation_id": conversation.id,
-        "grounded": bool(sources),
+        "grounded": bool(sources) and not unverified_used,
+        "verification_status": "unverified" if unverified_used else "verified",
     }
 
 

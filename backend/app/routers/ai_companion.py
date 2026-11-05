@@ -138,6 +138,12 @@ def companion_chat(
             memory_service.search(db, couple.id, req.message, top_k=5, user_id=user.id)
             if memory_settings.enabled else []
         )
+        unverified_used = False
+        if memory_settings.enabled and not memories:
+            memories = memory_service.search_degraded_candidates(
+                db, couple.id, req.message, top_k=2
+            )
+            unverified_used = bool(memories)
         memory_context_lines = []
         for item in memories:
             date_note = ""
@@ -146,7 +152,16 @@ def companion_chat(
                 date_note = f"（日期：{item['event_date'][:10]}）"
             memory_context_lines.append(f"- {item['title']}{date_note}：{item['content']}")
         memory_context = "\n".join(memory_context_lines)
-        reply = ai_service.companion_chat(req.message, history, memory_context)
+        if unverified_used:
+            candidate_text = "；".join(
+                item["content"] for item in memories if item.get("content")
+            )[:600]
+            reply = (
+                "这条信息来自服务降级期间的本地规则候选，尚未经过 Qwen 验证："
+                f"{candidate_text}。请暂时把它当作待确认线索。"
+            )
+        else:
+            reply = ai_service.companion_chat(req.message, history, memory_context)
 
     # 保存 AI 回复
     ai_msg = AIMessage(
