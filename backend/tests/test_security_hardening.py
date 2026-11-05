@@ -14,7 +14,7 @@ import app.routers.chat as chat_router
 from app.models import Couple, MemorySyncJob, User
 from app.services.memory_jobs import enqueue_memory_sync
 from app.services.rate_limit import enforce_rate_limit
-from app.services.uploads import validate_image_bytes
+from app.services.uploads import validate_album_media, validate_image_bytes, validate_video_bytes
 from app.utils import create_access_token, hash_password
 
 
@@ -56,6 +56,17 @@ class SecurityHardeningTest(unittest.TestCase):
         validate_image_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 20, 1024)
         with self.assertRaises(HTTPException):
             validate_image_bytes(b"not really an image", 1024)
+
+    def test_video_content_signature_and_extension_are_checked(self):
+        mp4 = b"\x00\x00\x00\x18ftypisom" + b"x" * 32
+        webm = b"\x1aE\xdf\xa3" + b"x" * 32
+        validate_video_bytes(mp4, 1024)
+        self.assertEqual(validate_album_media(mp4, "moment.mp4"), "video")
+        self.assertEqual(validate_album_media(webm, "moment.webm"), "video")
+        with self.assertRaises(HTTPException):
+            validate_video_bytes(b"not really a video", 1024)
+        with self.assertRaises(HTTPException):
+            validate_album_media(mp4, "moment.exe")
 
     def test_rate_limit_returns_429(self):
         key = uuid4().hex

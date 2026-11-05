@@ -84,7 +84,7 @@ export const chatApi = {
   upload: (file) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/chat/upload', form)
+    return api.post('/chat/upload', form, { timeout: 120000 })
   },
   unreadCount: () => api.get('/chat/unread-count'),
 }
@@ -103,7 +103,7 @@ export const albumApi = {
   upload: (file) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/album', form)
+    return api.post('/album', form, { timeout: 120000 })
   },
   delete: (id) => api.delete(`/album/${id}`),
 }

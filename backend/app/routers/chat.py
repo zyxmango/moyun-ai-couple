@@ -15,7 +15,7 @@ from ..deps import get_current_user, get_active_couple, get_partner
 from ..utils import decode_access_token
 from ..services.memory_jobs import enqueue_memory_sync
 from ..services.object_storage import object_storage
-from ..services.uploads import validate_image_bytes
+from ..services.uploads import validate_album_media
 
 router = APIRouter(prefix="/api/chat", tags=["聊天"])
 
@@ -64,7 +64,8 @@ def _msg_out(msg: Message, sender: User) -> dict:
     return {
         "id": msg.id, "couple_id": msg.couple_id, "sender_id": msg.sender_id,
         "sender_nickname": sender.nickname or f"用户{sender.phone[-4:]}",
-        "content": object_storage.url(msg.content) if msg.msg_type == "image" else msg.content,
+        "content": object_storage.url(msg.content) if msg.msg_type in {"image", "video"} else msg.content,
+        "msg_type": msg.msg_type,
         "read_status": msg.read_status, "created_at": _message_timestamp(msg.created_at),
     }
 
@@ -123,7 +124,9 @@ async def chat_websocket(websocket: WebSocket):
                 payload = json.loads(data)
                 content = payload.get("content", "").strip()
                 msg_type = payload.get("msg_type", "text")
-                if not content:
+                # Binary media must pass the authenticated upload endpoint and
+                # content validation before a message is created.
+                if not content or msg_type != "text":
                     continue
 
                 msg = Message(
@@ -229,7 +232,8 @@ def chat_history(
         result.append({
             "id": m.id, "couple_id": m.couple_id, "sender_id": m.sender_id,
             "sender_nickname": sender.nickname if sender else "",
-            "content": m.content, "msg_type": m.msg_type,
+            "content": object_storage.url(m.content) if m.msg_type in {"image", "video"} else m.content,
+            "msg_type": m.msg_type,
             "read_status": m.read_status, "created_at": _message_timestamp(m.created_at),
         })
     return result
@@ -251,25 +255,26 @@ def mark_read(
 
 
 @router.post("/upload")
-async def upload_chat_image(
+async def upload_chat_media(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
     couple: Couple = Depends(get_active_couple),
     db: Session = Depends(get_db),
 ):
-    """上传图片，返回 URL，前端再通过 WebSocket 发送 image 类型消息"""
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "png"
-    if ext.lower() not in {"jpg", "jpeg", "png", "webp", "gif"}:
-        raise HTTPException(status_code=400, detail="仅支持 jpg/png/webp/gif 格式")
+    """Validate and persist an image/video, then create the chat message."""
     content = await file.read()
-    validate_image_bytes(content, 10 * 1024 * 1024)
+    media_type = validate_album_media(
+        content, file.filename,
+        image_maximum_bytes=10 * 1024 * 1024,
+        video_maximum_bytes=100 * 1024 * 1024,
+    )
     stored_path = object_storage.put(
         f"couples/{couple.id}/chat", content, file.filename, file.content_type
     )
 
     msg = Message(
         couple_id=couple.id, sender_id=user.id,
-        content=stored_path, msg_type="image", read_status=False,
+        content=stored_path, msg_type=media_type, read_status=False,
     )
     db.add(msg)
     db.commit()
@@ -281,7 +286,7 @@ async def upload_chat_image(
         "type": "message",
         "id": msg.id, "couple_id": msg.couple_id, "sender_id": msg.sender_id,
         "sender_nickname": user.nickname,
-        "content": object_storage.url(msg.content), "msg_type": "image",
+        "content": object_storage.url(msg.content), "msg_type": media_type,
         "read_status": msg.read_status, "created_at": _message_timestamp(msg.created_at),
     }
     await manager.send_to_couple(couple.id, msg_data)

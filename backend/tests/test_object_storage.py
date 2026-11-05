@@ -66,6 +66,10 @@ class LocalObjectStorageTest(unittest.TestCase):
             self.assertEqual(fake.objects[0]["ContentType"], "image/png")
             self.assertIn("?ttl=900", storage.url(reference))
 
+            video_reference = storage.put("couples/7/chat", b"video", "clip.mp4", "video/mp4")
+            self.assertTrue(video_reference.endswith(".mp4"))
+            self.assertEqual(fake.objects[1]["ContentType"], "video/mp4")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -57,6 +57,14 @@
           <div class="message-content">
             <div class="bubble" :class="{ mine: item.sender_id === store.user.id }">
               <img v-if="item.msg_type === 'image'" :src="assetUrl(item.content)" class="msg-img" />
+              <video
+                v-else-if="item.msg_type === 'video'"
+                :src="assetUrl(item.content)"
+                class="msg-video"
+                controls
+                preload="metadata"
+                playsinline
+              />
               <span v-else>{{ item.content }}</span>
             </div>
           </div>
@@ -70,8 +78,8 @@
     </button>
 
     <div class="chat-input">
-      <el-upload :show-file-list="false" :before-upload="handleImage" accept="image/*">
-        <button class="input-tool" title="发送图片"><el-icon><Picture /></el-icon></button>
+      <el-upload :show-file-list="false" :before-upload="handleMedia" accept="image/*,video/mp4,video/webm,video/quicktime">
+        <button class="input-tool" title="发送图片或视频"><el-icon><Picture /></el-icon></button>
       </el-upload>
       <div class="emoji-wrap">
         <button
@@ -380,16 +388,18 @@ const send = () => {
   inputText.value = ''
   emojiPickerOpen.value = false
 }
-const handleImage = async file => {
+const handleMedia = async file => {
   if (historicalDate.value) { ElMessage.info('请先回到最新消息再发送'); return false }
-  if (file.size > 10 * 1024 * 1024) { ElMessage.warning('图片不能超过 10MB'); return false }
+  const isVideo = file.type.startsWith('video/')
+  const maximum = isVideo ? 100 : 10
+  if (file.size > maximum * 1024 * 1024) { ElMessage.warning(`${isVideo ? '视频' : '图片'}不能超过 ${maximum}MB`); return false }
   try {
     const result = await chatApi.upload(file)
     if (result.message && !messages.value.some(item => item.id === result.message.id)) {
       messages.value.push(result.message); totalCount.value += 1
     }
     scrollToBottom()
-  } catch (error) { ElMessage.error(error?.response?.data?.detail || '图片上传失败') }
+  } catch (error) { ElMessage.error(error?.response?.data?.detail || `${isVideo ? '视频' : '图片'}上传失败`) }
   return false
 }
 
@@ -417,6 +427,7 @@ onUnmounted(() => {
 .chat-messages{flex:1;overflow-y:auto;padding:12px 15px 24px;background:#f2f0ed;display:flex;flex-direction:column;gap:3px}.empty-tip{margin:auto;color:#9a928b;font-size:13px}.history-status{min-height:34px;display:grid;place-items:center;color:#aaa19a;font-size:10px}.history-status button{border:0;color:#847a72;background:rgba(255,255,255,.55);border-radius:999px;padding:7px 13px;font-size:10px;cursor:pointer}
 .message-unit{width:100%;align-self:stretch;display:flex;flex-direction:column}.time-divider{width:100%;margin:13px 0 10px;text-align:center}.time-divider span{display:inline-block;padding:3px 6px;border-radius:3px;color:#fff;background:rgba(155,153,151,.48);font-size:10px;line-height:1.35}
 .msg-row{display:flex;align-items:flex-start;gap:9px;margin:2px 0 7px}.msg-row.mine{flex-direction:row-reverse}.chat-avatar{flex:0 0 38px;border:2px solid rgba(255,255,255,.75);color:#ad6461;background:#f8e7e3;font-size:13px}.message-content{max-width:72%;display:flex}.mine .message-content{justify-content:flex-end}.bubble{position:relative;padding:9px 12px;border-radius:4px 13px 13px 13px;color:#302c29;background:#fffdf9;font-size:14px;line-height:1.55;word-break:break-word;box-shadow:0 2px 7px rgba(60,50,45,.055)}.bubble::before{content:'';position:absolute;left:-6px;top:10px;border-width:5px 7px 5px 0;border-style:solid;border-color:transparent #fffdf9 transparent transparent}.bubble.mine{border-radius:13px 4px 13px 13px;color:#fff;background:#bd6c68}.bubble.mine::before{left:auto;right:-6px;border-width:5px 0 5px 7px;border-color:transparent transparent transparent #bd6c68}.msg-img{display:block;max-width:220px;max-height:300px;border-radius:7px;object-fit:cover}
+.msg-video{display:block;width:min(260px,65vw);max-height:360px;border-radius:7px;background:#171513;object-fit:contain}
 .back-latest{position:absolute;right:16px;bottom:70px;z-index:4;padding:8px 11px;display:flex;align-items:center;gap:5px;border:1px solid #e5dbd3;border-radius:999px;color:#9f5e5b;background:#fffdf9;box-shadow:0 5px 18px rgba(50,40,35,.13);font-size:10px;cursor:pointer}
 .chat-input{position:relative;min-height:58px;padding:8px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(60,50,45,.09);background:#fffdf9}.input-tool{width:35px;height:35px;display:grid;place-items:center;border:0;border-radius:10px;color:#6f6761;background:#f1ede8;font-size:18px;cursor:pointer}.input-tool:hover,.input-tool.active{color:#ad5e5c;background:#f7e5e2}.emoji-wrap{position:relative;flex:0 0 auto}.emoji-trigger{font-family:Arial,sans-serif;font-size:21px;line-height:1}.emoji-panel{position:absolute;left:-44px;bottom:47px;z-index:10;width:300px;padding:10px;border:1px solid rgba(80,65,55,.1);border-radius:15px;background:#fffdf9;box-shadow:0 12px 35px rgba(60,45,40,.18)}.emoji-panel::after{content:'';position:absolute;left:56px;bottom:-6px;width:12px;height:12px;transform:rotate(45deg);border-right:1px solid rgba(80,65,55,.08);border-bottom:1px solid rgba(80,65,55,.08);background:#fffdf9}.emoji-panel-head{height:28px;padding:0 3px 6px;display:flex;align-items:center;justify-content:space-between;color:#5e5650;font-size:13px}.emoji-panel-head button{border:0;color:#9b9189;background:none;font-size:18px;cursor:pointer}.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;min-height:117px}.emoji-grid button{width:32px;height:36px;border:0;border-radius:8px;background:transparent;font-size:22px;cursor:pointer;transition:transform .12s,background .12s}.emoji-grid button:hover{transform:scale(1.14);background:#f6ebe8}.emoji-tabs{margin-top:8px;padding-top:8px;display:flex;gap:5px;border-top:1px solid #eee7e1}.emoji-tabs button{padding:5px 10px;border:0;border-radius:8px;color:#8a817a;background:transparent;font-size:11px;cursor:pointer}.emoji-tabs button.active{color:#ad5e5c;background:#f7e5e2}.input{flex:1}.input :deep(.el-input__wrapper){border-radius:12px;background:#f5f2ee;box-shadow:none}.chat-input :deep(.el-button--primary){border-color:#bd6c68;border-radius:11px;background:#bd6c68}
 @media(max-width:480px){.chat-header{height:58px}.chat-messages{padding-left:11px;padding-right:11px}.message-content{max-width:75%}.msg-img{max-width:min(190px, 100%)}.chat-input{gap:5px;padding-left:8px;padding-right:8px}.emoji-panel{left:-41px;width:min(300px,calc(100vw - 24px))}.emoji-grid{grid-template-columns:repeat(8,1fr)}.emoji-grid button{width:auto}}

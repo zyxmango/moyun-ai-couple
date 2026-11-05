@@ -70,6 +70,17 @@ def init_db():
                 "CREATE INDEX IF NOT EXISTS ix_messages_couple_created "
                 "ON messages (couple_id, created_at)"
             ))
+    if "photos" in inspector.get_table_names():
+        photo_columns = {column["name"] for column in inspector.get_columns("photos")}
+        photo_additions = {
+            "media_type": "VARCHAR(20) DEFAULT 'image' NOT NULL",
+            "mime_type": "VARCHAR(100) DEFAULT '' NOT NULL",
+            "file_size": "INTEGER DEFAULT 0 NOT NULL",
+        }
+        with engine.begin() as connection:
+            for name, definition in photo_additions.items():
+                if name not in photo_columns:
+                    connection.execute(text(f"ALTER TABLE photos ADD COLUMN {name} {definition}"))
     if "shared_memories" not in inspector.get_table_names():
         return
     existing = {column["name"] for column in inspector.get_columns("shared_memories")}

@@ -2,16 +2,32 @@
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">共享相册</h2>
-      <el-upload :show-file-list="false" :before-upload="upload" accept="image/*">
+      <el-upload :show-file-list="false" :before-upload="upload" accept="image/*,video/mp4,video/webm,video/quicktime">
         <el-button type="primary" size="small" :loading="uploading">上传</el-button>
       </el-upload>
     </div>
 
-    <div v-if="photos.length === 0" class="empty">还没有照片，上传你们的美好瞬间</div>
+    <div v-if="photos.length === 0" class="empty">还没有照片或视频，上传你们的美好瞬间</div>
 
     <div class="photo-grid">
       <div v-for="p in photos" :key="p.id" class="photo-item">
-        <el-image :src="assetUrl(p.url)" fit="cover" :preview-src-list="previewList" :initial-index="photos.indexOf(p)" class="photo-img" lazy />
+        <video
+          v-if="p.media_type === 'video'"
+          :src="assetUrl(p.url)"
+          class="photo-img media-video"
+          controls
+          preload="metadata"
+          playsinline
+        />
+        <el-image
+          v-else
+          :src="assetUrl(p.url)"
+          fit="cover"
+          :preview-src-list="previewList"
+          :initial-index="previewList.indexOf(assetUrl(p.url))"
+          class="photo-img"
+          lazy
+        />
         <div class="photo-info">
           <span class="uploader">{{ p.uploader_nickname }}</span>
           <el-button text size="small" type="danger" @click="del(p)">删除</el-button>
@@ -28,7 +44,7 @@ import { albumApi, assetUrl } from '../../api'
 
 const photos = ref([])
 const uploading = ref(false)
-const previewList = computed(() => photos.value.map((p) => assetUrl(p.url)))
+const previewList = computed(() => photos.value.filter((p) => p.media_type !== 'video').map((p) => assetUrl(p.url)))
 
 const load = async () => {
   try {
@@ -41,14 +57,16 @@ const load = async () => {
 }
 
 const upload = async (file) => {
-  if (file.size > 20 * 1024 * 1024) {
-    ElMessage.warning('单张图片不能超过 20MB')
+  const isVideo = file.type.startsWith('video/')
+  const maximum = isVideo ? 100 : 20
+  if (file.size > maximum * 1024 * 1024) {
+    ElMessage.warning(`${isVideo ? '视频' : '图片'}不能超过 ${maximum}MB`)
     return false
   }
   uploading.value = true
   try {
     await albumApi.upload(file)
-    ElMessage.success('上传成功')
+    ElMessage.success(`${isVideo ? '视频' : '图片'}上传成功`)
     load()
   } catch (e) {
     ElMessage.error(e?.response?.data?.detail || '上传失败')
@@ -103,6 +121,11 @@ onMounted(load)
   width: 100%;
   aspect-ratio: 1;
   display: block;
+}
+.media-video {
+  border: 0;
+  background: #171513;
+  object-fit: contain;
 }
 .photo-info {
   padding: 6px 10px;

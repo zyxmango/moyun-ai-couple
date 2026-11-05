@@ -47,6 +47,7 @@ flowchart LR
     PLAN --> LLM["OpenAI 兼容 LLM\n或本地降级策略"]
     QA --> LLM
     API --> DB[("PostgreSQL + pgvector\n或本地 SQLite")]
+    API --> OBJ[("MinIO 私有对象存储\n图片与视频")]
 ```
 
 一次约会规划请求的链路：
@@ -100,6 +101,7 @@ AI 服务采用 OpenAI 兼容接口，但未配置 Key 或接口失败时，会�
 | 后台任务 | 数据库持久化队列 + 独立 Worker | 不依赖请求触发，支持租约、重试、积压与成本监控 |
 | AI | OpenAI 兼容 API + 本地降级 | 可切换模型提供商，也能离线完成演示和自动化测试 |
 | 实时能力 | WebSocket | 支持情侣聊天实时收发 |
+| 媒体存储 | MinIO（S3 兼容） | 私有桶、短期签名 URL、图片与视频统一存储 |
 
 当前没有使用 LangGraph、Celery 或 Redis。任务队列直接复用业务数据库，通过租约保证多 Worker 不重复处理，减少个人项目的额外运维服务。
 
@@ -148,7 +150,17 @@ Copy-Item backend/.env.example backend/.env
 docker compose up --build
 ```
 
-Compose 会启动 PostgreSQL/pgvector、FastAPI、独立记忆 Worker 和 Nginx 前端，并使用命名卷持久化数据库与上传文件。
+Compose 会启动 PostgreSQL/pgvector、MinIO、FastAPI、独立记忆 Worker 和 Nginx 前端。数据库使用 `postgres_data`，图片和视频使用 `minio_data` 命名卷持久化。MinIO API 位于 `http://localhost:9000`，管理控制台位于 `http://localhost:9001`。
+
+对象桶保持私有，数据库只保存稳定的 `s3://bucket/key` 引用，页面获得一小时有效的签名读取地址。相册与聊天支持 JPEG、PNG、GIF、WebP、MP4、WebM 和 MOV；图片上限为 10/20MB，视频上限为 100MB。根目录 `.env` 中的 `MINIO_ROOT_USER` 和 `MINIO_ROOT_PASSWORD` 在公开部署前必须替换。
+
+旧版本地上传文件可在容器启动后迁移到 MinIO：
+
+```powershell
+docker compose exec backend python migrate_uploads_to_object_storage.py --apply
+```
+
+脚本只迁移仍以 `/uploads/` 开头的数据库引用，并保留本地原文件作为回滚备份，可安全重复执行。
 
 ### 虚构演示账号
 

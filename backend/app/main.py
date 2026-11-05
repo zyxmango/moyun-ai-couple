@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import settings
 from .database import SessionLocal, init_db
 from .services.memory_jobs import enqueue_lagging_couples, claim_next_job, execute_claimed_job, worker_identity
+from .services.object_storage import object_storage
 from .routers import (
     auth, chat, anniversary, album, diary,
     ai_companion, ai_generate, ai_summary, rag_agent,
@@ -74,6 +75,7 @@ async def _memory_sync_loop():
 async def startup():
     settings.validate_runtime()
     init_db()
+    object_storage.ensure_bucket()
     app.state.memory_sync_task = (
         asyncio.create_task(_memory_sync_loop()) if settings.MEMORY_WORKER_IN_PROCESS else None
     )

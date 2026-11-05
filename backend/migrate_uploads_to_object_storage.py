@@ -1,86 +1,88 @@
-"""Move legacy /uploads files to the configured S3-compatible object store.
+"""Copy legacy ``/uploads`` files to the configured S3-compatible storage.
 
-Dry-run by default. Run with ``--apply`` only after AIStor/S3 is reachable.
+The database is updated only after every readable source has been copied. Local
+files are deliberately retained as a rollback backup. Running the script again
+is safe because only references that still start with ``/uploads/`` are handled.
 """
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+import mimetypes
+from pathlib import Path
 
 from app.config import settings
-from app.database import SessionLocal
+from app.database import SessionLocal, init_db
 from app.models import Couple, Message, Photo, Recipe, User
 from app.services.object_storage import object_storage
 
 
-@dataclass
-class MigrationItem:
-    record: object
-    field: str
-    reference: str
-    category: str
+def _copy_reference(reference: str, cache: dict[str, str]) -> str | None:
+    if not reference or not reference.startswith("/uploads/"):
+        return None
+    if reference in cache:
+        return cache[reference]
+    relative = reference.removeprefix("/uploads/")
+    source = (settings.UPLOAD_DIR / relative).resolve()
+    if not source.is_relative_to(settings.UPLOAD_DIR.resolve()) or not source.is_file():
+        raise FileNotFoundError(relative)
+    category = Path(relative).parent.as_posix()
+    content_type = mimetypes.guess_type(source.name)[0] or "application/octet-stream"
+    cache[reference] = object_storage.put(category, source.read_bytes(), source.name, content_type)
+    return cache[reference]
 
 
-def _legacy_items(db):
-    for user in db.query(User).filter(User.avatar.like("/uploads/%")):
-        yield MigrationItem(user, "avatar", user.avatar, f"avatars/{user.id}")
-    for couple in db.query(Couple):
-        for field in ("hero_bg", "chat_bg"):
-            value = getattr(couple, field) or ""
-            if value.startswith("/uploads/"):
-                yield MigrationItem(couple, field, value, f"couples/{couple.id}/backgrounds")
-    for message in db.query(Message).filter(
-        Message.msg_type == "image", Message.content.like("/uploads/%")
-    ):
-        yield MigrationItem(message, "content", message.content, f"couples/{message.couple_id}/chat")
-    for photo in db.query(Photo).filter(Photo.file_path.like("/uploads/%")):
-        yield MigrationItem(photo, "file_path", photo.file_path, f"couples/{photo.couple_id}/album")
-    for recipe in db.query(Recipe).filter(Recipe.cover.like("/uploads/%")):
-        yield MigrationItem(recipe, "cover", recipe.cover, f"couples/{recipe.couple_id}/recipes")
+def migrate(dry_run: bool = True) -> dict[str, int]:
+    if not object_storage.uses_s3:
+        raise RuntimeError("STORAGE_BACKEND 必须配置为 s3")
+    init_db()
+    object_storage.ensure_bucket()
+    cache: dict[str, str] = {}
+    counters = {"migrated": 0, "missing": 0}
 
+    with SessionLocal() as db:
+        targets = []
+        targets.extend((user, "avatar") for user in db.query(User).all())
+        targets.extend((couple, "hero_bg") for couple in db.query(Couple).all())
+        targets.extend((couple, "chat_bg") for couple in db.query(Couple).all())
+        targets.extend((photo, "file_path") for photo in db.query(Photo).all())
+        targets.extend((recipe, "cover") for recipe in db.query(Recipe).all())
+        targets.extend(
+            (message, "content")
+            for message in db.query(Message).filter(Message.msg_type.in_(("image", "video"))).all()
+        )
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--apply", action="store_true", help="upload files and update database references")
-    args = parser.parse_args()
-
-    if args.apply and not object_storage.uses_s3:
-        raise SystemExit("请先设置 STORAGE_BACKEND=s3 并配置对象存储连接")
-
-    migrated = 0
-    missing = 0
-    db = SessionLocal()
-    try:
-        items = list(_legacy_items(db))
-        print(f"legacy_references={len(items)} mode={'apply' if args.apply else 'dry-run'}")
-        for item in items:
-            relative = item.reference.removeprefix("/uploads/")
-            source = settings.UPLOAD_DIR / relative
-            if not source.is_file():
-                missing += 1
-                print(f"missing={item.reference}")
+        for record, field in targets:
+            current = getattr(record, field) or ""
+            if not current.startswith("/uploads/"):
                 continue
-            if not args.apply:
+            if dry_run:
+                relative = current.removeprefix("/uploads/")
+                source = (settings.UPLOAD_DIR / relative).resolve()
+                if source.is_relative_to(settings.UPLOAD_DIR.resolve()) and source.is_file():
+                    counters["migrated"] += 1
+                else:
+                    counters["missing"] += 1
                 continue
-            stored = object_storage.put(
-                item.category,
-                source.read_bytes(),
-                source.name,
-            )
-            setattr(item.record, item.field, stored)
-            migrated += 1
-            if migrated % 100 == 0:
-                db.commit()
-                print(f"migrated={migrated}")
-        if args.apply:
+            try:
+                replacement = _copy_reference(current, cache)
+            except FileNotFoundError:
+                counters["missing"] += 1
+                continue
+            if replacement:
+                counters["migrated"] += 1
+                if not dry_run:
+                    setattr(record, field, replacement)
+
+        if dry_run:
+            db.rollback()
+        else:
             db.commit()
-        print(f"complete migrated={migrated} missing={missing}")
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
+    return counters
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--apply", action="store_true", help="上传文件并更新数据库引用")
+    args = parser.parse_args()
+    result = migrate(dry_run=not args.apply)
+    print(f"migrated={result['migrated']} missing={result['missing']} dry_run={not args.apply}")

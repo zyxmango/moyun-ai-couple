@@ -63,7 +63,7 @@ class Message(Base):
     couple_id = Column(Integer, ForeignKey("couples.id"), nullable=False, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     content = Column(Text, default="")
-    msg_type = Column(String(20), default="text")  # text/image
+    msg_type = Column(String(20), default="text")  # text/image/video
     read_status = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
@@ -88,6 +88,9 @@ class Photo(Base):
     uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     filename = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
+    media_type = Column(String(20), default="image", nullable=False)
+    mime_type = Column(String(100), default="", nullable=False)
+    file_size = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     uploader = relationship("User", foreign_keys=[uploader_id])
